@@ -37,5 +37,19 @@ namespace SCAssistant
         {
 
         }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            browser.Load("https://www.schub.top/");
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            browser.Load("https://www.scmod.cn/");
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            browser.Load("http://xn--1kq052aeifw5v.top/");
+        }
     }
 }
