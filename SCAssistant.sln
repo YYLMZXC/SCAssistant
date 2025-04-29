@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决�
 		开发笔记.txt = 开发笔记.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Setup", "Setup\Setup.csproj", "{12E09286-37CA-47AA-B920-0B40F0ECCACC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12E09286-37CA-47AA-B920-0B40F0ECCACC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12E09286-37CA-47AA-B920-0B40F0ECCACC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12E09286-37CA-47AA-B920-0B40F0ECCACC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12E09286-37CA-47AA-B920-0B40F0ECCACC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
