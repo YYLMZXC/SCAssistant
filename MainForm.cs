@@ -108,6 +108,10 @@ namespace SCAssistant
         {
             browser.Load("http://xn--1kq052aeifw5v.top/");
         }
+        private void button4_Click(object sender, EventArgs e)
+        {
+            browser.Load("https://web.schz.top/");
+        }
 
         private void settingsButton_Click(object sender, EventArgs e)
         {
