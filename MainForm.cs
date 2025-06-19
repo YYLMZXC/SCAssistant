@@ -92,13 +92,14 @@ namespace SCAssistant
 
         private void settingsButton_Click(object sender, EventArgs e)
         {
-            if (downloadListForm.IsDisposed)
+            if (downloadListForm == null || downloadListForm.IsDisposed)
             {
                 downloadListForm = new DownloadListForm();
             }
             downloadListForm.Show();
             downloadListForm.BringToFront();
         }
+
 
 
     }
