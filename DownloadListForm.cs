@@ -13,7 +13,7 @@ namespace SCAssistant
             InitializeComponent();
         }
 
-        private void DownloadListForm_Load(object sender, EventArgs e)
+        public void DownloadListForm_Load(object sender, EventArgs e)
         {
             listView1.View = View.Details;
             listView1.Columns.Add("文件名", 200);
@@ -21,14 +21,14 @@ namespace SCAssistant
 
         }
 
-        private void AddDownloadItem(string name, string url)
+        public void AddDownloadItem(string name, string url)
         {
             var item = new ListViewItem(name);
             item.SubItems.Add(url);
             listView1.Items.Add(item);
         }
 
-        private void listView1_DoubleClick(object sender, EventArgs e)
+        public void listView1_DoubleClick(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count > 0)
             {

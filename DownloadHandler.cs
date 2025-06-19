@@ -7,27 +7,21 @@ public class DownloadHandler : IDownloadHandler
     private Form parentForm;
     public event Action<string, string> DownloadCreated;
 
-
-
     public DownloadHandler(Form form)
     {
         parentForm = form;
     }
 
-    // 当是否允许下载时调用，返回true表示允许下载，false取消下载
     public bool CanDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, string url, string requestMethod)
     {
-        // 你可以加逻辑判断，这里直接返回 true 允许所有下载
         return true;
     }
 
-    // 下载开始前调用，返回 true 表示你异步调用 callback 继续下载
     public bool OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IBeforeDownloadCallback callback)
     {
-        // 触发事件，通知有新下载
+        // 触发事件通知新下载
         DownloadCreated?.Invoke(downloadItem.SuggestedFileName, downloadItem.Url);
 
-        // 下面是弹出保存对话框的UI线程调用示例（改为Invoke调用）
         bool result = false;
         parentForm.Invoke(new Action(() =>
         {
@@ -47,8 +41,6 @@ public class DownloadHandler : IDownloadHandler
         return result;
     }
 
-
-    // 下载进度更新回调
     public void OnDownloadUpdated(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IDownloadItemCallback callback)
     {
         parentForm.Invoke(new Action(() =>

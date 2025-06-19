@@ -13,24 +13,57 @@ namespace SCAssistant
 {
     public partial class MainForm : Form
     {
-        public Button settingsButton;
         public ChromiumWebBrowser browser;
         public DownloadHandler downloadHandler;
+        private DownloadListForm downloadListForm;
+
         public MainForm()
         {
             InitializeComponent();
-            // 初始化 CEF
+
             CefSettings settings = new CefSettings();
             Cef.Initialize(settings);
 
-            // 创建 ChromiumWebBrowser 控件
             browser = new ChromiumWebBrowser("https://www.schub.top/");
             this.Controls.Add(browser);
             browser.Dock = DockStyle.Fill;
-            // 创建并设置下载处理器
+
             downloadHandler = new DownloadHandler(this);
             browser.DownloadHandler = downloadHandler;
+
+            // 订阅下载创建事件
+            downloadHandler.DownloadCreated += OnDownloadCreated;
         }
+        private void OnDownloadCreated(string fileName, string url)
+        {
+            // 跨线程安全调用窗体方法
+            if (downloadListForm == null || downloadListForm.IsDisposed)
+            {
+                // UI线程创建窗体并显示
+                this.Invoke(new Action(() =>
+                {
+                    downloadListForm = new DownloadListForm();
+                    downloadListForm.Show();
+                }));
+            }
+
+            // 下面确保添加项时窗体句柄已创建
+            if (!downloadListForm.IsHandleCreated)
+            {
+                var _ = downloadListForm.Handle; // 强制创建句柄
+            }
+
+            // 通过 Invoke 添加下载项
+            downloadListForm.Invoke(new Action(() =>
+            {
+                downloadListForm.AddDownloadItem(fileName, url);
+                // 你也可以这里BringToFront保证窗体在前
+                if (!downloadListForm.Visible)
+                    downloadListForm.Show();
+                downloadListForm.BringToFront();
+            }));
+        }
+
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             // 释放资源
@@ -59,8 +92,12 @@ namespace SCAssistant
 
         private void settingsButton_Click(object sender, EventArgs e)
         {
-            var form = new DownloadListForm();
-            form.ShowDialog();
+            if (downloadListForm.IsDisposed)
+            {
+                downloadListForm = new DownloadListForm();
+            }
+            downloadListForm.Show();
+            downloadListForm.BringToFront();
         }
 
 

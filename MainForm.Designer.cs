@@ -33,6 +33,8 @@ namespace SCAssistant
         private Button button2;
         private Button button3;
         private TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Button settingsButton;
+
 
         private void InitializeComponent()
         {
