@@ -1,50 +1,95 @@
 ﻿using CefSharp;
+using System.Diagnostics;
+using System.Windows.Forms;
 
 public class CustomContextMenuHandler : IContextMenuHandler
 {
-    private const int JumpMenuId = 26501;
+    private const int OpenLinkInCurrentTab = 26501;
+    private const int OpenLinkInExternalBrowser = 26502;
+    private const int CopyLinkAddress = 26503;
+    private const int CopyPageUrl = 26504;
 
-    public void OnBeforeContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
+    public void OnBeforeContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame,
+                                    IContextMenuParams parameters, IMenuModel model)
     {
-        model.Clear(); // 清空默认菜单
+        // 保留默认菜单项（不要 model.Clear()）
 
-        // 无论有没有链接，添加“跳转”菜单项
-        model.AddItem((CefMenuCommand)JumpMenuId, "跳转");
+        string url = parameters.LinkUrl ?? parameters.SourceUrl;
 
-        // 可以继续添加其他菜单项，比如刷新
         model.AddSeparator();
-        model.AddItem(CefMenuCommand.Reload, "刷新");
+        model.AddItem((CefMenuCommand)OpenLinkInCurrentTab, "在当前标签打开链接");
+        model.AddItem((CefMenuCommand)OpenLinkInExternalBrowser, "在默认浏览器中打开链接");
+        model.AddItem((CefMenuCommand)CopyLinkAddress, "复制链接地址");
+
+        if (!string.IsNullOrEmpty(browser.MainFrame.Url))
+        {
+            model.AddSeparator();
+            model.AddItem((CefMenuCommand)CopyPageUrl, "复制页面地址");
+        }
     }
 
-    public bool OnContextMenuCommand(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
+    public bool OnContextMenuCommand(IWebBrowser browserControl, IBrowser browser, IFrame frame,
+                                     IContextMenuParams parameters, CefMenuCommand commandId,
+                                     CefEventFlags eventFlags)
     {
-        if ((int)commandId == JumpMenuId)
+        string url = parameters.LinkUrl ?? parameters.SourceUrl;
+
+        switch ((int)commandId)
         {
-            string targetUrl = parameters.LinkUrl;
+            case OpenLinkInCurrentTab:
+                if (!string.IsNullOrEmpty(url))
+                {
+                    browser.MainFrame.LoadUrl(url);
+                }
+                else
+                {
+                    MessageBox.Show("无效的链接。");
+                }
+                return true;
 
-            if (string.IsNullOrEmpty(targetUrl))
-            {
-                // 没有链接时跳转当前页面地址
-                targetUrl = browser.MainFrame.Url;
-            }
+            case OpenLinkInExternalBrowser:
+                if (!string.IsNullOrEmpty(url))
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                else
+                {
+                    MessageBox.Show("无效的链接。");
+                }
+                return true;
 
-            if (!string.IsNullOrEmpty(targetUrl))
-            {
-                browser.MainFrame.LoadUrl(targetUrl);
-            }
-            return true;
+            case CopyLinkAddress:
+                if (!string.IsNullOrEmpty(url))
+                {
+                    Clipboard.SetText(url);
+                }
+                else
+                {
+                    Clipboard.SetText("（空链接）");
+                }
+                return true;
+
+            case CopyPageUrl:
+                string pageUrl = browser.MainFrame.Url;
+                if (!string.IsNullOrEmpty(pageUrl))
+                {
+                    Clipboard.SetText(pageUrl);
+                }
+                return true;
         }
 
-        return false;
+        return false; // 保留默认菜单功能（如复制/粘贴）
     }
 
-    public void OnContextMenuDismissed(IWebBrowser browserControl, IBrowser browser, IFrame frame)
+    public void OnContextMenuDismissed(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame)
     {
+        // 可选
     }
 
     public bool RunContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame,
-        IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback)
+                               IContextMenuParams parameters, IMenuModel model,
+                               IRunContextMenuCallback callback)
     {
-        return false; // 使用默认菜单
+        return false; // 使用默认右键菜单弹出方式
     }
 }
