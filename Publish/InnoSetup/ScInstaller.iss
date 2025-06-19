@@ -30,7 +30,7 @@ PrivilegesRequired=admin
 Name: desktopicon; Description: "{cm:DesktopIcon}"; GroupDescription: "{cm:DesktopIconGroup}"; Flags:
 
 [Files]
-Source: "..\Desktop\Content\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "..\Desktop\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\{cm:SurvivalcraftIconName}"; Filename: "{app}\Assistant.exe"

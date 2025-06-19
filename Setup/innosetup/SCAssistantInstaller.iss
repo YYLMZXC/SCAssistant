@@ -8,10 +8,10 @@ Compression=lzma
 SolidCompression=yes
 
 [Tasks]
-Name: desktopicon; Description: "创建桌面快捷方式"; GroupDescription: "快捷方式"; Flags: unchecked
+Name: desktopicon; Description: "创建桌面快捷方式"; GroupDescription: "快捷方式"; Flags: 
 
 [Files]
-Source: "C:\SC-DEV\GPS\SCAssistant\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "h:\SC-DEV\GPS\SCAssistant\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\SCAssistant"; Filename: "{app}\SCAssistant.exe"
