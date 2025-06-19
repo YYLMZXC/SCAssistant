@@ -22,7 +22,8 @@ namespace SCAssistant
     public partial class DownloadListForm : Form
     {
 
-        private const string HistoryFileName = "download_history.json";
+        private static readonly string HistoryFileName = Path.Combine(Application.StartupPath, "download_history.json");
+
 
         private List<DownloadRecord> downloadHistory = new List<DownloadRecord>();
 
@@ -38,18 +39,15 @@ namespace SCAssistant
                 try
                 {
                     string json = File.ReadAllText(HistoryFileName);
-                    // 读
-                    downloadHistory = JsonConvert.DeserializeObject<List<DownloadRecord>>(json);
-                    // 写
-                    File.WriteAllText(HistoryFileName, JsonConvert.SerializeObject(downloadHistory));
+                    downloadHistory = JsonConvert.DeserializeObject<List<DownloadRecord>>(json) ?? new List<DownloadRecord>();
                     foreach (var record in downloadHistory)
                     {
-                        AddDownloadItem(record.FileName, record.Url, saveHistory: false);
+                        AddDownloadItem(record.FileName, record.Url, record.LocalPath, saveHistory: false);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // 读取或解析失败，忽略
+                    MessageBox.Show("读取下载历史失败: " + ex.Message);
                     downloadHistory = new List<DownloadRecord>();
                 }
             }
@@ -58,15 +56,15 @@ namespace SCAssistant
         {
             try
             {
-                // 序列化为字符串
                 string json = JsonConvert.SerializeObject(downloadHistory);
                 File.WriteAllText(HistoryFileName, json);
             }
-            catch
+            catch (Exception ex)
             {
-                // 保存失败，忽略或弹窗提示
+                MessageBox.Show("保存下载历史失败: " + ex.Message);
             }
         }
+
         private void openFolderMenuItem_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count > 0)
