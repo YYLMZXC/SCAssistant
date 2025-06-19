@@ -36,10 +36,11 @@ namespace SCAssistant
         }
         private void OnDownloadCreated(string fileName, string url)
         {
-            // 跨线程安全调用窗体方法
+            string fullPath = ""; // 临时变量
+
+            // 显示下载窗体
             if (downloadListForm == null || downloadListForm.IsDisposed)
             {
-                // UI线程创建窗体并显示
                 this.Invoke(new Action(() =>
                 {
                     downloadListForm = new DownloadListForm();
@@ -47,22 +48,25 @@ namespace SCAssistant
                 }));
             }
 
-            // 下面确保添加项时窗体句柄已创建
             if (!downloadListForm.IsHandleCreated)
             {
-                var _ = downloadListForm.Handle; // 强制创建句柄
+                var _ = downloadListForm.Handle;
             }
 
-            // 通过 Invoke 添加下载项
-            downloadListForm.Invoke(new Action(() =>
-            {
-                downloadListForm.AddDownloadItem(fileName, url);
-                // 你也可以这里BringToFront保证窗体在前
-                if (!downloadListForm.Visible)
-                    downloadListForm.Show();
-                downloadListForm.BringToFront();
-            }));
+    // 保存路径在下载确认时处理
+    ((DownloadHandler)downloadHandler).OnDownloadConfirmed = (realPath) =>
+    {
+        fullPath = realPath;
+
+        downloadListForm.Invoke(new Action(() =>
+        {
+            downloadListForm.AddDownloadItem(fileName, url, fullPath);
+            if (!downloadListForm.Visible) downloadListForm.Show();
+            downloadListForm.BringToFront();
+        }));
+         };
         }
+
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
@@ -96,6 +100,7 @@ namespace SCAssistant
             {
                 downloadListForm = new DownloadListForm();
             }
+
             downloadListForm.Show();
             downloadListForm.BringToFront();
         }

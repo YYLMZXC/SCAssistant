@@ -1,11 +1,14 @@
 ﻿using CefSharp;
-using System;
 using System.Windows.Forms;
+using System;
 
 public class DownloadHandler : IDownloadHandler
 {
     private Form parentForm;
     public event Action<string, string> DownloadCreated;
+
+    // 新增：用于确认下载路径时回调
+    public Action<string> OnDownloadConfirmed;
 
     public DownloadHandler(Form form)
     {
@@ -19,7 +22,6 @@ public class DownloadHandler : IDownloadHandler
 
     public bool OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, DownloadItem downloadItem, IBeforeDownloadCallback callback)
     {
-        // 触发事件通知新下载
         DownloadCreated?.Invoke(downloadItem.SuggestedFileName, downloadItem.Url);
 
         bool result = false;
@@ -33,6 +35,7 @@ public class DownloadHandler : IDownloadHandler
                 if (sfd.ShowDialog(parentForm) == DialogResult.OK)
                 {
                     callback.Continue(sfd.FileName, showDialog: false);
+                    OnDownloadConfirmed?.Invoke(sfd.FileName); // ✅ 通知保存路径
                     result = true;
                 }
             }

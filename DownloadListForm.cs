@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Windows.Forms;
 using Newtonsoft.Json;
@@ -14,7 +15,9 @@ namespace SCAssistant
     {
         public string FileName { get; set; }
         public string Url { get; set; }
+        public string LocalPath { get; set; } 
     }
+
 
     public partial class DownloadListForm : Form
     {
@@ -64,26 +67,74 @@ namespace SCAssistant
                 // 保存失败，忽略或弹窗提示
             }
         }
+        private void openFolderMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                string localPath = listView1.SelectedItems[0].SubItems[2].Text;
+
+                if (!string.IsNullOrWhiteSpace(localPath))
+                {
+                    if (File.Exists(localPath))
+                    {
+                        // 文件存在，打开文件所在目录并选中文件
+                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{localPath}\"");
+                    }
+                    else
+                    {
+                        // 文件不存在，尝试只打开文件夹（先获取文件夹路径）
+                        string folderPath;
+                        try
+                        {
+                            folderPath = Path.GetDirectoryName(localPath);
+                        }
+                        catch (ArgumentException)
+                        {
+                            folderPath = null;
+                        }
+
+                        if (!string.IsNullOrEmpty(folderPath) && Directory.Exists(folderPath))
+                        {
+                            System.Diagnostics.Process.Start("explorer.exe", $"\"{folderPath}\"");
+                        }
+                        else
+                        {
+                            MessageBox.Show("文件路径无效，无法打开文件夹。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("文件路径为空，无法打开文件夹。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+
         public void DownloadListForm_Load(object sender, EventArgs e)
         {
             listView1.View = View.Details;
             listView1.Columns.Add("文件名", 200);
             listView1.Columns.Add("下载地址", 400);
-
+            listView1.Columns.Add("本地路径", 300); 
         }
 
-        public void AddDownloadItem(string name, string url, bool saveHistory = true)
+
+        public void AddDownloadItem(string name, string url, string localPath = "", bool saveHistory = true)
         {
             var item = new ListViewItem(name);
             item.SubItems.Add(url);
+            item.SubItems.Add(localPath); // 显示路径
             listView1.Items.Add(item);
 
-            if (saveHistory)
+            if (saveHistory && !downloadHistory.Any(r => r.Url == url && r.LocalPath == localPath))
             {
-                downloadHistory.Add(new DownloadRecord { FileName = name, Url = url });
+                downloadHistory.Add(new DownloadRecord { FileName = name, Url = url, LocalPath = localPath });
                 SaveDownloadHistory();
             }
+
         }
+
 
         public void listView1_DoubleClick(object sender, EventArgs e)
         {
