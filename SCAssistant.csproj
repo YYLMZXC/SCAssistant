@@ -66,6 +66,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ContextMenuHandler.cs" />
     <Compile Include="CustomLifeSpanHandler.cs" />
     <Compile Include="DownloadRecord.cs" />
     <Compile Include="DownloadHandler.cs" />

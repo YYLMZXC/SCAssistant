@@ -1,36 +1,50 @@
 ﻿using CefSharp;
-using CefSharp.WinForms;
 
-public class CustomLifeSpanHandler : ILifeSpanHandler
+public class CustomContextMenuHandler : IContextMenuHandler
 {
-    // 当弹出新窗口请求时，调用此方法
-    public bool OnBeforePopup(IWebBrowser chromiumWebBrowser, IBrowser browser,
-        IFrame frame, string targetUrl, string targetFrameName,
-        WindowOpenDisposition disposition, bool userGesture,
-        IPopupFeatures popupFeatures, IWindowInfo windowInfo,
-        IBrowserSettings browserSettings, ref bool noJavascriptAccess,
-        out IWebBrowser newBrowser)
-    {
-        // 这里直接让当前浏览器加载新地址，阻止弹出新窗口
-        chromiumWebBrowser.Load(targetUrl);
-        newBrowser = null;
+    private const int JumpMenuId = 26501;
 
-        // 返回 true 表示我们自己处理了，不要弹出新窗口
-        return true;
+    public void OnBeforeContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, IMenuModel model)
+    {
+        model.Clear(); // 清空默认菜单
+
+        // 无论有没有链接，添加“跳转”菜单项
+        model.AddItem((CefMenuCommand)JumpMenuId, "跳转");
+
+        // 可以继续添加其他菜单项，比如刷新
+        model.AddSeparator();
+        model.AddItem(CefMenuCommand.Reload, "刷新");
     }
 
-    public void OnAfterCreated(IWebBrowser chromiumWebBrowser, IBrowser browser)
+    public bool OnContextMenuCommand(IWebBrowser browserControl, IBrowser browser, IFrame frame, IContextMenuParams parameters, CefMenuCommand commandId, CefEventFlags eventFlags)
     {
-        // 不需要处理
-    }
+        if ((int)commandId == JumpMenuId)
+        {
+            string targetUrl = parameters.LinkUrl;
 
-    public bool DoClose(IWebBrowser chromiumWebBrowser, IBrowser browser)
-    {
+            if (string.IsNullOrEmpty(targetUrl))
+            {
+                // 没有链接时跳转当前页面地址
+                targetUrl = browser.MainFrame.Url;
+            }
+
+            if (!string.IsNullOrEmpty(targetUrl))
+            {
+                browser.MainFrame.LoadUrl(targetUrl);
+            }
+            return true;
+        }
+
         return false;
     }
 
-    public void OnBeforeClose(IWebBrowser chromiumWebBrowser, IBrowser browser)
+    public void OnContextMenuDismissed(IWebBrowser browserControl, IBrowser browser, IFrame frame)
     {
-        // 不需要处理
+    }
+
+    public bool RunContextMenu(IWebBrowser browserControl, IBrowser browser, IFrame frame,
+        IContextMenuParams parameters, IMenuModel model, IRunContextMenuCallback callback)
+    {
+        return false; // 使用默认菜单
     }
 }

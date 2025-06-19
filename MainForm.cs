@@ -93,7 +93,8 @@ namespace SCAssistant
         public void button1_Click(object sender, EventArgs e)
         {
             browser.Load("https://www.schub.top/");
-            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 关键这一行
+            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 自定义弹窗处理
+            browser.MenuHandler = new CustomContextMenuHandler(); // 自定义右键菜单处理
 
             this.Controls.Add(browser);
             browser.Dock = DockStyle.Fill;
@@ -102,7 +103,8 @@ namespace SCAssistant
         public void button2_Click(object sender, EventArgs e)
         {
             browser.Load("https://www.scmod.cn/");
-            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 关键这一行
+            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 自定义弹窗处理
+            browser.MenuHandler = new CustomContextMenuHandler(); // 自定义右键菜单处理
 
             this.Controls.Add(browser);
             browser.Dock = DockStyle.Fill;
@@ -111,7 +113,8 @@ namespace SCAssistant
         public void button3_Click(object sender, EventArgs e)
         {
             browser.Load("http://xn--1kq052aeifw5v.top/");
-            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 关键这一行
+            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 自定义弹窗处理
+            browser.MenuHandler = new CustomContextMenuHandler(); // 自定义右键菜单处理
 
             this.Controls.Add(browser);
             browser.Dock = DockStyle.Fill;
