@@ -74,24 +74,47 @@ namespace SCAssistant
             Cef.Shutdown();
             base.OnFormClosed(e);
         }
-
-        public void MainForm_Load(object sender, EventArgs e)
+/*
+        private void MainForm_Load(object sender, EventArgs e)
+        {// 最大化窗口
+         
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.WindowState = FormWindowState.Maximized;
+            this.TopMost = true;}*/
+         private void MainForm_Load(object sender, EventArgs e)
         {
-
+            this.FormBorderStyle = FormBorderStyle.Fixed3D; // 或者其他你想保留的边框样式
+            this.WindowState = FormWindowState.Maximized;
+            this.TopMost = false; // 通常最大化窗口不需要置顶
         }
+
+        
+
         public void button1_Click(object sender, EventArgs e)
         {
             browser.Load("https://www.schub.top/");
+            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 关键这一行
+
+            this.Controls.Add(browser);
+            browser.Dock = DockStyle.Fill;
         }
 
         public void button2_Click(object sender, EventArgs e)
         {
             browser.Load("https://www.scmod.cn/");
+            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 关键这一行
+
+            this.Controls.Add(browser);
+            browser.Dock = DockStyle.Fill;
         }
 
         public void button3_Click(object sender, EventArgs e)
         {
             browser.Load("http://xn--1kq052aeifw5v.top/");
+            browser.LifeSpanHandler = new CustomLifeSpanHandler(); // 关键这一行
+
+            this.Controls.Add(browser);
+            browser.Dock = DockStyle.Fill;
         }
 
         private void settingsButton_Click(object sender, EventArgs e)
