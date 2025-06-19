@@ -7,6 +7,7 @@
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem openFolderMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteRecordMenuItem;
 
         protected override void Dispose(bool disposing)
         {
@@ -26,12 +27,14 @@
             this.listView1 = new System.Windows.Forms.ListView(); // ✅ 必须先初始化
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.openFolderMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-
+            this.deleteRecordMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             // 
             // contextMenuStrip1
             // 
+            // contextMenuStrip1
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-        this.openFolderMenuItem});
+        this.openFolderMenuItem,
+        this.deleteRecordMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
 
             // 
@@ -41,7 +44,11 @@
             this.openFolderMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openFolderMenuItem.Text = "打开文件夹";
             this.openFolderMenuItem.Click += new System.EventHandler(this.openFolderMenuItem_Click);
-
+            // deleteRecordMenuItem
+            this.deleteRecordMenuItem.Name = "deleteRecordMenuItem";
+            this.deleteRecordMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteRecordMenuItem.Text = "删除记录";
+            this.deleteRecordMenuItem.Click += new System.EventHandler(this.deleteRecordMenuItem_Click);
             // 
             // listView1
             // 

@@ -109,7 +109,39 @@ namespace SCAssistant
                 }
             }
         }
+        private void deleteRecordMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                // 提示确认删除
+                var result = MessageBox.Show("确定要删除选中的下载记录吗？", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    foreach (ListViewItem item in listView1.SelectedItems)
+                    {
+                        string url = item.SubItems[1].Text;
+                        string localPath = item.SubItems.Count > 2 ? item.SubItems[2].Text : "";
 
+                        // 从内存历史中移除对应项
+                        var recordToRemove = downloadHistory.FirstOrDefault(r => r.Url == url && r.LocalPath == localPath);
+                        if (recordToRemove != null)
+                        {
+                            downloadHistory.Remove(recordToRemove);
+                        }
+
+                        // 从界面移除选中项
+                        listView1.Items.Remove(item);
+                    }
+
+                    // 保存更新后的历史
+                    SaveDownloadHistory();
+                }
+            }
+            else
+            {
+                MessageBox.Show("请先选择要删除的下载记录。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
 
         public void DownloadListForm_Load(object sender, EventArgs e)
         {
