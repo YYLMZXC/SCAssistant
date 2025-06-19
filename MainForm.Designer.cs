@@ -43,6 +43,16 @@ namespace SCAssistant
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
+
+            // settingsButton
+            this.settingsButton = new System.Windows.Forms.Button();
+            this.settingsButton.Text = "⚙ 设置";
+            this.settingsButton.Size = new System.Drawing.Size(80, 30);
+            
+            this.settingsButton.Location = new System.Drawing.Point(820, 10); // 写死位置
+
+            this.settingsButton.Click += new System.EventHandler(this.settingsButton_Click);
+            this.Controls.Add(this.settingsButton);
             // 
             // button1
             // 

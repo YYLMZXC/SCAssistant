@@ -13,7 +13,9 @@ namespace SCAssistant
 {
     public partial class MainForm : Form
     {
-        private ChromiumWebBrowser browser;
+        public Button settingsButton;
+        public ChromiumWebBrowser browser;
+        public DownloadHandler downloadHandler;
         public MainForm()
         {
             InitializeComponent();
@@ -25,6 +27,9 @@ namespace SCAssistant
             browser = new ChromiumWebBrowser("https://www.schub.top/");
             this.Controls.Add(browser);
             browser.Dock = DockStyle.Fill;
+            // 创建并设置下载处理器
+            downloadHandler = new DownloadHandler(this);
+            browser.DownloadHandler = downloadHandler;
         }
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
@@ -33,23 +38,31 @@ namespace SCAssistant
             base.OnFormClosed(e);
         }
 
-        private void MainForm_Load(object sender, EventArgs e)
+        public void MainForm_Load(object sender, EventArgs e)
         {
 
         }
-        private void button1_Click(object sender, EventArgs e)
+        public void button1_Click(object sender, EventArgs e)
         {
             browser.Load("https://www.schub.top/");
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        public void button2_Click(object sender, EventArgs e)
         {
             browser.Load("https://www.scmod.cn/");
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        public void button3_Click(object sender, EventArgs e)
         {
             browser.Load("http://xn--1kq052aeifw5v.top/");
         }
+
+        private void settingsButton_Click(object sender, EventArgs e)
+        {
+            var form = new DownloadListForm();
+            form.ShowDialog();
+        }
+
+
     }
 }
