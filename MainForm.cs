@@ -24,7 +24,7 @@ namespace SCAssistant
             CefSettings settings = new CefSettings();
             Cef.Initialize(settings);
 
-            browser = new ChromiumWebBrowser("https://www.schub.top/");
+            browser = new ChromiumWebBrowser("https://test.suancaixianyu.cn/");
             browser.LifeSpanHandler = new CustomLifeSpanHandler();
             browser.MenuHandler = new CustomContextMenuHandler();
 
@@ -95,7 +95,7 @@ namespace SCAssistant
 
         public void button1_Click(object sender, EventArgs e)
         {
-            browser.Load("https://www.schub.top/");
+            browser.Load("https://test.suancaixianyu.cn/");
 
         }
 
@@ -106,7 +106,7 @@ namespace SCAssistant
 
         public void button3_Click(object sender, EventArgs e)
         {
-            browser.Load("http://xn--1kq052aeifw5v.top/");
+            browser.Load("https://scwz.top/");
         }
         private void button4_Click(object sender, EventArgs e)
         {
