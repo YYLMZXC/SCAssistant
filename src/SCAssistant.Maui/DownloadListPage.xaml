@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SCAssistant.Maui.DownloadListPage"
+             Title="下载管理">
+
+    <Grid RowDefinitions="*,Auto">
+        
+        <CollectionView x:Name="DownloadCollection" 
+                        Grid.Row="0"
+                        SelectionMode="Single"
+                        SelectionChanged="OnDownloadSelected">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="10"
+                           Margin="5"
+                           BackgroundColor="White"
+                           StrokeThickness="0"
+                           StrokeShape="RoundRectangle 8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Label Text="📄"
+                                   Grid.Column="0"
+                                   FontSize="32"
+                                   VerticalOptions="Center"/>
+                            
+                            <VerticalStackLayout Grid.Column="1"
+                                                Margin="8,0,0,0"
+                                                Spacing="4">
+                                <Label Text="{Binding FileName}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Url}"
+                                       FontSize="11"
+                                       TextColor="#666666"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding LocalPath}"
+                                       FontSize="10"
+                                       TextColor="#999999"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding DownloadTime, StringFormat='{0:yyyy-MM-dd HH:mm}'}"
+                                       FontSize="10"
+                                       TextColor="#AAAAAA"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <VerticalStackLayout Grid.Row="0"
+                             x:Name="EmptyState"
+                             IsVisible="False"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             Spacing="10">
+            <Label Text="📥"
+                   FontSize="48"
+                   HorizontalOptions="Center"/>
+            <Label Text="暂无下载记录"
+                   FontSize="16"
+                   TextColor="#999999"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <HorizontalStackLayout Grid.Row="1"
+                               Padding="10"
+                               Spacing="10"
+                               BackgroundColor="#F5F5F5">
+            
+            <Button Text="打开文件"
+                    Clicked="OnOpenFileClicked"
+                    IsEnabled="False"
+                    x:Name="OpenFileBtn"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HorizontalOptions="Fill"/>
+            
+            <Button Text="删除"
+                    Clicked="OnDeleteClicked"
+                    IsEnabled="False"
+                    x:Name="DeleteBtn"
+                    BackgroundColor="#E74C3C"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HorizontalOptions="Fill"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

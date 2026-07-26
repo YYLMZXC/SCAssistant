@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SCAssistant.Maui.MainPage"
+             Title="生存战争助手">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- 顶部导航栏 -->
+        <HorizontalStackLayout Grid.Row="0" 
+                               Padding="10,5" 
+                               Spacing="8"
+                               BackgroundColor="#F5F5F5">
+            
+            <Button Text="←" 
+                    Clicked="OnGoBackClicked" 
+                    BackgroundColor="#E0E0E0"
+                    TextColor="#333333"
+                    CornerRadius="8"
+                    WidthRequest="40"
+                    HeightRequest="36"
+                    Padding="0" />
+            
+            <Button Text="→" 
+                    Clicked="OnGoForwardClicked" 
+                    BackgroundColor="#E0E0E0"
+                    TextColor="#333333"
+                    CornerRadius="8"
+                    WidthRequest="40"
+                    HeightRequest="36"
+                    Padding="0" />
+            
+            <Button Text="↻" 
+                    Clicked="OnReloadClicked" 
+                    BackgroundColor="#E0E0E0"
+                    TextColor="#333333"
+                    CornerRadius="8"
+                    WidthRequest="40"
+                    HeightRequest="36"
+                    Padding="0" />
+            
+            <Entry x:Name="UrlEntry" 
+                   Placeholder="输入网址..." 
+                   HorizontalOptions="Fill"
+                   Completed="OnUrlSubmitted" />
+            
+            <Button Text="前往" 
+                    Clicked="OnNavigateClicked"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="36" />
+        </HorizontalStackLayout>
+
+        <!-- WebView 浏览器 -->
+        <WebView x:Name="BrowserWebView" 
+                 Grid.Row="1"
+                 Source="https://test.suancaixianyu.cn/"
+                 Navigating="OnWebNavigating"
+                 Navigated="OnWebNavigated" />
+
+        <!-- 底部快捷链接栏 -->
+        <HorizontalStackLayout Grid.Row="2" 
+                               Padding="10,5" 
+                               Spacing="6"
+                               BackgroundColor="#F5F5F5"
+                               x:Name="QuickLinksBar">
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>
