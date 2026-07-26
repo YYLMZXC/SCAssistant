@@ -28,10 +28,10 @@
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<!-- Display name -->
-		<ApplicationTitle>SCAssistant.Maui</ApplicationTitle>
+		<ApplicationTitle>生存战争助手</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.scassistant.maui</ApplicationId>
+		<ApplicationId>com.scassistant.maui</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
