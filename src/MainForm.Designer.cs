@@ -51,7 +51,8 @@ namespace SCAssistant
             this.settingsButton = new System.Windows.Forms.Button();
             this.settingsButton.Text = "⚙ 设置";
             this.settingsButton.Size = new System.Drawing.Size(80, 30);
-            this.settingsButton.Location = new System.Drawing.Point(820, 10);
+            this.settingsButton.Location = new System.Drawing.Point(822, 10);
+            this.settingsButton.Anchor = ((AnchorStyles.Top | AnchorStyles.Right));
 
             this.settingsButton.BackColor = Color.Black;
             this.settingsButton.ForeColor = Color.White;
