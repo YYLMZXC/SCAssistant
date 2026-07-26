@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.8.12021.73 stable
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SCAssistant", "SCAssistant.csproj", "{3237380C-56D4-4284-8CBD-22CAAB078F41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{9FA3D6BD-1EC1-3BA5-80CB-CE02773A58D5}"
+	ProjectSection(SolutionItems) = preProject
+		..\doc\开发笔记.txt = ..\doc\开发笔记.txt
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3237380C-56D4-4284-8CBD-22CAAB078F41}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CEAE079B-DBED-45CB-9853-181925BEA411}
+	EndGlobalSection
+EndGlobal
