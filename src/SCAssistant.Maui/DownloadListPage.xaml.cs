@@ -67,12 +67,12 @@ public partial class DownloadListPage : ContentPage
             }
             else
             {
-                await DisplayAlertAsync("提示", "文件不存在", "确定");
+                await DisplayAlert("提示", "文件不存在", "确定");
             }
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("错误", $"无法打开文件: {ex.Message}", "确定");
+            await DisplayAlert("错误", $"无法打开文件: {ex.Message}", "确定");
         }
     }
 
@@ -81,7 +81,7 @@ public partial class DownloadListPage : ContentPage
         if (_selectedRecord == null)
             return;
 
-        var result = await DisplayAlertAsync("确认", "确定要删除选中的下载记录吗？", "删除", "取消");
+        var result = await DisplayAlert("确认", "确定要删除选中的下载记录吗？", "删除", "取消");
         if (result)
         {
             await DownloadHistoryService.Instance.RemoveRecordAsync(_selectedRecord);

@@ -136,7 +136,7 @@ public partial class MainPage : ContentPage
         MainThread.BeginInvokeOnMainThread(async () =>
         {
             Title = "生存战争助手";
-            await DisplayAlertAsync("下载完成", $"文件 {e.Record.FileName} 下载成功！", "确定");
+            await DisplayAlert("下载完成", $"文件 {e.Record.FileName} 下载成功！", "确定");
         });
     }
 
@@ -145,7 +145,7 @@ public partial class MainPage : ContentPage
         MainThread.BeginInvokeOnMainThread(async () =>
         {
             Title = "生存战争助手";
-            await DisplayAlertAsync("下载失败", $"文件 {e} 下载失败，请重试。", "确定");
+            await DisplayAlert("下载失败", $"文件 {e} 下载失败，请重试。", "确定");
         });
     }
 
