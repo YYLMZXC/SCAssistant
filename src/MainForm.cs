@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -101,18 +101,13 @@ namespace SCAssistant
 
         public void button2_Click(object sender, EventArgs e)
         {
-            browser.Load("https://www.scmod.cn/");
+            browser.Load("https://www.sckey.net");
         }
 
         public void button3_Click(object sender, EventArgs e)
         {
             browser.Load("https://scwz.top/");
         }
-        private void button4_Click(object sender, EventArgs e)
-        {
-            browser.Load("https://web.schz.top/");
-        }
-
         private void settingsButton_Click(object sender, EventArgs e)
         {
             if (downloadListForm == null || downloadListForm.IsDisposed)
