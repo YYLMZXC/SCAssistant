@@ -20,7 +20,7 @@
         <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
 
         <!-- SCAssistant migration dependencies -->
-        <PackageVersion Include="CefSharp.Avalonia" Version="1.0.5" />
+        <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3065.39" />
         <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 </Project>

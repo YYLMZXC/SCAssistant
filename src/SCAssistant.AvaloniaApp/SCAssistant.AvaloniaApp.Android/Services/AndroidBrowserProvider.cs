@@ -85,13 +85,6 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
             if (url != null)
                 _provider.AddressChanged?.Invoke(_provider, url);
         }
-
-        public override void OnReceivedTitle(WebView? view, string? title)
-        {
-            base.OnReceivedTitle(view, title);
-            if (title != null)
-                _provider.TitleChanged?.Invoke(_provider, title);
-        }
     }
 
     private sealed class CustomWebChromeClient : WebChromeClient

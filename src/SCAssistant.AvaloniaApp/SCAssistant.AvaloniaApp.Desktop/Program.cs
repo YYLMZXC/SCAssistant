@@ -10,8 +10,8 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Register platform-specific services before building the app
-        ServiceLocator.BrowserProvider = new CefBrowserProvider();
+        // 注册 Windows WebView2 浏览器
+        ServiceLocator.BrowserProvider = new WebView2BrowserProvider();
         ServiceLocator.DownloadHistory = new DownloadHistoryService();
         ServiceLocator.DownloadHistory.Load();
 
