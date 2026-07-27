@@ -13,6 +13,7 @@ namespace SCAssistant.AvaloniaApp.Android.Services;
 public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
 {
     private WebView? _webView;
+    private string? _pendingUrl;
     private bool _isLoading;
 
     public event EventHandler<string>? AddressChanged;
@@ -42,6 +43,14 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
         _webView.SetWebViewClient(new CustomWebViewClient(this));
         _webView.SetWebChromeClient(new CustomWebChromeClient(this));
 
+        // 异步导航：WebView 创建完成后再加载已缓存的 URL
+        if (_pendingUrl != null)
+        {
+            var url = _pendingUrl;
+            _pendingUrl = null;
+            Dispatcher.UIThread.Post(() => _webView.LoadUrl(url));
+        }
+
         return new PlatformHandle(_webView.Handle, "AndroidWebView");
     }
 
@@ -53,6 +62,8 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
     {
         if (_webView != null)
             Dispatcher.UIThread.Post(() => _webView.LoadUrl(url));
+        else
+            _pendingUrl = url;
     }
 
     public void Reload()

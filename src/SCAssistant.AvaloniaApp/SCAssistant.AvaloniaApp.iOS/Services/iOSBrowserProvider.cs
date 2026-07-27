@@ -14,6 +14,7 @@ namespace SCAssistant.AvaloniaApp.iOS.Services;
 public class iOSBrowserProvider : NativeControlHost, IBrowserProvider
 {
     private WKWebView? _webView;
+    private string? _pendingUrl;
     private bool _isLoading;
 
     public event EventHandler<string>? AddressChanged;
@@ -34,6 +35,14 @@ public class iOSBrowserProvider : NativeControlHost, IBrowserProvider
         _webView = new WKWebView(CGRect.Empty, config);
         _webView.NavigationDelegate = new CustomNavigationDelegate(this);
 
+        // 异步导航：WKWebView 创建完成后再加载已缓存的 URL
+        if (_pendingUrl != null && Uri.TryCreate(_pendingUrl, UriKind.Absolute, out var pendingUri))
+        {
+            _pendingUrl = null;
+            var request = new NSUrlRequest(new NSUrl(pendingUri.AbsoluteUri));
+            _webView.LoadRequest(request);
+        }
+
         return new PlatformHandle(_webView.Handle, "iOSWebView");
     }
 
@@ -47,6 +56,10 @@ public class iOSBrowserProvider : NativeControlHost, IBrowserProvider
         {
             var request = new NSUrlRequest(new NSUrl(uri.AbsoluteUri));
             _webView.LoadRequest(request);
+        }
+        else
+        {
+            _pendingUrl = url;
         }
     }
 
