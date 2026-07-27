@@ -1,61 +1,114 @@
 
-
 # SC 助手
 
-SCAssistant 是一个用于与 Chromium 浏览器集成并管理下载任务的 Windows Forms 应用程序。该应用程序允许用户通过内嵌的浏览器界面进行浏览，并通过图形界面跟踪和管理下载文件。
+SCAssistant（SC 助手）是一个基于 [Avalonia UI](https://avaloniaui.net/) 的**跨平台**应用程序，为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。支持 Windows、Android 和 iOS 平台。
 
 ## 主要功能
 
-- 使用 Chromium 浏览器浏览网页。
-- 自定义下载处理逻辑，支持下载前确认和下载进度更新。
-- 下载记录管理界面，支持查看、打开文件夹和删除下载记录。
-- 集成安装程序，支持用户通过 SetupForm 安装应用程序。
+- **快捷导航**：内置首页、[SCKey](https://www.sckey.net) 和 [SCWZ](https://scwz.top/) 一键跳转，方便快速访问生存战争社区资源。
+- **内置浏览器**：各平台均使用原生浏览器内核，提供流畅的浏览体验：
+  - Windows：基于 WebView2（Edge Chromium）
+  - Android：基于系统原生 WebView
+  - iOS：基于 WKWebView
+- **下载历史管理**：自动记录下载文件信息，支持查看、打开文件夹和删除记录。
+- **跨平台支持**：一套代码，同时编译为 Windows 桌面应用、Android APK 和 iOS 应用。
+
+## 技术架构
+
+- **UI 框架**：Avalonia UI 12 + Fluent 主题
+- **运行时**：.NET 10
+- **架构模式**：MVVM（使用 CommunityToolkit.Mvvm）
+- **序列化**：Newtonsoft.Json
 
 ## 项目结构
 
-- `MainForm.cs` 和 `MainForm.Designer.cs`: 主界面逻辑和 UI 设计。
-- `DownloadHandler.cs`: 下载处理逻辑，实现下载确认和进度更新。
-- `DownloadListForm.cs` 和 `DownloadListForm.Designer.cs`: 下载记录管理界面。
-- `Setup/SetupForm.cs` 和 `SetupForm.Designer.cs`: 应用程序安装界面和逻辑。
-- `Program.cs`: 应用程序入口点。
-- `SCAssistant.csproj` 和 `Setup/Setup.csproj`: 项目配置文件。
-- `res/` 和 `Setup/res/`: 包含应用程序图标和其他资源文件。
+```
+src/SCAssistant.AvaloniaApp/
+├── SCAssistant.AvaloniaApp/               # 共享核心项目（net10.0）
+│   ├── App.axaml / App.axaml.cs           # 应用入口
+│   ├── ViewModels/                        # MVVM 视图模型层
+│   │   ├── ViewModelBase.cs               # 基类
+│   │   ├── MainViewModel.cs               # 主页面逻辑
+│   │   └── DownloadListViewModel.cs       # 下载列表逻辑
+│   ├── Views/                             # MVVM 视图层
+│   │   ├── MainWindow.axaml               # 桌面主窗口
+│   │   ├── MainView.axaml                 # 主用户控件
+│   │   └── DownloadListWindow.axaml       # 下载列表弹出面板
+│   ├── Models/                            # 数据模型
+│   │   └── DownloadRecord.cs              # 下载记录
+│   └── Services/                          # 服务层
+│       ├── IBrowserProvider.cs            # 浏览器提供者接口
+│       ├── IDownloadHistoryService.cs     # 下载历史接口
+│       ├── DownloadHistoryService.cs      # 下载历史实现
+│       ├── ServiceLocator.cs              # 服务定位器
+│       ├── PlaceholderBrowserProvider.cs  # 占位浏览器（未适配平台时使用）
+│       └── SystemBrowserProvider.cs       # 系统浏览器降级方案
+├── SCAssistant.AvaloniaApp.Desktop/       # 桌面项目（net10.0-windows）
+│   ├── Program.cs                         # 桌面入口点
+│   └── Services/WebView2BrowserProvider.cs # WebView2 浏览器实现
+├── SCAssistant.AvaloniaApp.Android/       # Android 项目（net10.0-android）
+│   ├── MainActivity.cs                    # Android 主 Activity
+│   └── Services/AndroidBrowserProvider.cs  # Android 原生 WebView 实现
+├── SCAssistant.AvaloniaApp.iOS/           # iOS 项目（net10.0-ios）
+│   ├── AppDelegate.cs                     # iOS 应用代理
+│   └── Services/iOSBrowserProvider.cs      # iOS WKWebView 实现
+├── SCAssistant.AvaloniaApp.slnx           # 解决方案文件
+└── Directory.Packages.props               # 中央包版本管理
+```
 
 ## 依赖项
 
-本项目依赖于 [CefSharp](https://github.com/cefsharp/CefSharp)，用于嵌入 Chromium 浏览器到 Windows Forms 应用程序中。
+| 包名 | 版本 | 说明 |
+|------|------|------|
+| Avalonia | 12.1.0 | Avalonia UI 核心框架 |
+| Avalonia.Themes.Fluent | 12.1.0 | Fluent 风格主题 |
+| Avalonia.Fonts.Inter | 12.1.0 | Inter 字体 |
+| CommunityToolkit.Mvvm | 8.4.2 | MVVM 工具包 |
+| Newtonsoft.Json | 13.0.3 | JSON 序列化 |
+| Avalonia.Desktop | 12.1.0 | 桌面平台支持 |
+| Avalonia.Controls.WebView | 12.0.1 | WebView2 浏览器控件 |
+| Avalonia.Android | 12.1.0 | Android 平台支持 |
+| Avalonia.iOS | 12.1.0 | iOS 平台支持 |
 
 ## 如何运行
 
-1. 确保你已安装 .NET Framework 4.7 或更高版本。
-2. 下载并安装 CefSharp 的依赖项。
-3. 打开项目目录并运行 `SCAssistant.sln`。
-4. 编译并运行 `SCAssistant` 项目。
+### 环境要求
 
-## 如何安装
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **Windows**：需要安装 [WebView2 运行时](https://developer.microsoft.com/microsoft-edge/webview2/)（Windows 11 已内置）
+- **Android**：需要 Android SDK 及相关编译工具
+- **iOS**：需要在 macOS 上使用 Xcode 进行编译
 
-1. 运行 Setup 文件夹中的 `SetupForm`。
-2. 选择安装路径并点击“下一步”开始安装。
-3. 安装完成后，可以在桌面或安装目录中启动应用程序。
+### 桌面端（Windows）
 
-## 事件与交互
+```bash
+cd src/SCAssistant.AvaloniaApp
+dotnet run --project SCAssistant.AvaloniaApp.Desktop
+```
 
-- 当用户点击下载链接时，`DownloadHandler` 会触发 `OnDownloadCreated` 事件。
-- 下载记录会自动保存在 `DownloadListForm` 中，并支持双击打开文件或右键菜单操作。
-- 安装过程中，`SetupForm` 会提供进度条和状态更新以引导用户完成安装。
+或直接使用 Visual Studio / Rider 打开 `SCAssistant.AvaloniaApp.slnx`，选择 Desktop 项目运行。
+
+### Android
+
+```bash
+cd src/SCAssistant.AvaloniaApp
+dotnet build SCAssistant.AvaloniaApp.Android -c Release
+```
+
+生成的 APK 位于 `SCAssistant.AvaloniaApp.Android/bin/Release/net10.0-android/`。
+
+### iOS
+
+在 macOS 上使用 Visual Studio for Mac 或 Rider 打开解决方案，选择 iOS 项目编译运行。
 
 ## 许可证
 
-本项目使用 MIT 许可证，请参阅项目根目录中的 `LICENSE` 文件以了解详细信息。
+本项目使用 MIT 许可证。
 
 ## 贡献
 
-欢迎贡献和改进！如果你发现任何问题或有改进建议，请提交 PR 或 issue。在贡献之前，请确保阅读并理解本项目的贡献指南。
-
-## 联系
-
-如果你有任何问题或需要帮助，请访问 [Gitee 项目页面](https://gitee.com/projects) 或通过电子邮件联系作者。
+欢迎提交 Issue 和 Pull Request 来改进项目。如有任何问题或建议，请通过 GitHub Issue 反馈。
 
 ---
 
-**SCAssistant - 让下载管理更简单**
+**SCAssistant - 生存战争助手，让社区访问更便捷**

@@ -1,61 +1,114 @@
 
-
 # SC Assistant
 
-SCAssistant is a Windows Forms application designed to integrate with the Chromium browser and manage download tasks. The application allows users to browse the web through an embedded browser interface, and track and manage downloaded files using a graphical user interface.
+SCAssistant is a **cross-platform** application built with [Avalonia UI](https://avaloniaui.net/), providing convenient access to Survivalcraft game community sites and download management. It supports Windows, Android, and iOS platforms.
 
 ## Key Features
 
-- Browse web pages using the Chromium browser.
-- Customizable download handling logic, supporting download confirmation before starting and progress updates.
-- Download history management interface, supporting viewing, opening folder locations, and deleting download records.
-- Integrated installation program, allowing users to install the application via SetupForm.
+- **Quick Navigation**: Built-in shortcuts to the homepage, [SCKey](https://www.sckey.net), and [SCWZ](https://scwz.top/) for quick access to Survivalcraft community resources.
+- **Built-in Browser**: Uses native browser engines on each platform for a smooth browsing experience:
+  - Windows: WebView2 (Edge Chromium)
+  - Android: Native System WebView
+  - iOS: WKWebView
+- **Download History Management**: Automatically records downloaded files, supports viewing, opening folders, and deleting records.
+- **Cross-Platform Support**: A single codebase compiled into Windows desktop apps, Android APKs, and iOS apps.
+
+## Technical Architecture
+
+- **UI Framework**: Avalonia UI 12 + Fluent Theme
+- **Runtime**: .NET 10
+- **Architecture Pattern**: MVVM (using CommunityToolkit.Mvvm)
+- **Serialization**: Newtonsoft.Json
 
 ## Project Structure
 
-- `MainForm.cs` and `MainForm.Designer.cs`: Main interface logic and UI design.
-- `DownloadHandler.cs`: Download handling logic, implementing download confirmation and progress updates.
-- `DownloadListForm.cs` and `DownloadListForm.Designer.cs`: Interface for managing download history.
-- `Setup/SetupForm.cs` and `SetupForm.Designer.cs`: Installation interface and logic for the application.
-- `Program.cs`: Application entry point.
-- `SCAssistant.csproj` and `Setup/Setup.csproj`: Project configuration files.
-- `res/` and `Setup/res/`: Contain application icons and other resource files.
+```
+src/SCAssistant.AvaloniaApp/
+├── SCAssistant.AvaloniaApp/               # Shared core project (net10.0)
+│   ├── App.axaml / App.axaml.cs           # Application entry point
+│   ├── ViewModels/                        # MVVM ViewModel layer
+│   │   ├── ViewModelBase.cs               # Base class
+│   │   ├── MainViewModel.cs               # Main page logic
+│   │   └── DownloadListViewModel.cs       # Download list logic
+│   ├── Views/                             # MVVM View layer
+│   │   ├── MainWindow.axaml               # Desktop main window
+│   │   ├── MainView.axaml                 # Main user control
+│   │   └── DownloadListWindow.axaml       # Download list flyout panel
+│   ├── Models/                            # Data models
+│   │   └── DownloadRecord.cs              # Download record
+│   └── Services/                          # Service layer
+│       ├── IBrowserProvider.cs            # Browser provider interface
+│       ├── IDownloadHistoryService.cs     # Download history interface
+│       ├── DownloadHistoryService.cs      # Download history implementation
+│       ├── ServiceLocator.cs              # Service locator
+│       ├── PlaceholderBrowserProvider.cs  # Placeholder browser (fallback)
+│       └── SystemBrowserProvider.cs       # System browser fallback
+├── SCAssistant.AvaloniaApp.Desktop/       # Desktop project (net10.0-windows)
+│   ├── Program.cs                         # Desktop entry point
+│   └── Services/WebView2BrowserProvider.cs # WebView2 browser implementation
+├── SCAssistant.AvaloniaApp.Android/       # Android project (net10.0-android)
+│   ├── MainActivity.cs                    # Android main activity
+│   └── Services/AndroidBrowserProvider.cs  # Android native WebView implementation
+├── SCAssistant.AvaloniaApp.iOS/           # iOS project (net10.0-ios)
+│   ├── AppDelegate.cs                     # iOS app delegate
+│   └── Services/iOSBrowserProvider.cs      # iOS WKWebView implementation
+├── SCAssistant.AvaloniaApp.slnx           # Solution file
+└── Directory.Packages.props               # Central package version management
+```
 
 ## Dependencies
 
-This project depends on [CefSharp](https://github.com/cefsharp/CefSharp), used to embed the Chromium browser into the Windows Forms application.
+| Package | Version | Description |
+|---------|---------|-------------|
+| Avalonia | 12.1.0 | Avalonia UI core framework |
+| Avalonia.Themes.Fluent | 12.1.0 | Fluent design theme |
+| Avalonia.Fonts.Inter | 12.1.0 | Inter font family |
+| CommunityToolkit.Mvvm | 8.4.2 | MVVM toolkit |
+| Newtonsoft.Json | 13.0.3 | JSON serialization |
+| Avalonia.Desktop | 12.1.0 | Desktop platform support |
+| Avalonia.Controls.WebView | 12.0.1 | WebView2 browser control |
+| Avalonia.Android | 12.1.0 | Android platform support |
+| Avalonia.iOS | 12.1.0 | iOS platform support |
 
 ## How to Run
 
-1. Ensure you have installed .NET Framework 4.7 or later.
-2. Download and install the CefSharp dependencies.
-3. Open the project directory and run `SCAssistant.sln`.
-4. Build and run the `SCAssistant` project.
+### Requirements
 
-## How to Install
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **Windows**: Requires [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) (pre-installed on Windows 11)
+- **Android**: Requires Android SDK and related build tools
+- **iOS**: Requires macOS with Xcode for building
 
-1. Run `SetupForm` located in the Setup folder.
-2. Select the installation path and click "Next" to begin installation.
-3. After installation completes, launch the application from the desktop shortcut or the installation directory.
+### Desktop (Windows)
 
-## Events and Interactions
+```bash
+cd src/SCAssistant.AvaloniaApp
+dotnet run --project SCAssistant.AvaloniaApp.Desktop
+```
 
-- When a user clicks a download link, the `DownloadHandler` triggers the `OnDownloadCreated` event.
-- Download records are automatically saved in the `DownloadListForm`, supporting double-click to open files or right-click menu operations.
-- During installation, the `SetupForm` provides a progress bar and status updates to guide the user through the installation process.
+Or open `SCAssistant.AvaloniaApp.slnx` directly in Visual Studio / Rider and run the Desktop project.
+
+### Android
+
+```bash
+cd src/SCAssistant.AvaloniaApp
+dotnet build SCAssistant.AvaloniaApp.Android -c Release
+```
+
+The generated APK will be located at `SCAssistant.AvaloniaApp.Android/bin/Release/net10.0-android/`.
+
+### iOS
+
+On macOS, open the solution in Visual Studio for Mac or Rider, select the iOS project, and build & run.
 
 ## License
 
-This project uses the MIT License. Please refer to the `LICENSE` file in the project root directory for more details.
+This project is licensed under the MIT License.
 
-## Contributions
+## Contributing
 
-Contributions and improvements are welcome! If you find any issues or have suggestions for enhancements, please submit a PR or open an issue. Before contributing, please read and understand the project's contribution guidelines.
-
-## Contact
-
-If you have any questions or need assistance, please visit the [Gitee Project Page](https://gitee.com/projects) or contact the author via email.
+Issues and Pull Requests are welcome! If you have any questions or suggestions, please submit them via GitHub Issues.
 
 ---
 
-**SCAssistant - Simplified Download Management**
+**SCAssistant - Simplify your Survivalcraft community access**
