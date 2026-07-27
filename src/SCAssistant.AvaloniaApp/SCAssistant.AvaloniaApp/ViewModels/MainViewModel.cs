@@ -21,6 +21,8 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsDownloadListVisible { get; set; }
 
+    public DownloadListViewModel DownloadList { get; } = new();
+
     private const string HomeUrl = "https://test.suancaixianyu.cn/";
     private const string SCKeyUrl = "https://www.sckey.net";
     private const string SCWZUrl = "https://scwz.top/";

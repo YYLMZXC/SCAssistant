@@ -33,6 +33,7 @@
         <Panel IsVisible="{Binding IsDownloadListVisible}" Background="#80000000"
                ZIndex="100">
             <views:DownloadListWindow x:Name="DownloadListPanel"
+                                       DataContext="{Binding DownloadList}"
                                        MaxWidth="480"
                                        MaxHeight="500"
                                        HorizontalAlignment="Center"

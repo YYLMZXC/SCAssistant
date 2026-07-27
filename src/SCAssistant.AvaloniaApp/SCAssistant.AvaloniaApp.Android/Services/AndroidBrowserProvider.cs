@@ -134,8 +134,9 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
         /// <summary>
         /// 接受所有 SSL 证书（仅测试环境，生产环境应验证证书链）。
         /// </summary>
-        public override void OnReceivedSslError(WebView? view, SslErrorHandler? handler, SslError? error)
+        public override void OnReceivedSslError(WebView? view, SslErrorHandler? handler, global::Android.Net.Http.SslError? error)
         {
+            base.OnReceivedSslError(view, handler, error);
             handler?.Proceed();
         }
     }
