@@ -1,22 +1,21 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using Exclr8Cef.WebView;
 using SCAssistant.AvaloniaApp.Services;
-using Xilium.CefGlue.Avalonia;
-using Xilium.CefGlue.Common;
-using Xilium.CefGlue.Common.Events;
 
 namespace SCAssistant.AvaloniaApp.Desktop.Services;
 
 /// <summary>
-/// 基于 CefGlue.Next (OutSystems CefGlue) 的跨平台浏览器实现。
-/// 使用 CefGlue.Avalonia 提供的 AvaloniaCefBrowser 控件，
+/// 基于 Exclr8Cef (exclr8cef) 的跨平台浏览器实现。
+/// 使用 Exclr8Cef.WebView.WebView 控件，
 /// 底层为 Chromium Embedded Framework (CEF)，
 /// 支持 Windows / macOS / Linux 桌面平台。
 /// </summary>
-public sealed class CefGlueBrowserProvider : IBrowserProvider
+public sealed class Exclr8CefBrowserProvider : IBrowserProvider
 {
-    private AvaloniaCefBrowser? _browser;
+    private WebView? _browser;
     private string? _pendingNavigateUrl;
     private bool _isLoading;
     private string _currentUrl = string.Empty;
@@ -33,15 +32,14 @@ public sealed class CefGlueBrowserProvider : IBrowserProvider
 
     public Control CreateBrowserControl()
     {
-        _browser = new AvaloniaCefBrowser();
+        _browser = new WebView();
 
-        _browser.LoadStart += OnBrowserLoadStart;
-        _browser.TitleChanged += OnBrowserTitleChanged;
+        _browser.PropertyChanged += OnBrowserPropertyChanged;
 
         // 处理待导航 URL
         if (_pendingNavigateUrl != null)
         {
-            _browser.Address = _pendingNavigateUrl;
+            _browser.NavigateToUrl(_pendingNavigateUrl);
             _pendingNavigateUrl = null;
         }
 
@@ -52,7 +50,7 @@ public sealed class CefGlueBrowserProvider : IBrowserProvider
     {
         if (_browser != null)
         {
-            _browser.Address = startUrl;
+            _browser.NavigateToUrl(startUrl);
         }
         else
         {
@@ -65,7 +63,7 @@ public sealed class CefGlueBrowserProvider : IBrowserProvider
         _currentUrl = url;
         if (_browser != null)
         {
-            _browser.Address = url;
+            _browser.NavigateToUrl(url);
         }
         else
         {
@@ -75,36 +73,42 @@ public sealed class CefGlueBrowserProvider : IBrowserProvider
 
     public void Reload()
     {
-        if (_browser == null) return;
-        var current = _browser.Address;
-        if (!string.IsNullOrEmpty(current))
+        if (_browser?.Browser is { } b)
         {
-            _browser.Address = current;
+            b.Reload();
         }
     }
 
-    private void OnBrowserLoadStart(object? sender, LoadStartEventArgs e)
+    private void OnBrowserPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Frame.Browser.IsPopup || !e.Frame.IsMain)
-            return;
-
-        Dispatcher.UIThread.Post(() =>
+        if (e.Property == WebView.UrlProperty)
         {
-            _isLoading = true;
-            _currentUrl = e.Frame.Url;
-            LoadingStateChanged?.Invoke(this, true);
-            AddressChanged?.Invoke(this, e.Frame.Url);
-        });
-    }
-
-    private void OnBrowserTitleChanged(object? sender, string title)
-    {
-        Dispatcher.UIThread.Post(() =>
+            var url = e.GetNewValue<string>() ?? string.Empty;
+            Dispatcher.UIThread.Post(() =>
+            {
+                _currentUrl = url;
+                AddressChanged?.Invoke(this, url);
+            });
+        }
+        else if (e.Property == WebView.TitleProperty)
         {
-            _isLoading = false;
-            _currentTitle = title;
-            TitleChanged?.Invoke(this, title);
-            LoadingStateChanged?.Invoke(this, false);
-        });
+            var title = e.GetNewValue<string>() ?? string.Empty;
+            Dispatcher.UIThread.Post(() =>
+            {
+                _isLoading = false;
+                _currentTitle = title;
+                TitleChanged?.Invoke(this, title);
+                LoadingStateChanged?.Invoke(this, false);
+            });
+        }
+        else if (e.Property == WebView.IsLoadingProperty)
+        {
+            var loading = e.GetNewValue<bool>();
+            Dispatcher.UIThread.Post(() =>
+            {
+                _isLoading = loading;
+                LoadingStateChanged?.Invoke(this, loading);
+            });
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace SCAssistant.AvaloniaApp.Services;
 /// <summary>
 /// 占位浏览器实现，作为 ServiceLocator 的初始默认值。
 /// 各平台入口点应在应用启动时替换为对应平台的 IBrowserProvider 实现：
-///   - Windows/macOS/Linux Desktop → CefGlueBrowserProvider (CefGlue.Next)
+///   - Windows/macOS/Linux Desktop → Exclr8CefBrowserProvider (Exclr8Cef)
 ///   - Android → AndroidBrowserProvider
 ///   - iOS → iOSBrowserProvider
 /// </summary>

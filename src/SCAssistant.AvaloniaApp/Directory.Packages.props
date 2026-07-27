@@ -19,9 +19,9 @@
 
         <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.15" />
 
-        <!-- CefGlue.Next (OutSystems fork) browser engine -->
-        <PackageVersion Include="CefGlue.Common" Version="120.6099.211" />
-        <PackageVersion Include="CefGlue.Avalonia" Version="120.6099.211" />
+        <!-- Exclr8CEF browser engine (Chromium via CEF for .NET/Avalonia) -->
+        <PackageVersion Include="Exclr8Cef" Version="0.8.0" />
+        <PackageVersion Include="Exclr8Cef.WebView" Version="0.8.0" />
 
         <!-- SCAssistant migration dependencies -->
         <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
