@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="Avalonia.Controls.WebView" />
+    <PackageReference Include="CefGlue.Avalonia" />
   </ItemGroup>
 
   <ItemGroup>
