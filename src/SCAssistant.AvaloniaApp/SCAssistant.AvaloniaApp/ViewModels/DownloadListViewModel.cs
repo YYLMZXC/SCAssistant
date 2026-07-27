@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SCAssistant.AvaloniaApp.Models;
@@ -47,7 +48,7 @@ public partial class DownloadListViewModel : ViewModelBase
 
         if (File.Exists(localPath))
         {
-            Process.Start("explorer.exe", $"/select,\"{localPath}\"");
+            RevealFileInFolder(localPath);
         }
         else if (!string.IsNullOrWhiteSpace(localPath))
         {
@@ -55,9 +56,48 @@ public partial class DownloadListViewModel : ViewModelBase
             {
                 var folderPath = Path.GetDirectoryName(localPath);
                 if (!string.IsNullOrEmpty(folderPath) && Directory.Exists(folderPath))
-                    Process.Start("explorer.exe", $"\"{folderPath}\"");
+                    OpenFolderInExplorer(folderPath);
             }
             catch { }
+        }
+    }
+
+    private static void RevealFileInFolder(string filePath)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Process.Start("open", $"-R \"{filePath}\"");
+        }
+        else
+        {
+            // Linux: open the containing folder
+            var folder = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(folder))
+                OpenFolderInExplorer(folder);
+        }
+    }
+
+    private static void OpenFolderInExplorer(string folderPath)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Process.Start("explorer.exe", $"\"{folderPath}\"");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Process.Start("open", $"\"{folderPath}\"");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Process.Start("xdg-open", $"\"{folderPath}\"");
+        }
+        else
+        {
+            Process.Start(new ProcessStartInfo(folderPath) { UseShellExecute = true });
         }
     }
 
