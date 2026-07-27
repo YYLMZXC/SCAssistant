@@ -3,26 +3,40 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SCAssistant.AvaloniaApp.ViewModels"
+             xmlns:views="using:SCAssistant.AvaloniaApp.Views"
              mc:Ignorable="d" d:DesignWidth="1024" d:DesignHeight="768"
              x:Class="SCAssistant.AvaloniaApp.Views.MainView"
              x:DataType="vm:MainViewModel">
-    <Grid RowDefinitions="36,*">
-        <!-- Toolbar -->
-        <Border Grid.Row="0" Padding="4,2"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="4">
-                <Button Content="首页" Command="{Binding NavigateHomeCommand}" Width="60" />
-                <Button Content="SCKey" Command="{Binding NavigateSCKeyCommand}" Width="60" />
-                <Button Content="SCWZ" Command="{Binding NavigateSCWZCommand}" Width="60" />
-                <Separator Width="8" />
-                <Button Content="下载列表" Command="{Binding OpenDownloadListCommand}" Width="80" />
-                <!-- Loading indicator -->
-                <TextBlock Text="加载中..." VerticalAlignment="Center" Margin="8,0,0,0"
-                           IsVisible="{Binding IsBrowserLoading}" />
-            </StackPanel>
-        </Border>
+    <Grid>
+        <!-- Main content -->
+        <Grid RowDefinitions="36,*">
+            <!-- Toolbar -->
+            <Border Grid.Row="0" Padding="4,2"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Content="首页" Command="{Binding NavigateHomeCommand}" Width="60" />
+                    <Button Content="SCKey" Command="{Binding NavigateSCKeyCommand}" Width="60" />
+                    <Button Content="SCWZ" Command="{Binding NavigateSCWZCommand}" Width="60" />
+                    <Separator Width="8" />
+                    <Button Content="下载列表" Command="{Binding OpenDownloadListCommand}" Width="80" />
+                    <!-- Loading indicator -->
+                    <TextBlock Text="加载中..." VerticalAlignment="Center" Margin="8,0,0,0"
+                               IsVisible="{Binding IsBrowserLoading}" />
+                </StackPanel>
+            </Border>
 
-        <!-- Browser host area -->
-        <ContentControl Grid.Row="1" x:Name="BrowserHost" />
+            <!-- Browser host area -->
+            <ContentControl Grid.Row="1" x:Name="BrowserHost" />
+        </Grid>
+
+        <!-- Download list overlay panel -->
+        <Panel IsVisible="{Binding IsDownloadListVisible}" Background="#80000000"
+               ZIndex="100">
+            <views:DownloadListWindow x:Name="DownloadListPanel"
+                                       MaxWidth="480"
+                                       MaxHeight="500"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+        </Panel>
     </Grid>
 </UserControl>

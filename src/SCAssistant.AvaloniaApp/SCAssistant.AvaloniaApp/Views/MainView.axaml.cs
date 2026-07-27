@@ -10,6 +10,11 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
         Loaded += OnControlLoaded;
+        DownloadListPanel.CloseRequested += (_, _) =>
+        {
+            if (DataContext is ViewModels.MainViewModel vm)
+                vm.IsDownloadListVisible = false;
+        };
     }
 
     private void OnControlLoaded(object? sender, RoutedEventArgs e)

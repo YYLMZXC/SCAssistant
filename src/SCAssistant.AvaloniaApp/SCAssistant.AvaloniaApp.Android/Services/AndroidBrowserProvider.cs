@@ -1,5 +1,6 @@
 using System;
 using Android.Webkit;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -25,6 +26,14 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
     public string CurrentTitle => _webView?.Title ?? string.Empty;
     public bool IsLoading => _isLoading;
 
+    /// <summary>
+    /// 确保 NativeControlHost 填充父容器分配的空间，避免 WebView 尺寸为 0。
+    /// </summary>
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        return availableSize;
+    }
+
     protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
         var context = global::Android.App.Application.Context;
@@ -39,11 +48,17 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
         settings.LoadWithOverviewMode = true;
         settings.UseWideViewPort = true;
         settings.AllowFileAccess = true;
+        settings.AllowContentAccess = true;
+        // 允许混合内容（HTTP 资源嵌入 HTTPS 页面）
+        settings.MixedContentMode = MixedContentHandling.AlwaysAllow;
+
+        // 启用 WebView 调试 (chrome://inspect 远程调试)
+        WebView.SetWebContentsDebuggingEnabled(true);
 
         _webView.SetWebViewClient(new CustomWebViewClient(this));
         _webView.SetWebChromeClient(new CustomWebChromeClient(this));
 
-        // 异步导航：WebView 创建完成后再加载已缓存的 URL
+        // WebView 创建完成后加载已缓存的 URL
         if (_pendingUrl != null)
         {
             var url = _pendingUrl;
@@ -72,6 +87,17 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
             Dispatcher.UIThread.Post(() => _webView.Reload());
     }
 
+    protected override void DestroyNativeControlCore(IPlatformHandle control)
+    {
+        if (_webView != null)
+        {
+            _webView.RemoveAllViews();
+            _webView.Destroy();
+            _webView = null;
+        }
+        base.DestroyNativeControlCore(control);
+    }
+
     private sealed class CustomWebViewClient : WebViewClient
     {
         private readonly AndroidBrowserProvider _provider;
@@ -95,6 +121,22 @@ public class AndroidBrowserProvider : NativeControlHost, IBrowserProvider
             _provider.LoadingStateChanged?.Invoke(_provider, false);
             if (url != null)
                 _provider.AddressChanged?.Invoke(_provider, url);
+        }
+
+        public override void OnReceivedError(WebView? view, IWebResourceRequest? request, WebResourceError? error)
+        {
+            base.OnReceivedError(view, request, error);
+            _provider._isLoading = false;
+            _provider.LoadingStateChanged?.Invoke(_provider, false);
+            _provider.BrowserCrashed?.Invoke(_provider, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// 接受所有 SSL 证书（仅测试环境，生产环境应验证证书链）。
+        /// </summary>
+        public override void OnReceivedSslError(WebView? view, SslErrorHandler? handler, SslError? error)
+        {
+            handler?.Proceed();
         }
     }
 

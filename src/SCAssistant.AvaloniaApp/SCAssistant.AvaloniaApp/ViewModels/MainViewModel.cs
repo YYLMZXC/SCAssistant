@@ -18,6 +18,9 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsBrowserLoading { get; set; }
 
+    [ObservableProperty]
+    public partial bool IsDownloadListVisible { get; set; }
+
     private const string HomeUrl = "https://test.suancaixianyu.cn/";
     private const string SCKeyUrl = "https://www.sckey.net";
     private const string SCWZUrl = "https://scwz.top/";
@@ -65,10 +68,6 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void OpenDownloadList()
     {
-        var win = new Views.DownloadListWindow
-        {
-            DataContext = new DownloadListViewModel()
-        };
-        win.Show();
+        IsDownloadListVisible = !IsDownloadListVisible;
     }
 }
