@@ -1,13 +1,13 @@
 
 # SC 助手
 
-SCAssistant（SC 助手）是一个基于 [Avalonia UI](https://avaloniaui.net/) 的**跨平台**应用程序，为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。支持 Windows、Android 和 iOS 平台。
+SCAssistant（SC 助手）是一个基于 [Avalonia UI](https://avaloniaui.net/) 的**跨平台**应用程序，为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。支持 Windows、macOS、Linux、Android 和 iOS 平台。
 
 ## 主要功能
 
 - **快捷导航**：内置首页、[SCKey](https://www.sckey.net) 和 [SCWZ](https://scwz.top/) 一键跳转，方便快速访问生存战争社区资源。
-- **内置浏览器**：各平台均使用原生浏览器内核，提供流畅的浏览体验：
-  - Windows：基于 WebView2（Edge Chromium）
+- **内置浏览器**：各平台均集成浏览器内核，提供流畅的浏览体验：
+  - Windows/macOS/Linux：基于 [Exclr8Cef](https://github.com/alexmehlhorn/exclr8cef)（Chromium Embedded Framework），跨平台一致体验
   - Android：基于系统原生 WebView
   - iOS：基于 WKWebView
 - **下载历史管理**：自动记录下载文件信息，支持查看、打开文件夹和删除记录。
@@ -17,6 +17,7 @@ SCAssistant（SC 助手）是一个基于 [Avalonia UI](https://avaloniaui.net/)
 
 - **UI 框架**：Avalonia UI 12 + Fluent 主题
 - **运行时**：.NET 10
+- **桌面浏览器引擎**：[Exclr8Cef](https://github.com/alexmehlhorn/exclr8cef) 0.8（自包含 Chromium，无需额外安装浏览器运行时）
 - **架构模式**：MVVM（使用 CommunityToolkit.Mvvm）
 - **序列化**：Newtonsoft.Json
 
@@ -43,9 +44,9 @@ src/SCAssistant.AvaloniaApp/
 │       ├── ServiceLocator.cs              # 服务定位器
 │       ├── PlaceholderBrowserProvider.cs  # 占位浏览器（未适配平台时使用）
 │       └── SystemBrowserProvider.cs       # 系统浏览器降级方案
-├── SCAssistant.AvaloniaApp.Desktop/       # 桌面项目（net10.0-windows）
-│   ├── Program.cs                         # 桌面入口点
-│   └── Services/WebView2BrowserProvider.cs # WebView2 浏览器实现
+├── SCAssistant.AvaloniaApp.Desktop/         # 桌面项目（net10.0-windows）
+│   ├── Program.cs                           # 桌面入口点（含 Exclr8Cef 初始化）
+│   └── Services/Exclr8CefBrowserProvider.cs  # Exclr8Cef（CEF）浏览器实现
 ├── SCAssistant.AvaloniaApp.Android/       # Android 项目（net10.0-android）
 │   ├── MainActivity.cs                    # Android 主 Activity
 │   └── Services/AndroidBrowserProvider.cs  # Android 原生 WebView 实现
@@ -66,7 +67,8 @@ src/SCAssistant.AvaloniaApp/
 | CommunityToolkit.Mvvm | 8.4.2 | MVVM 工具包 |
 | Newtonsoft.Json | 13.0.3 | JSON 序列化 |
 | Avalonia.Desktop | 12.1.0 | 桌面平台支持 |
-| Avalonia.Controls.WebView | 12.0.1 | WebView2 浏览器控件 |
+| Exclr8Cef.WebView | 0.8.0 | 跨平台 CEF 浏览器控件 |
+| Exclr8Cef | 0.8.0 | CEF (Chromium) 的 .NET 封装 |
 | Avalonia.Android | 12.1.0 | Android 平台支持 |
 | Avalonia.iOS | 12.1.0 | iOS 平台支持 |
 
@@ -75,7 +77,7 @@ src/SCAssistant.AvaloniaApp/
 ### 环境要求
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- **Windows**：需要安装 [WebView2 运行时](https://developer.microsoft.com/microsoft-edge/webview2/)（Windows 11 已内置）
+- **Windows/macOS/Linux**：无需额外安装浏览器运行时（Exclr8Cef 自包含 Chromium）
 - **Android**：需要 Android SDK 及相关编译工具
 - **iOS**：需要在 macOS 上使用 Xcode 进行编译
 
