@@ -1,0 +1,84 @@
+## .NET / MSBuild
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.dbmdl
+*.jfm
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+/packages/
+*.nupkg
+
+## NuGet
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+nuget.exe
+
+## Rider
+.idea/
+
+## Visual Studio
+.vs/
+*.rsuser
+*.DotSettings.user
+*.DotSettings
+
+## VS Code
+.vscode/
+
+## JetBrains
+.junie/
+
+## macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+## App packaging (Maui, WinUI, etc.)
+*.msix
+*.msixupload
+*.appxbundle
+*.appxupload
+
+## Uno Platform generated files
+*.g.cs
+*.g.i.cs
+
+## Android
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.keystore
+local.properties
+
+## iOS
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Test results
+TestResults/
+TestResult.xml
+*.trx
+*.coverage
+coverage.opencover.xml
