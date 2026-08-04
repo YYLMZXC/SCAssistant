@@ -12,6 +12,7 @@
     <key>UIRequiredDeviceCapabilities</key>
     <array>
         <string>armv7</string>
+        <string>arm64</string>
     </array>
     <key>UISupportedInterfaceOrientations</key>
     <array>
@@ -26,6 +27,12 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+    <key>XSAppIconAssets</key>
+    <string>Assets.xcassets/icon.appiconset</string>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
     <key>CFBundleDisplayName</key>
     <string>SCAssistant</string>
     <key>CFBundleName</key>
