@@ -21,6 +21,10 @@
           https://aka.platform.uno/singleproject-features
         -->
         <UnoFeatures>SkiaRenderer;Toolkit;ThemeService;Dsp</UnoFeatures>
+
+        <!-- Android ABI: arm64 for physical devices, x64 for emulators -->
+        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+        <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
     </PropertyGroup>
 
     <ItemGroup>
