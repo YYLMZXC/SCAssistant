@@ -1,0 +1,70 @@
+<UserControl
+    x:Class="SCAssistant.UnoApp.Views.DownloadListPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:SCAssistant.UnoApp.Converters"
+    mc:Ignorable="d"
+    d:DesignWidth="360" d:DesignHeight="500">
+
+    <UserControl.Resources>
+        <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+    </UserControl.Resources>
+
+    <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            BorderBrush="{ThemeResource SystemBaseLowColor}"
+            BorderThickness="1" CornerRadius="4" Padding="8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="下载文件列表" FontSize="16" FontWeight="Bold"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1" Content="X" Width="32" Height="32"
+                        Click="CloseButton_Click" />
+            </Grid>
+
+            <!-- List -->
+            <ListView Grid.Row="1"
+                      x:Name="RootList"
+                      ItemsSource="{Binding Records}"
+                      SelectedItem="{Binding SelectedRecord, Mode=TwoWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="4" Margin="0,2">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding FileName}" FontWeight="Bold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Url}" FontSize="11"
+                                           Foreground="Gray"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding LocalPath}" FontSize="11"
+                                           Foreground="Gray"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Footer buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8"
+                        Margin="0,8,0,0">
+                <Button Content="打开文件夹" Command="{Binding OpenFolderCommand}"
+                        IsEnabled="{Binding ElementName=RootList, Path=SelectedItem, Converter={StaticResource IsNotNullConverter}}" />
+                <Button Content="删除记录" Command="{Binding DeleteRecordCommand}"
+                        IsEnabled="{Binding ElementName=RootList, Path=SelectedItem, Converter={StaticResource IsNotNullConverter}}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
