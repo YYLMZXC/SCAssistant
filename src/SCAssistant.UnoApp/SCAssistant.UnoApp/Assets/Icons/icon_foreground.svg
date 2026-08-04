@@ -1,148 +1,31 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   width="450"
-   height="450"
-   viewBox="0 0 450 450"
-   version="1.1"
-   id="icon_foreground"
-   xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <!-- Wood grain pattern -->
-    <pattern id="woodGrainFg" patternUnits="userSpaceOnUse" width="8" height="8">
-      <rect width="8" height="8" fill="#7a4f2a"/>
-      <rect x="0" y="0" width="2" height="8" fill="#6b4423" opacity="0.5"/>
-      <rect x="4" y="2" width="2" height="4" fill="#8b5a2b" opacity="0.4"/>
-    </pattern>
-    <pattern id="dirtTextureFg" patternUnits="userSpaceOnUse" width="10" height="10">
-      <rect width="10" height="10" fill="#8b5a2b"/>
-      <rect x="1" y="1" width="3" height="2" fill="#7a4f2a"/>
-      <rect x="5" y="4" width="2" height="3" fill="#6b4423"/>
-      <rect x="7" y="7" width="2" height="2" fill="#7a4f2a"/>
-    </pattern>
-    <linearGradient id="logTopGradientFg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f0d8a8"/>
-      <stop offset="50%" style="stop-color:#e6c88a"/>
-      <stop offset="100%" style="stop-color:#d4b06e"/>
-    </linearGradient>
-    <linearGradient id="grassGradientFg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#5ec93f"/>
-      <stop offset="100%" style="stop-color:#3fa927"/>
-    </linearGradient>
-    <linearGradient id="starGradientFg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffec5e"/>
-      <stop offset="50%" style="stop-color:#ffd93a"/>
-      <stop offset="100%" style="stop-color:#f5b800"/>
-    </linearGradient>
-  </defs>
+<svg width="1157" height="960" viewBox="0 0 1157 960" xmlns="http://www.w3.org/2000/svg">
+  <!-- 草方块左 -->
+  <rect x="80" y="440" width="480" height="480" fill="#86bb59"/>
+  <rect x="80" y="580" width="480" height="340" fill="#9b6b47"/>
+  <!-- 草方块右 -->
+  <rect x="597" y="440" width="480" height="480" fill="#86bb59"/>
+  <rect x="597" y="580" width="480" height="340" fill="#9b6b47"/>
+  <!-- 原木方块 -->
+  <rect x="340" y="120" width="480" height="480" fill="#7b4f32"/>
+  <rect x="340" y="120" width="480" height="160" fill="#f8e289"/>
 
-  <!-- Note: Transparent background (for Android adaptive icon foreground) -->
+  <!--左侧像素星星带笑脸 -->
+  <path d="M240 480 l40 -60 l70 10 l35 -55 l35 55 l70 -10 l40 60 l-50 45 l20 70 l-65 -35 l-65 35 l20 -70 z" fill="#ffdd22"/>
+  <!--星星五官 -->
+  <rect x="280" y="520" width="18" height="22" fill="#443322"/>
+  <rect x="342" y="520" width="18" height="22" fill="#443322"/>
+  <path d="M290 560 Q312 582 334 560" stroke="#443322" stroke-width="6" fill="none"/>
+  <ellipse cx="270" cy="550" rx="16" ry="12" fill="#ffaa44"/>
+  <ellipse cx="354" cy="550" rx="16" ry="12" fill="#ffaa44"/>
 
-  <!-- ============== BOTTOM LEFT GRASS BLOCK ============== -->
-  <g id="grassBlock1Fg">
-    <!-- Top face (grass) - isometric diamond -->
-    <polygon points="101,197 191,147 281,197 191,247" fill="url(#grassGradientFg)"/>
-    <!-- Grass top lighter squares -->
-    <rect x="149" y="169" width="10" height="10" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
-    <rect x="201" y="185" width="8" height="8" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
-    <rect x="173" y="207" width="7" height="7" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
-    <!-- Grass edge -->
-    <polygon points="101,197 191,247 185,255 95,205" fill="#3fa927"/>
-    <polygon points="191,247 281,197 287,205 197,255" fill="#2e8b1c"/>
-    <!-- Left face (dirt) -->
-    <polygon points="101,197 95,205 95,299 101,291" fill="url(#dirtTextureFg)"/>
-    <polygon points="101,197 95,205 95,299 101,291" fill="#000000" opacity="0.08"/>
-    <!-- Right face (dirt) -->
-    <polygon points="191,247 197,255 197,349 191,341" fill="url(#dirtTextureFg)"/>
-    <polygon points="191,247 197,255 197,349 191,341" fill="#ffffff" opacity="0.08"/>
-    <!-- Connecting dirt face -->
-    <polygon points="101,291 191,341 197,349 95,299" fill="#7a4f2a"/>
-    <!-- Pixel details -->
-    <rect x="113" y="229" width="8" height="6" fill="#6b4423" opacity="0.6"/>
-    <rect x="139" y="265" width="6" height="8" fill="#9b6a3b" opacity="0.5"/>
-    <rect x="163" y="295" width="10" height="5" fill="#6b4423" opacity="0.5"/>
-  </g>
+  <!--右侧像素星星带笑脸 -->
+  <path d="M640 480 l40 -60 l70 10 l35 -55 l35 55 l70 -10 l40 60 l-50 45 l20 70 l-65 -35 l-65 35 l20 -70 z" fill="#ffdd22"/>
+  <rect x="680" y="520" width="18" height="22" fill="#443322"/>
+  <rect x="742" y="520" width="18" height="22" fill="#443322"/>
+  <path d="M690 560 Q712 582 734 560" stroke="#443322" stroke-width="6" fill="none"/>
+  <ellipse cx="670" cy="550" rx="16" ry="12" fill="#ffaa44"/>
+  <ellipse cx="754" cy="550" rx="16" ry="12" fill="#ffaa44"/>
 
-  <!-- ============== BOTTOM RIGHT GRASS BLOCK ============== -->
-  <g id="grassBlock2Fg">
-    <!-- Top face (grass) - isometric diamond -->
-    <polygon points="269,197 359,147 449,197 359,247" fill="url(#grassGradientFg)"/>
-    <!-- Grass top lighter squares -->
-    <rect x="313" y="169" width="10" height="10" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
-    <rect x="365" y="185" width="8" height="8" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
-    <rect x="341" y="207" width="7" height="7" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
-    <!-- Grass edge -->
-    <polygon points="269,197 359,247 353,255 263,205" fill="#3fa927"/>
-    <polygon points="359,247 449,197 455,205 365,255" fill="#2e8b1c"/>
-    <!-- Left face (dirt) -->
-    <polygon points="269,197 263,205 263,299 269,291" fill="url(#dirtTextureFg)"/>
-    <polygon points="269,197 263,205 263,299 269,291" fill="#000000" opacity="0.08"/>
-    <!-- Right face (dirt) -->
-    <polygon points="359,247 365,255 365,349 359,341" fill="url(#dirtTextureFg)"/>
-    <polygon points="359,247 365,255 365,349 359,341" fill="#ffffff" opacity="0.08"/>
-    <!-- Connecting dirt face -->
-    <polygon points="269,291 359,341 365,349 263,299" fill="#7a4f2a"/>
-    <!-- Pixel details -->
-    <rect x="285" y="233" width="8" height="6" fill="#6b4423" opacity="0.6"/>
-    <rect x="309" y="269" width="6" height="8" fill="#9b6a3b" opacity="0.5"/>
-    <rect x="333" y="299" width="10" height="5" fill="#6b4423" opacity="0.5"/>
-  </g>
-
-  <!-- ============== TOP WOOD LOG BLOCK ============== -->
-  <g id="woodBlockFg">
-    <!-- Top face (log rings) - isometric diamond -->
-    <polygon points="188,65 278,15 368,65 278,115" fill="url(#logTopGradientFg)"/>
-    <!-- Log ring circles -->
-    <ellipse cx="278" cy="65" rx="62" ry="36" fill="none" stroke="#c49a5c" stroke-width="2"/>
-    <ellipse cx="278" cy="65" rx="50" ry="29" fill="none" stroke="#d4af70" stroke-width="1.5"/>
-    <ellipse cx="278" cy="65" rx="38" ry="22" fill="none" stroke="#c49a5c" stroke-width="1.5"/>
-    <ellipse cx="278" cy="65" rx="26" ry="15" fill="none" stroke="#d4af70" stroke-width="1"/>
-    <ellipse cx="278" cy="65" rx="14" ry="8" fill="none" stroke="#c49a5c" stroke-width="1"/>
-    <!-- Top center dot -->
-    <ellipse cx="278" cy="65" rx="4" ry="2.5" fill="#b8924d"/>
-    <!-- Left face (wood) -->
-    <polygon points="188,65 182,73 182,167 188,159" fill="url(#woodGrainFg)"/>
-    <polygon points="188,65 182,73 182,167 188,159" fill="#000000" opacity="0.1"/>
-    <!-- Vertical wood grain lines -->
-    <line x1="194" y1="71" x2="194" y2="163" stroke="#6b4423" stroke-width="1.5" opacity="0.5"/>
-    <line x1="202" y1="69" x2="202" y2="165" stroke="#5a3a1c" stroke-width="1" opacity="0.4"/>
-    <line x1="210" y1="73" x2="210" y2="161" stroke="#6b4423" stroke-width="1.5" opacity="0.4"/>
-    <!-- Right face (wood) -->
-    <polygon points="278,115 284,123 284,217 278,209" fill="url(#woodGrainFg)"/>
-    <polygon points="278,115 284,123 284,217 278,209" fill="#ffffff" opacity="0.06"/>
-    <!-- Vertical wood grain lines -->
-    <line x1="280" y1="121" x2="280" y2="213" stroke="#6b4423" stroke-width="1.5" opacity="0.4"/>
-    <line x1="282" y1="125" x2="282" y2="209" stroke="#5a3a1c" stroke-width="1" opacity="0.5"/>
-    <!-- Front connecting face -->
-    <polygon points="188,159 278,209 284,217 182,167" fill="#6b4423"/>
-  </g>
-
-  <!-- ============== STAR 1 (on left grass block) ============== -->
-  <g id="star1Fg" transform="translate(179, 192)">
-    <polygon points="0,-38 11.5,-12 40,-8.5 17.5,10 24.5,38 0,23 -24.5,38 -17.5,10 -40,-8.5 -11.5,-12"
-             fill="url(#starGradientFg)"
-             stroke="#d49600" stroke-width="1.5" stroke-linejoin="round"/>
-    <polygon points="0,-34 8,-14 -4,-14" fill="#fff9c4" opacity="0.6"/>
-    <ellipse cx="-11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
-    <ellipse cx="-10" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
-    <ellipse cx="11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
-    <ellipse cx="12" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
-    <path d="M -9,8 Q 0,17 9,8" fill="none" stroke="#2a1a00" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="-19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
-    <circle cx="19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
-  </g>
-
-  <!-- ============== STAR 2 (on right grass block) ============== -->
-  <g id="star2Fg" transform="translate(339, 192)">
-    <polygon points="0,-38 11.5,-12 40,-8.5 17.5,10 24.5,38 0,23 -24.5,38 -17.5,10 -40,-8.5 -11.5,-12"
-             fill="url(#starGradientFg)"
-             stroke="#d49600" stroke-width="1.5" stroke-linejoin="round"/>
-    <polygon points="0,-34 8,-14 -4,-14" fill="#fff9c4" opacity="0.6"/>
-    <ellipse cx="-11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
-    <ellipse cx="-10" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
-    <ellipse cx="11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
-    <ellipse cx="12" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
-    <path d="M -9,8 Q 0,17 9,8" fill="none" stroke="#2a1a00" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="-19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
-    <circle cx="19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
-  </g>
+  <!--文字：生存战争助手 -->
+  <text x="180" y="840" font-size="130" font-weight="bold" fill="#fff8dc" font-family="sans-serif">生存战争助手</text>
 </svg>

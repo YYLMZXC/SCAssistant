@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using SCAssistant.UnoApp.Services;
 using SCAssistant.UnoApp.ViewModels;
 using SCAssistant.UnoApp.Views;
+using Uno.Resizetizer;
 
 namespace SCAssistant.UnoApp;
 
@@ -26,6 +27,7 @@ public partial class App : Application
         var mainPage = new MainPage();
         _mainWindow.Content = mainPage;
         _mainWindow.Title = "SCAssistant - 生存战争助手";
+        _mainWindow.SetWindowIcon();
 
         _mainWindow.Activate();
         LogHelper.Info("[应用] 窗口已激活");
