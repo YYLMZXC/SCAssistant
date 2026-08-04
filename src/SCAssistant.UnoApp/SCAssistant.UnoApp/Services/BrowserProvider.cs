@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -12,7 +13,12 @@ namespace SCAssistant.UnoApp.Services;
 /// - iOS: WKWebView
 /// - Desktop Skia: Uno 模拟实现
 ///
-/// 使用 Loaded 事件作为控件就绪信号，确保 WebView2 加入可视化树后再执行导航。
+/// 正确生命周期：
+/// 1. 创建 WebView2 控件对象，加入可视化树
+/// 2. 调用 EnsureCoreWebView2Async() 等待内核初始化完成
+/// 3. 内核就绪后才允许导航（Source = / CoreWebView2.Navigate）
+///
+/// 注意：Loaded 事件仅代表 UI 控件入树，不代表 CoreWebView2 内核就绪。
 /// </summary>
 public class BrowserProvider : IBrowserProvider
 {
@@ -37,6 +43,7 @@ public class BrowserProvider : IBrowserProvider
         _webView = new WebView2();
         _isReady = false;
 
+        // Loaded 仅用于触发内核初始化，不直接执行业务导航
         _webView.Loaded += OnWebViewLoaded;
 
         _webView.NavigationStarting += (_, args) =>
@@ -59,10 +66,6 @@ public class BrowserProvider : IBrowserProvider
                 {
                     _currentTitle = sender.CoreWebView2.DocumentTitle ?? string.Empty;
                 }
-                else
-                {
-                    LogHelper.Info("[Browser] NavigationCompleted - CoreWebView2 is null (Skia/fallback mode)");
-                }
             }
             catch (Exception ex)
             {
@@ -76,24 +79,49 @@ public class BrowserProvider : IBrowserProvider
         return _webView;
     }
 
+    /// <summary>
+    /// Loaded 表示 WebView2 UI 控件已挂入可视化树。
+    /// 此时启动 CoreWebView2 内核初始化，但内核未就绪，不可导航。
+    /// </summary>
     private void OnWebViewLoaded(object sender, RoutedEventArgs e)
     {
         if (_webView is null) return;
         _webView.Loaded -= OnWebViewLoaded;
 
-        LogHelper.Info("[Browser] WebView2.Loaded fired - control in visual tree");
-        _isReady = true;
+        LogHelper.Info("[Browser] WebView2.Loaded - control in visual tree, starting kernel init");
+        _ = InitializeCoreWebView2Async();
+    }
 
-        if (_pendingNavigateUrl is not null)
+    /// <summary>
+    /// 异步初始化 CoreWebView2 内核。
+    /// 控件必须在可视化树中才能调用 EnsureCoreWebView2Async。
+    /// 内核初始化成功后，_isReady = true，执行挂起的导航请求。
+    /// </summary>
+    private async Task InitializeCoreWebView2Async()
+    {
+        try
         {
-            var url = _pendingNavigateUrl;
-            _pendingNavigateUrl = null;
-            LogHelper.Info($"[Browser] Executing pending navigation -> {url}");
-            DoNavigate(url);
+            LogHelper.Info("[Browser] Calling EnsureCoreWebView2Async...");
+            await _webView!.EnsureCoreWebView2Async();
+            LogHelper.Info("[Browser] CoreWebView2 kernel ready");
+
+            _isReady = true;
+
+            if (_pendingNavigateUrl is not null)
+            {
+                var url = _pendingNavigateUrl;
+                _pendingNavigateUrl = null;
+                LogHelper.Info($"[Browser] Executing pending navigation -> {url}");
+                DoNavigate(url);
+            }
+            else
+            {
+                LogHelper.Info("[Browser] Kernel ready but no pending navigation");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            LogHelper.Info("[Browser] Loaded but no pending navigation");
+            LogHelper.Error($"[Browser] CoreWebView2 initialization failed: {ex.Message}", ex);
         }
     }
 
@@ -108,7 +136,7 @@ public class BrowserProvider : IBrowserProvider
         }
         else
         {
-            LogHelper.Info("[Browser] Initialize deferred - waiting for Loaded event");
+            LogHelper.Info("[Browser] Initialize deferred - waiting for CoreWebView2 kernel");
         }
     }
 
@@ -122,7 +150,7 @@ public class BrowserProvider : IBrowserProvider
         }
         else
         {
-            LogHelper.Info("[Browser] Navigate deferred - waiting for Loaded event");
+            LogHelper.Info("[Browser] Navigate deferred - waiting for CoreWebView2 kernel");
             _pendingNavigateUrl = url;
         }
     }
@@ -141,16 +169,9 @@ public class BrowserProvider : IBrowserProvider
 
         try
         {
-            if (_webView.CoreWebView2 is not null)
-            {
-                LogHelper.Info("[Browser] Using CoreWebView2.Navigate()");
-                _webView.CoreWebView2.Navigate(url);
-            }
-            else
-            {
-                LogHelper.Info("[Browser] CoreWebView2 is null, using Source property");
-                _webView.Source = new Uri(url);
-            }
+            // Uno Platform 中统一使用 Source 属性进行跨平台导航
+            LogHelper.Info("[Browser] Setting Source property to navigate");
+            _webView.Source = new Uri(url);
         }
         catch (Exception ex)
         {
