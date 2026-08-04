@@ -32,6 +32,11 @@ public static class LogHelper
         Write("[ERROR]", text);
     }
 
+    public static void Warn(string message)
+    {
+        Write("[WARN]", message);
+    }
+
     private static void Write(string level, string message)
     {
         var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");

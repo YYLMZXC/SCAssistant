@@ -39,11 +39,11 @@ public class BrowserProvider : IBrowserProvider
 
     public object CreateBrowserControl()
     {
-        LogHelper.Info("[Browser] CreateBrowserControl - creating WebView2");
+        LogHelper.Info("[浏览器] CreateBrowserControl - 正在创建 WebView2 控件");
         _webView = new WebView2();
         _isReady = false;
 
-        LogHelper.Info($"[Browser] WebView2 type: {_webView.GetType().FullName}, assembly: {_webView.GetType().Assembly.GetName().FullName}");
+        LogHelper.Info($"[浏览器] WebView2 类型: {_webView.GetType().FullName}, 程序集: {_webView.GetType().Assembly.GetName().FullName}");
 
         // Loaded 仅用于触发内核初始化，不直接执行业务导航
         _webView.Loaded += OnWebViewLoaded;
@@ -54,18 +54,18 @@ public class BrowserProvider : IBrowserProvider
         {
             if (e.Exception is not null)
             {
-                LogHelper.Error($"[Browser] CoreWebView2Initialized FAILED: {e.Exception.GetType().Name}: {e.Exception.Message}", e.Exception);
+                LogHelper.Error($"[浏览器] CoreWebView2Initialized 初始化失败: {e.Exception.GetType().Name}: {e.Exception.Message}", e.Exception);
                 return;
             }
-            LogHelper.Info("[Browser] CoreWebView2Initialized OK - runtime is fully functional");
-            LogHelper.Info($"[Browser] CoreWebView2 type: {sender.CoreWebView2?.GetType().FullName ?? "null"}");
+            LogHelper.Info("[浏览器] CoreWebView2Initialized 成功 - 运行时已完全就绪");
+            LogHelper.Info($"[浏览器] CoreWebView2 类型: {sender.CoreWebView2?.GetType().FullName ?? "null"}");
         };
 
         _webView.NavigationStarting += (_, args) =>
         {
             _isLoading = true;
             _currentUrl = args.Uri?.ToString() ?? string.Empty;
-            LogHelper.Info($"[Browser] NavigationStarting -> {_currentUrl}");
+            LogHelper.Info($"[浏览器] 导航开始 -> {_currentUrl}");
             AddressChanged?.Invoke(this, _currentUrl);
             LoadingStateChanged?.Invoke(this, true);
         };
@@ -73,7 +73,7 @@ public class BrowserProvider : IBrowserProvider
         _webView.NavigationCompleted += (sender, args) =>
         {
             _isLoading = false;
-            LogHelper.Info($"[Browser] NavigationCompleted success={args.IsSuccess} err={args.WebErrorStatus}");
+            LogHelper.Info($"[浏览器] 导航完成 成功={args.IsSuccess} 错误={args.WebErrorStatus}");
 
             try
             {
@@ -84,7 +84,7 @@ public class BrowserProvider : IBrowserProvider
             }
             catch (Exception ex)
             {
-                LogHelper.Error("[Browser] Failed to read document title", ex);
+                LogHelper.Error("[浏览器] 读取文档标题失败", ex);
             }
             TitleChanged?.Invoke(this, _currentTitle);
             LoadingStateChanged?.Invoke(this, false);
@@ -94,14 +94,14 @@ public class BrowserProvider : IBrowserProvider
         try
         {
             var cv = _webView.CoreWebView2;
-            LogHelper.Info($"[Browser] CoreWebView2 prop (pre-init): {(cv is null ? "null" : cv.GetType().FullName)}");
+            LogHelper.Info($"[浏览器] CoreWebView2 属性(初始化前): {(cv is null ? "null" : cv.GetType().FullName)}");
         }
         catch (Exception ex)
         {
-            LogHelper.Info($"[Browser] CoreWebView2 prop (pre-init) threw: {ex.GetType().Name}: {ex.Message}");
+            LogHelper.Info($"[浏览器] CoreWebView2 属性(初始化前)访问异常: {ex.GetType().Name}: {ex.Message}");
         }
 
-        LogHelper.Info($"[Browser] CreateBrowserControl done, _isReady={_isReady}");
+        LogHelper.Info($"[浏览器] CreateBrowserControl 完成, _isReady={_isReady}");
         return _webView;
     }
 
@@ -114,7 +114,7 @@ public class BrowserProvider : IBrowserProvider
         if (_webView is null) return;
         _webView.Loaded -= OnWebViewLoaded;
 
-        LogHelper.Info("[Browser] WebView2.Loaded - control in visual tree, starting kernel init");
+        LogHelper.Info("[浏览器] WebView2.Loaded - 控件已挂入可视化树，开始初始化内核");
         _ = InitializeCoreWebView2Async();
     }
 
@@ -128,24 +128,24 @@ public class BrowserProvider : IBrowserProvider
         try
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            LogHelper.Info("[Browser] Calling EnsureCoreWebView2Async...");
+            LogHelper.Info("[浏览器] 正在调用 EnsureCoreWebView2Async...");
             await _webView!.EnsureCoreWebView2Async();
             sw.Stop();
-            LogHelper.Info($"[Browser] EnsureCoreWebView2Async completed in {sw.ElapsedMilliseconds}ms");
+            LogHelper.Info($"[浏览器] EnsureCoreWebView2Async 完成，耗时 {sw.ElapsedMilliseconds}ms");
 
             // 诊断：初始化后检查 CoreWebView2 状态
             try
             {
                 var cv = _webView.CoreWebView2;
-                LogHelper.Info($"[Browser] CoreWebView2 after init: {(cv is null ? "null" : $"type={cv.GetType().FullName}, can navigate")}");
+                LogHelper.Info($"[浏览器] CoreWebView2 初始化后状态: {(cv is null ? "null" : $"类型={cv.GetType().FullName}, 可以导航")}");
                 if (cv is not null)
                 {
-                    LogHelper.Info($"[Browser] CoreWebView2.Settings={(cv.Settings is null ? "null" : "ok")}");
+                    LogHelper.Info($"[浏览器] CoreWebView2.Settings={(cv.Settings is null ? "null" : "正常")}");
                 }
             }
             catch (Exception ex2)
             {
-                LogHelper.Error($"[Browser] Failed to inspect CoreWebView2 after init: {ex2.Message}", ex2);
+                LogHelper.Error($"[浏览器] 初始化后检查 CoreWebView2 失败: {ex2.Message}", ex2);
             }
 
             _isReady = true;
@@ -154,24 +154,24 @@ public class BrowserProvider : IBrowserProvider
             {
                 var url = _pendingNavigateUrl;
                 _pendingNavigateUrl = null;
-                LogHelper.Info($"[Browser] Executing pending navigation -> {url}");
+                LogHelper.Info($"[浏览器] 执行挂起的导航 -> {url}");
                 DoNavigate(url);
             }
             else
             {
-                LogHelper.Info("[Browser] Kernel ready but no pending navigation");
+                LogHelper.Info("[浏览器] 内核就绪，无挂起的导航");
             }
         }
         catch (Exception ex)
         {
-            LogHelper.Error($"[Browser] CoreWebView2 initialization FAILED: {ex.GetType().Name}: {ex.Message}", ex);
+            LogHelper.Error($"[浏览器] CoreWebView2 初始化失败: {ex.GetType().Name}: {ex.Message}", ex);
             // 注意：Uno 内部可能会吞掉异常，这里显式记录
         }
     }
 
     public void Initialize(string startUrl)
     {
-        LogHelper.Info($"[Browser] Initialize(startUrl={startUrl}) _isReady={_isReady}");
+        LogHelper.Info($"[浏览器] Initialize(startUrl={startUrl}) _isReady={_isReady}");
         _pendingNavigateUrl = startUrl;
         if (_webView is not null && _isReady)
         {
@@ -180,13 +180,13 @@ public class BrowserProvider : IBrowserProvider
         }
         else
         {
-            LogHelper.Info("[Browser] Initialize deferred - waiting for CoreWebView2 kernel");
+            LogHelper.Info("[浏览器] 初始化延迟 - 等待 CoreWebView2 内核就绪");
         }
     }
 
     public void Navigate(string url)
     {
-        LogHelper.Info($"[Browser] Navigate(url={url}) _isReady={_isReady}");
+        LogHelper.Info($"[浏览器] Navigate(url={url}) _isReady={_isReady}");
         _currentUrl = url;
         if (_webView is not null && _isReady)
         {
@@ -194,44 +194,45 @@ public class BrowserProvider : IBrowserProvider
         }
         else
         {
-            LogHelper.Info("[Browser] Navigate deferred - waiting for CoreWebView2 kernel");
+            LogHelper.Info("[浏览器] 导航延迟 - 等待 CoreWebView2 内核就绪");
             _pendingNavigateUrl = url;
         }
     }
 
     public void Reload()
     {
-        LogHelper.Info("[Browser] Reload requested");
+        LogHelper.Info("[浏览器] 请求刷新页面");
         _webView?.Reload();
+        LogHelper.Info("[浏览器] Reload 已调用");
     }
 
     private void DoNavigate(string url)
     {
         if (_webView is null) return;
 
-        LogHelper.Info($"[Browser] DoNavigate -> {url}");
+        LogHelper.Info($"[浏览器] DoNavigate -> {url}");
 
         try
         {
             // 尝试 CoreWebView2.Navigate()（如果可用）和 Source 属性两种方式
             if (_webView.CoreWebView2 is not null)
             {
-                LogHelper.Info("[Browser] CoreWebView2 available, using CoreWebView2.Navigate()");
+                LogHelper.Info("[浏览器] CoreWebView2 可用，使用 CoreWebView2.Navigate()");
                 _webView.CoreWebView2.Navigate(url);
             }
             else
             {
-                LogHelper.Info("[Browser] CoreWebView2 is null, using Source property");
+                LogHelper.Info("[浏览器] CoreWebView2 为空，使用 Source 属性");
                 _webView.Source = new Uri(url);
             }
 
             // 验证导航是否生效：检查 Source 属性值
-            LogHelper.Info($"[Browser] After navigate, Source={(object?)_webView.Source}");
+            LogHelper.Info($"[浏览器] 导航后 Source={(object?)_webView.Source}");
         }
         catch (Exception ex)
         {
-            LogHelper.Error($"[Browser] Navigation FAILED for {url}: {ex.GetType().Name}: {ex.Message}", ex);
-            LogHelper.Info("[Browser] Falling back to system browser");
+            LogHelper.Error($"[浏览器] 导航失败 URL={url}: {ex.GetType().Name}: {ex.Message}", ex);
+            LogHelper.Info("[浏览器] 回退到系统浏览器");
             SystemBrowserProvider.OpenUrl(url);
         }
     }

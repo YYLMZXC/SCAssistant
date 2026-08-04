@@ -32,31 +32,37 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel(IBrowserProvider browser, IDownloadHistoryService historyService)
     {
+        LogHelper.Info("[主视图] 构造函数 - 初始化 MainViewModel");
         _browser = browser;
         DownloadList = new DownloadListViewModel(historyService);
 
         _browser.AddressChanged += (_, url) =>
         {
+            LogHelper.Info($"[主视图] 地址变更 -> {url}");
             CurrentUrl = url;
         };
         _browser.TitleChanged += (_, title) =>
         {
+            LogHelper.Info($"[主视图] 标题变更 -> {title}");
             CurrentTitle = title;
         };
         _browser.LoadingStateChanged += (_, loading) =>
         {
             IsBrowserLoading = loading;
         };
+        LogHelper.Info("[主视图] 构造函数 - 初始化完成");
     }
 
     public void NavigateToHome()
     {
+        LogHelper.Info($"[主视图] NavigateToHome -> {HomeUrl}");
         _browser.Initialize(HomeUrl);
     }
 
     public void InitializeBrowser(object window)
     {
         if (IsInitialized) return;
+        LogHelper.Info("[主视图] InitializeBrowser - 首次初始化浏览器");
         IsInitialized = true;
         NavigateToHome();
     }
@@ -64,18 +70,21 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateHome()
     {
+        LogHelper.Info($"[主视图] NavigateHome -> {HomeUrl}");
         _browser.Navigate(HomeUrl);
     }
 
     [RelayCommand]
     private void NavigateSCKey()
     {
+        LogHelper.Info($"[主视图] NavigateSCKey -> {SCKeyUrl}");
         _browser.Navigate(SCKeyUrl);
     }
 
     [RelayCommand]
     private void NavigateSCWZ()
     {
+        LogHelper.Info($"[主视图] NavigateSCWZ -> {SCWZUrl}");
         _browser.Navigate(SCWZUrl);
     }
 
@@ -83,5 +92,6 @@ public partial class MainViewModel : ViewModelBase
     private void OpenDownloadList()
     {
         IsDownloadListVisible = !IsDownloadListVisible;
+        LogHelper.Info($"[主视图] 下载列表切换 -> {(IsDownloadListVisible ? "打开" : "关闭")}");
     }
 }

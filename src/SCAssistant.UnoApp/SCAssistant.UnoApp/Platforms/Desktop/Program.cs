@@ -15,11 +15,11 @@ internal class Program
         {
             AllocConsole();
         }
-        LogHelper.Info("[App] Starting");
+        LogHelper.Info("[应用] 启动中...");
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
-            LogHelper.Error($"[App] Unhandled exception: {e.ExceptionObject}");
+            LogHelper.Error($"[应用] 未处理的异常: {e.ExceptionObject}");
         };
 
         var host = UnoPlatformHostBuilder.Create()
