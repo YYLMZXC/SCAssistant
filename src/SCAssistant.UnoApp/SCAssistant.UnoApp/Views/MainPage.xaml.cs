@@ -93,16 +93,29 @@ public partial class MainPage : Page
         try
         {
             var density = Android.Content.Res.Resources.System?.DisplayMetrics?.Density ?? 1f;
-            int resourceId = Android.Content.Res.Resources.System?.GetIdentifier(
-                "status_bar_height", "dimen", "android") ?? 0;
-            if (resourceId > 0)
+
+            // 优先用 WindowInsets（含刘海高度），由 MainActivity.SafeAreaTopPixels 提供
+            var safeAreaPx = SCAssistant.UnoApp.Droid.MainActivity.SafeAreaTopPixels;
+            if (safeAreaPx > 0)
             {
-                var px = Android.Content.Res.Resources.System?.GetDimensionPixelSize(resourceId) ?? 0;
-                topPadding = px / density;
+                topPadding = safeAreaPx / density;
+                LogHelper.Info($"[主页面] Android SafeArea (WindowInsets): {safeAreaPx}px / {density}density = {topPadding}dp");
+            }
+
+            // 降级：WindowInsets 还没回调时，先用 status_bar_height
+            if (topPadding <= 0)
+            {
+                int resourceId = Android.Content.Res.Resources.System?.GetIdentifier(
+                    "status_bar_height", "dimen", "android") ?? 0;
+                if (resourceId > 0)
+                {
+                    var px = Android.Content.Res.Resources.System?.GetDimensionPixelSize(resourceId) ?? 0;
+                    topPadding = px / density;
+                }
             }
         }
         catch { /* 降级 */ }
-        if (topPadding <= 0) topPadding = 24;
+        if (topPadding <= 0) topPadding = 44; // 刘海屏默认值
 #elif IOS
         try
         {
