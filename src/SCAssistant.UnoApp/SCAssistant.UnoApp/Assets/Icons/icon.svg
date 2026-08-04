@@ -4,39 +4,189 @@
    height="456"
    viewBox="0 0 456 456"
    version="1.1"
-   id="svg453"
-   sodipodi:docname="icon.svg"
-   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <defs
-     id="defs457" />
-  <sodipodi:namedview
-     id="namedview455"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="1.8574561"
-     inkscape:cx="228.26919"
-     inkscape:cy="228.26919"
-     inkscape:window-width="1920"
-     inkscape:window-height="1027"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg453" />
-  <rect
-     x="0"
-     y="0"
-     width="456"
-     height="456"
-     fill="#FFFFFF"
-     id="rect451" />
+   id="icon"
+   xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Wood grain pattern -->
+    <pattern id="woodGrain" patternUnits="userSpaceOnUse" width="8" height="8">
+      <rect width="8" height="8" fill="#7a4f2a"/>
+      <rect x="0" y="0" width="2" height="8" fill="#6b4423" opacity="0.5"/>
+      <rect x="4" y="2" width="2" height="4" fill="#8b5a2b" opacity="0.4"/>
+    </pattern>
+    <pattern id="dirtTexture" patternUnits="userSpaceOnUse" width="10" height="10">
+      <rect width="10" height="10" fill="#8b5a2b"/>
+      <rect x="1" y="1" width="3" height="2" fill="#7a4f2a"/>
+      <rect x="5" y="4" width="2" height="3" fill="#6b4423"/>
+      <rect x="7" y="7" width="2" height="2" fill="#7a4f2a"/>
+    </pattern>
+    <linearGradient id="logTopGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0d8a8"/>
+      <stop offset="50%" style="stop-color:#e6c88a"/>
+      <stop offset="100%" style="stop-color:#d4b06e"/>
+    </linearGradient>
+    <linearGradient id="grassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5ec93f"/>
+      <stop offset="100%" style="stop-color:#3fa927"/>
+    </linearGradient>
+    <linearGradient id="starGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffec5e"/>
+      <stop offset="50%" style="stop-color:#ffd93a"/>
+      <stop offset="100%" style="stop-color:#f5b800"/>
+    </linearGradient>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff4d4"/>
+      <stop offset="50%" style="stop-color:#ffe49e"/>
+      <stop offset="100%" style="stop-color:#e6c16b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- White background -->
+  <rect x="0" y="0" width="456" height="456" fill="#ffffff"/>
+
+  <!-- ============== BOTTOM LEFT GRASS BLOCK ============== -->
+  <g id="grassBlock1">
+    <!-- Top face (grass) - isometric diamond -->
+    <polygon points="110,200 200,150 290,200 200,250" fill="url(#grassGradient)"/>
+    <!-- Grass top lighter squares -->
+    <rect x="158" y="172" width="10" height="10" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="210" y="188" width="8" height="8" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="182" y="210" width="7" height="7" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <!-- Grass edge (green fringe on top of dirt) -->
+    <polygon points="110,200 200,250 194,258 104,208" fill="#3fa927"/>
+    <polygon points="200,250 290,200 296,208 206,258" fill="#2e8b1c"/>
+    <!-- Left face (dirt) -->
+    <polygon points="110,200 104,208 104,302 110,294" fill="url(#dirtTexture)"/>
+    <polygon points="110,200 104,208 104,302 110,294" fill="#000000" opacity="0.08"/>
+    <!-- Right face (dirt) -->
+    <polygon points="200,250 206,258 206,352 200,344" fill="url(#dirtTexture)"/>
+    <polygon points="200,250 206,258 206,352 200,344" fill="#ffffff" opacity="0.08"/>
+    <!-- Connecting dirt face -->
+    <polygon points="110,294 200,344 206,352 104,302" fill="#7a4f2a"/>
+    <!-- Pixel details on dirt -->
+    <rect x="122" y="232" width="8" height="6" fill="#6b4423" opacity="0.6"/>
+    <rect x="148" y="268" width="6" height="8" fill="#9b6a3b" opacity="0.5"/>
+    <rect x="172" y="298" width="10" height="5" fill="#6b4423" opacity="0.5"/>
+  </g>
+
+  <!-- ============== BOTTOM RIGHT GRASS BLOCK ============== -->
+  <g id="grassBlock2">
+    <!-- Top face (grass) - isometric diamond -->
+    <polygon points="256,200 346,150 436,200 346,250" fill="url(#grassGradient)"/>
+    <!-- Grass top lighter squares -->
+    <rect x="300" y="172" width="10" height="10" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="352" y="188" width="8" height="8" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="328" y="210" width="7" height="7" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <!-- Grass edge -->
+    <polygon points="256,200 346,250 340,258 250,208" fill="#3fa927"/>
+    <polygon points="346,250 436,200 442,208 352,258" fill="#2e8b1c"/>
+    <!-- Left face (dirt) -->
+    <polygon points="256,200 250,208 250,302 256,294" fill="url(#dirtTexture)"/>
+    <polygon points="256,200 250,208 250,302 256,294" fill="#000000" opacity="0.08"/>
+    <!-- Right face (dirt) -->
+    <polygon points="346,250 352,258 352,352 346,344" fill="url(#dirtTexture)"/>
+    <polygon points="346,250 352,258 352,352 346,344" fill="#ffffff" opacity="0.08"/>
+    <!-- Connecting dirt face -->
+    <polygon points="256,294 346,344 352,352 250,302" fill="#7a4f2a"/>
+    <!-- Pixel details -->
+    <rect x="272" y="236" width="8" height="6" fill="#6b4423" opacity="0.6"/>
+    <rect x="296" y="272" width="6" height="8" fill="#9b6a3b" opacity="0.5"/>
+    <rect x="320" y="302" width="10" height="5" fill="#6b4423" opacity="0.5"/>
+  </g>
+
+  <!-- ============== TOP WOOD LOG BLOCK ============== -->
+  <g id="woodBlock">
+    <!-- Top face (log rings) - isometric diamond -->
+    <polygon points="183,68 273,18 363,68 273,118" fill="url(#logTopGradient)"/>
+    <!-- Log ring circles -->
+    <ellipse cx="273" cy="68" rx="62" ry="36" fill="none" stroke="#c49a5c" stroke-width="2"/>
+    <ellipse cx="273" cy="68" rx="50" ry="29" fill="none" stroke="#d4af70" stroke-width="1.5"/>
+    <ellipse cx="273" cy="68" rx="38" ry="22" fill="none" stroke="#c49a5c" stroke-width="1.5"/>
+    <ellipse cx="273" cy="68" rx="26" ry="15" fill="none" stroke="#d4af70" stroke-width="1"/>
+    <ellipse cx="273" cy="68" rx="14" ry="8" fill="none" stroke="#c49a5c" stroke-width="1"/>
+    <!-- Top center dot -->
+    <ellipse cx="273" cy="68" rx="4" ry="2.5" fill="#b8924d"/>
+    <!-- Left face (wood) -->
+    <polygon points="183,68 177,76 177,170 183,162" fill="url(#woodGrain)"/>
+    <polygon points="183,68 177,76 177,170 183,162" fill="#000000" opacity="0.1"/>
+    <!-- Vertical wood grain lines left face -->
+    <line x1="189" y1="74" x2="189" y2="166" stroke="#6b4423" stroke-width="1.5" opacity="0.5"/>
+    <line x1="197" y1="72" x2="197" y2="168" stroke="#5a3a1c" stroke-width="1" opacity="0.4"/>
+    <line x1="205" y1="76" x2="205" y2="164" stroke="#6b4423" stroke-width="1.5" opacity="0.4"/>
+    <!-- Right face (wood) -->
+    <polygon points="273,118 279,126 279,220 273,212" fill="url(#woodGrain)"/>
+    <polygon points="273,118 279,126 279,220 273,212" fill="#ffffff" opacity="0.06"/>
+    <!-- Vertical wood grain lines right face -->
+    <line x1="275" y1="124" x2="275" y2="216" stroke="#6b4423" stroke-width="1.5" opacity="0.4"/>
+    <line x1="277" y1="128" x2="277" y2="212" stroke="#5a3a1c" stroke-width="1" opacity="0.5"/>
+    <!-- Front connecting face -->
+    <polygon points="183,162 273,212 279,220 177,170" fill="#6b4423"/>
+  </g>
+
+  <!-- ============== STAR 1 (on left grass block) ============== -->
+  <g id="star1" transform="translate(180, 195)">
+    <!-- Star outer shape with slight shadow -->
+    <polygon points="0,-38 11.5,-12 40,-8.5 17.5,10 24.5,38 0,23 -24.5,38 -17.5,10 -40,-8.5 -11.5,-12"
+             fill="url(#starGradient)"
+             stroke="#d49600" stroke-width="1.5" stroke-linejoin="round"/>
+    <!-- Highlight on star -->
+    <polygon points="0,-34 8,-14 -4,-14" fill="#fff9c4" opacity="0.6"/>
+    <!-- Left eye -->
+    <ellipse cx="-11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="-10" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <!-- Right eye -->
+    <ellipse cx="11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="12" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <!-- Smile -->
+    <path d="M -9,8 Q 0,17 9,8" fill="none" stroke="#2a1a00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Left cheek -->
+    <circle cx="-19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+    <!-- Right cheek -->
+    <circle cx="19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+  </g>
+
+  <!-- ============== STAR 2 (on right grass block) ============== -->
+  <g id="star2" transform="translate(326, 195)">
+    <!-- Star outer shape -->
+    <polygon points="0,-38 11.5,-12 40,-8.5 17.5,10 24.5,38 0,23 -24.5,38 -17.5,10 -40,-8.5 -11.5,-12"
+             fill="url(#starGradient)"
+             stroke="#d49600" stroke-width="1.5" stroke-linejoin="round"/>
+    <!-- Highlight on star -->
+    <polygon points="0,-34 8,-14 -4,-14" fill="#fff9c4" opacity="0.6"/>
+    <!-- Left eye -->
+    <ellipse cx="-11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="-10" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <!-- Right eye -->
+    <ellipse cx="11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="12" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <!-- Smile -->
+    <path d="M -9,8 Q 0,17 9,8" fill="none" stroke="#2a1a00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Left cheek -->
+    <circle cx="-19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+    <!-- Right cheek -->
+    <circle cx="19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+  </g>
+
+  <!-- ============== TEXT: 生存战争助手 ============== -->
+  <g id="titleText" transform="translate(228, 402)">
+    <!-- Text shadow -->
+    <text x="0" y="0"
+          text-anchor="middle"
+          font-family="Microsoft YaHei, SimHei, 'PingFang SC', 'Hiragino Sans GB', sans-serif"
+          font-size="46" font-weight="900"
+          fill="#5a4010" opacity="0.35"
+          transform="translate(2, 3)">生存战争助手</text>
+    <!-- Text outline -->
+    <text x="0" y="0"
+          text-anchor="middle"
+          font-family="Microsoft YaHei, SimHei, 'PingFang SC', 'Hiragino Sans GB', sans-serif"
+          font-size="46" font-weight="900"
+          stroke="#8b6318" stroke-width="3"
+          fill="none">生存战争助手</text>
+    <!-- Main text fill -->
+    <text x="0" y="0"
+          text-anchor="middle"
+          font-family="Microsoft YaHei, SimHei, 'PingFang SC', 'Hiragino Sans GB', sans-serif"
+          font-size="46" font-weight="900"
+          fill="url(#textGradient)">生存战争助手</text>
+  </g>
 </svg>

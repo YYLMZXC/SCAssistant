@@ -2,136 +2,147 @@
 <svg
    width="450"
    height="450"
-   viewBox="0 0 50.369617 49.826836"
+   viewBox="0 0 450 450"
    version="1.1"
-   id="svg151"
-   sodipodi:docname="icon_foreground.svg"
-   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview153"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="1.250876"
-     inkscape:cx="218.64677"
-     inkscape:cy="175.87674"
-     inkscape:window-width="1920"
-     inkscape:window-height="1027"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="g149" />
-  <defs
-     id="defs105">
-    <path
-       id="aj28a0fd1a"
-       d="M 1.738,0.156 3.927,2.323 2.347,3.919 0.101,1.81 Z" />
-    <path
-       id="fdje57jgic"
-       d="M 2.201,0.066 3.855,1.703 1.69,3.894 0.093,2.311 Z" />
-    <path
-       id="6bg72xwlze"
-       d="M 2.398,0.044 3.994,1.624 1.886,3.869 0.232,2.232 Z" />
-    <path
-       id="eaqjnja8wg"
-       d="M 1.736,0.023 3.981,2.132 2.344,3.786 0.156,1.619 Z" />
+   id="icon_foreground"
+   xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Wood grain pattern -->
+    <pattern id="woodGrainFg" patternUnits="userSpaceOnUse" width="8" height="8">
+      <rect width="8" height="8" fill="#7a4f2a"/>
+      <rect x="0" y="0" width="2" height="8" fill="#6b4423" opacity="0.5"/>
+      <rect x="4" y="2" width="2" height="4" fill="#8b5a2b" opacity="0.4"/>
+    </pattern>
+    <pattern id="dirtTextureFg" patternUnits="userSpaceOnUse" width="10" height="10">
+      <rect width="10" height="10" fill="#8b5a2b"/>
+      <rect x="1" y="1" width="3" height="2" fill="#7a4f2a"/>
+      <rect x="5" y="4" width="2" height="3" fill="#6b4423"/>
+      <rect x="7" y="7" width="2" height="2" fill="#7a4f2a"/>
+    </pattern>
+    <linearGradient id="logTopGradientFg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0d8a8"/>
+      <stop offset="50%" style="stop-color:#e6c88a"/>
+      <stop offset="100%" style="stop-color:#d4b06e"/>
+    </linearGradient>
+    <linearGradient id="grassGradientFg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5ec93f"/>
+      <stop offset="100%" style="stop-color:#3fa927"/>
+    </linearGradient>
+    <linearGradient id="starGradientFg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffec5e"/>
+      <stop offset="50%" style="stop-color:#ffd93a"/>
+      <stop offset="100%" style="stop-color:#f5b800"/>
+    </linearGradient>
   </defs>
-  <g
-     fill="none"
-     fill-rule="evenodd"
-     id="g149"
-     transform="translate(-2.9304427e-4,-1.6465461e-4)">
-    <g
-       id="g147">
-      <g
-         id="g145">
-        <path
-           fill="#7a67f8"
-           d="M 34.758,38.865 H 34.746 C 31.892,38.86 29.342,36.882 26.152,33.692 l -6.93,-6.873 2.166,-2.188 6.937,6.88 c 3.075,3.074 4.876,4.272 6.427,4.275 h 0.005 c 1.567,0 3.467,-1.262 6.558,-4.353 l 3.541,-3.587 c 1.784,-1.784 2.57,-3.34 2.408,-4.762 -0.13,-1.156 -0.894,-2.397 -2.401,-3.904 L 44.83,19.146 C 43.202,17.414 41.211,15.483 39.131,14.414 38.745,12.437 37.48,10.881 37.3,10.596 c 3.803,0.559 7.197,3.703 9.758,6.424 2.788,2.794 5.803,7.176 -0.018,12.996 l -3.54,3.588 c -3.251,3.25 -5.844,5.261 -8.742,5.261"
-           id="path107" />
-        <path
-           fill="#f85977"
-           d="m 25.399,28.608 6.492,-6.562 c 3.076,-3.076 4.274,-4.877 4.276,-6.428 0.004,-1.567 -1.257,-3.469 -4.352,-6.563 L 28.228,5.515 C 24.58,1.867 22.369,2.699 19.561,5.507 L 19.528,5.54 c -1.54,1.448 -3.237,3.182 -4.346,5.01 -1.031,0.073 -2.361,0.424 -3.997,1.518 0.906,-3.397 3.737,-6.422 6.216,-8.755 2.794,-2.789 7.177,-5.804 12.997,0.017 l 3.588,3.54 c 3.255,3.256 5.266,5.851 5.26,8.754 -0.005,2.854 -1.982,5.404 -5.172,8.594 l -6.489,6.559 z"
-           id="path109" />
-        <path
-           fill="#159bff"
-           d="M 12.522,38.707 C 8.939,37.946 5.746,34.972 3.308,32.382 2.035,31.106 0.321,29.13 0.042,26.663 c -0.274,-2.414 0.8,-4.795 3.283,-7.278 l 3.542,-3.588 c 3.25,-3.25 5.843,-5.261 8.74,-5.261 h 0.013 c 2.854,0.005 5.404,1.983 8.593,5.172 l 7.046,6.976 -2.165,2.19 -7.053,-6.983 c -3.076,-3.076 -4.876,-4.273 -6.427,-4.276 h -0.006 c -1.566,0 -3.466,1.261 -6.557,4.352 L 5.51,21.555 c -1.784,1.784 -2.57,3.34 -2.409,4.762 0.131,1.156 0.894,2.396 2.402,3.904 l 0.033,0.034 c 1.55,1.649 3.43,3.479 5.401,4.573 0.168,1.739 1.2,3.297 1.585,3.88"
-           id="path111" />
-        <path
-           fill="#67e5ad"
-           d="m 26.32,49.827 c -1.925,0 -4.114,-0.886 -6.557,-3.33 l -3.588,-3.54 C 9.167,35.949 9.151,32.546 16.086,25.61 l 6.802,-6.872 2.193,2.162 -6.812,6.882 c -3.076,3.076 -4.273,4.877 -4.276,6.427 -0.003,1.568 1.258,3.47 4.352,6.563 l 3.588,3.541 c 3.646,3.647 5.858,2.816 8.666,0.008 l 0.034,-0.033 c 1.654,-1.555 3.5,-3.46 4.593,-5.437 1.661,-0.14 2.9,-0.841 3.835,-1.438 -0.8,3.537 -3.738,6.69 -6.302,9.102 -1.62,1.618 -3.777,3.312 -6.439,3.312"
-           id="path113" />
-        <g
-           transform="translate(21.154,18.577)"
-           id="g120">
-          <mask
-             id="8jptpqrneb"
-             fill="#ffffff">
-            <use
-               xlink:href="#aj28a0fd1a"
-               id="use115" />
-          </mask>
-          <path
-             d="M 0.101,1.81 1.738,0.156 3.927,2.323 2.347,3.919 Z"
-             mask="url(#8jptpqrneb)"
-             id="path118" />
-        </g>
-        <g
-           transform="translate(27.404,20.981)"
-           id="g127">
-          <mask
-             id="b2iljpfwbd"
-             fill="#ffffff">
-            <use
-               xlink:href="#fdje57jgic"
-               id="use122" />
-          </mask>
-          <path
-             d="M 2.201,0.066 3.855,1.703 1.69,3.894 0.093,2.311 Z"
-             mask="url(#b2iljpfwbd)"
-             id="path125" />
-        </g>
-        <g
-           transform="translate(18.99,24.587)"
-           id="g134">
-          <mask
-             id="gj70tyfpnf"
-             fill="#ffffff">
-            <use
-               xlink:href="#6bg72xwlze"
-               id="use129" />
-          </mask>
-          <path
-             d="M 1.886,3.869 0.232,2.232 2.398,0.044 3.994,1.624 Z"
-             mask="url(#gj70tyfpnf)"
-             id="path132" />
-        </g>
-        <g
-           transform="translate(25.24,26.99)"
-           id="g141">
-          <mask
-             id="z7vhvduckh"
-             fill="#ffffff">
-            <use
-               xlink:href="#eaqjnja8wg"
-               id="use136" />
-          </mask>
-          <path
-             d="M 3.981,2.132 2.344,3.786 0.156,1.619 1.736,0.023 Z"
-             mask="url(#z7vhvduckh)"
-             id="path139" />
-        </g>
-      </g>
-    </g>
+
+  <!-- Note: Transparent background (for Android adaptive icon foreground) -->
+
+  <!-- ============== BOTTOM LEFT GRASS BLOCK ============== -->
+  <g id="grassBlock1Fg">
+    <!-- Top face (grass) - isometric diamond -->
+    <polygon points="101,197 191,147 281,197 191,247" fill="url(#grassGradientFg)"/>
+    <!-- Grass top lighter squares -->
+    <rect x="149" y="169" width="10" height="10" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="201" y="185" width="8" height="8" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="173" y="207" width="7" height="7" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <!-- Grass edge -->
+    <polygon points="101,197 191,247 185,255 95,205" fill="#3fa927"/>
+    <polygon points="191,247 281,197 287,205 197,255" fill="#2e8b1c"/>
+    <!-- Left face (dirt) -->
+    <polygon points="101,197 95,205 95,299 101,291" fill="url(#dirtTextureFg)"/>
+    <polygon points="101,197 95,205 95,299 101,291" fill="#000000" opacity="0.08"/>
+    <!-- Right face (dirt) -->
+    <polygon points="191,247 197,255 197,349 191,341" fill="url(#dirtTextureFg)"/>
+    <polygon points="191,247 197,255 197,349 191,341" fill="#ffffff" opacity="0.08"/>
+    <!-- Connecting dirt face -->
+    <polygon points="101,291 191,341 197,349 95,299" fill="#7a4f2a"/>
+    <!-- Pixel details -->
+    <rect x="113" y="229" width="8" height="6" fill="#6b4423" opacity="0.6"/>
+    <rect x="139" y="265" width="6" height="8" fill="#9b6a3b" opacity="0.5"/>
+    <rect x="163" y="295" width="10" height="5" fill="#6b4423" opacity="0.5"/>
+  </g>
+
+  <!-- ============== BOTTOM RIGHT GRASS BLOCK ============== -->
+  <g id="grassBlock2Fg">
+    <!-- Top face (grass) - isometric diamond -->
+    <polygon points="269,197 359,147 449,197 359,247" fill="url(#grassGradientFg)"/>
+    <!-- Grass top lighter squares -->
+    <rect x="313" y="169" width="10" height="10" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="365" y="185" width="8" height="8" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <rect x="341" y="207" width="7" height="7" fill="#7dd95f" opacity="0.8" transform="skewX(-30)"/>
+    <!-- Grass edge -->
+    <polygon points="269,197 359,247 353,255 263,205" fill="#3fa927"/>
+    <polygon points="359,247 449,197 455,205 365,255" fill="#2e8b1c"/>
+    <!-- Left face (dirt) -->
+    <polygon points="269,197 263,205 263,299 269,291" fill="url(#dirtTextureFg)"/>
+    <polygon points="269,197 263,205 263,299 269,291" fill="#000000" opacity="0.08"/>
+    <!-- Right face (dirt) -->
+    <polygon points="359,247 365,255 365,349 359,341" fill="url(#dirtTextureFg)"/>
+    <polygon points="359,247 365,255 365,349 359,341" fill="#ffffff" opacity="0.08"/>
+    <!-- Connecting dirt face -->
+    <polygon points="269,291 359,341 365,349 263,299" fill="#7a4f2a"/>
+    <!-- Pixel details -->
+    <rect x="285" y="233" width="8" height="6" fill="#6b4423" opacity="0.6"/>
+    <rect x="309" y="269" width="6" height="8" fill="#9b6a3b" opacity="0.5"/>
+    <rect x="333" y="299" width="10" height="5" fill="#6b4423" opacity="0.5"/>
+  </g>
+
+  <!-- ============== TOP WOOD LOG BLOCK ============== -->
+  <g id="woodBlockFg">
+    <!-- Top face (log rings) - isometric diamond -->
+    <polygon points="188,65 278,15 368,65 278,115" fill="url(#logTopGradientFg)"/>
+    <!-- Log ring circles -->
+    <ellipse cx="278" cy="65" rx="62" ry="36" fill="none" stroke="#c49a5c" stroke-width="2"/>
+    <ellipse cx="278" cy="65" rx="50" ry="29" fill="none" stroke="#d4af70" stroke-width="1.5"/>
+    <ellipse cx="278" cy="65" rx="38" ry="22" fill="none" stroke="#c49a5c" stroke-width="1.5"/>
+    <ellipse cx="278" cy="65" rx="26" ry="15" fill="none" stroke="#d4af70" stroke-width="1"/>
+    <ellipse cx="278" cy="65" rx="14" ry="8" fill="none" stroke="#c49a5c" stroke-width="1"/>
+    <!-- Top center dot -->
+    <ellipse cx="278" cy="65" rx="4" ry="2.5" fill="#b8924d"/>
+    <!-- Left face (wood) -->
+    <polygon points="188,65 182,73 182,167 188,159" fill="url(#woodGrainFg)"/>
+    <polygon points="188,65 182,73 182,167 188,159" fill="#000000" opacity="0.1"/>
+    <!-- Vertical wood grain lines -->
+    <line x1="194" y1="71" x2="194" y2="163" stroke="#6b4423" stroke-width="1.5" opacity="0.5"/>
+    <line x1="202" y1="69" x2="202" y2="165" stroke="#5a3a1c" stroke-width="1" opacity="0.4"/>
+    <line x1="210" y1="73" x2="210" y2="161" stroke="#6b4423" stroke-width="1.5" opacity="0.4"/>
+    <!-- Right face (wood) -->
+    <polygon points="278,115 284,123 284,217 278,209" fill="url(#woodGrainFg)"/>
+    <polygon points="278,115 284,123 284,217 278,209" fill="#ffffff" opacity="0.06"/>
+    <!-- Vertical wood grain lines -->
+    <line x1="280" y1="121" x2="280" y2="213" stroke="#6b4423" stroke-width="1.5" opacity="0.4"/>
+    <line x1="282" y1="125" x2="282" y2="209" stroke="#5a3a1c" stroke-width="1" opacity="0.5"/>
+    <!-- Front connecting face -->
+    <polygon points="188,159 278,209 284,217 182,167" fill="#6b4423"/>
+  </g>
+
+  <!-- ============== STAR 1 (on left grass block) ============== -->
+  <g id="star1Fg" transform="translate(179, 192)">
+    <polygon points="0,-38 11.5,-12 40,-8.5 17.5,10 24.5,38 0,23 -24.5,38 -17.5,10 -40,-8.5 -11.5,-12"
+             fill="url(#starGradientFg)"
+             stroke="#d49600" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="0,-34 8,-14 -4,-14" fill="#fff9c4" opacity="0.6"/>
+    <ellipse cx="-11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="-10" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <ellipse cx="11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="12" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <path d="M -9,8 Q 0,17 9,8" fill="none" stroke="#2a1a00" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="-19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+    <circle cx="19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+  </g>
+
+  <!-- ============== STAR 2 (on right grass block) ============== -->
+  <g id="star2Fg" transform="translate(339, 192)">
+    <polygon points="0,-38 11.5,-12 40,-8.5 17.5,10 24.5,38 0,23 -24.5,38 -17.5,10 -40,-8.5 -11.5,-12"
+             fill="url(#starGradientFg)"
+             stroke="#d49600" stroke-width="1.5" stroke-linejoin="round"/>
+    <polygon points="0,-34 8,-14 -4,-14" fill="#fff9c4" opacity="0.6"/>
+    <ellipse cx="-11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="-10" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <ellipse cx="11" cy="-2" rx="3.5" ry="4.5" fill="#2a1a00"/>
+    <ellipse cx="12" cy="-3.5" rx="1.2" ry="1.5" fill="#ffffff"/>
+    <path d="M -9,8 Q 0,17 9,8" fill="none" stroke="#2a1a00" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="-19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
+    <circle cx="19" cy="6" r="5" fill="#ff8a3d" opacity="0.85"/>
   </g>
 </svg>

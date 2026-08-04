@@ -6,9 +6,9 @@
         <Nullable>enable</Nullable>
 
         <!-- Display name -->
-        <ApplicationTitle>SCAssistant</ApplicationTitle>
+        <ApplicationTitle>生存战争助手</ApplicationTitle>
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.scassistant</ApplicationId>
+        <ApplicationId>com.companyname.scassistant.yylmzxc001</ApplicationId>
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
