@@ -1,4 +1,6 @@
 using System;
+using System.Diagnostics;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace SCAssistant.UnoApp.Services;
@@ -9,7 +11,11 @@ namespace SCAssistant.UnoApp.Services;
 /// - Windows: Edge WebView2
 /// - Android: Android WebView
 /// - iOS: WKWebView
-/// - Desktop Skia: 系统浏览器回退
+/// - Desktop Skia: Uno 模拟实现
+///
+/// 注意：Uno Platform 6.x 的 WebView2 不暴露 CoreWebView2InitializationCompleted 事件，
+/// 仅提供 NavigationStarting / NavigationCompleted / Source / CoreWebView2 / Reload 等基础 API。
+/// 使用 Loaded 事件作为控件就绪信号，确保 WebView2 加入可视化树后再执行导航。
 /// </summary>
 public class BrowserProvider : IBrowserProvider
 {
@@ -18,6 +24,7 @@ public class BrowserProvider : IBrowserProvider
     private string _currentTitle = string.Empty;
     private bool _isLoading;
     private string? _pendingNavigateUrl;
+    private bool _isReady;
 
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
@@ -30,8 +37,12 @@ public class BrowserProvider : IBrowserProvider
     public object CreateBrowserControl()
     {
         _webView = new WebView2();
+        _isReady = false;
 
-        _webView.NavigationStarting += (sender, args) =>
+        // 使用 Loaded 事件确保 WebView2 已加入可视化树、底层原生控件已创建后再导航
+        _webView.Loaded += OnWebViewLoaded;
+
+        _webView.NavigationStarting += (_, args) =>
         {
             _isLoading = true;
             _currentUrl = args.Uri?.ToString() ?? string.Empty;
@@ -39,40 +50,62 @@ public class BrowserProvider : IBrowserProvider
             LoadingStateChanged?.Invoke(this, true);
         };
 
-        _webView.NavigationCompleted += (sender, args) =>
+        _webView.NavigationCompleted += (sender, _) =>
         {
             _isLoading = false;
-            _currentTitle = sender.CoreWebView2?.DocumentTitle ?? string.Empty;
+            try
+            {
+                if (sender.CoreWebView2 is not null)
+                {
+                    _currentTitle = sender.CoreWebView2.DocumentTitle ?? string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[BrowserProvider] Failed to read document title: {ex.Message}");
+            }
             TitleChanged?.Invoke(this, _currentTitle);
             LoadingStateChanged?.Invoke(this, false);
         };
 
-        // 处理待导航 URL
+        return _webView;
+    }
+
+    /// <summary>
+    /// WebView2 加入可视化树后触发。在此之前导航可能因底层原生控件未创建而失败/空白。
+    /// </summary>
+    private void OnWebViewLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_webView is null) return;
+        _webView.Loaded -= OnWebViewLoaded;
+
+        Debug.WriteLine("[BrowserProvider] WebView2 Loaded - ready to navigate");
+        _isReady = true;
+
         if (_pendingNavigateUrl is not null)
         {
-            NavigateToUrl(_pendingNavigateUrl);
+            var url = _pendingNavigateUrl;
             _pendingNavigateUrl = null;
+            DoNavigate(url);
         }
-
-        return _webView;
     }
 
     public void Initialize(string startUrl)
     {
         _pendingNavigateUrl = startUrl;
-        if (_webView is not null)
+        if (_webView is not null && _isReady)
         {
-            NavigateToUrl(startUrl);
             _pendingNavigateUrl = null;
+            DoNavigate(startUrl);
         }
     }
 
     public void Navigate(string url)
     {
         _currentUrl = url;
-        if (_webView is not null)
+        if (_webView is not null && _isReady)
         {
-            NavigateToUrl(url);
+            DoNavigate(url);
         }
         else
         {
@@ -85,7 +118,7 @@ public class BrowserProvider : IBrowserProvider
         _webView?.Reload();
     }
 
-    private void NavigateToUrl(string url)
+    private void DoNavigate(string url)
     {
         if (_webView is null) return;
 
@@ -97,12 +130,14 @@ public class BrowserProvider : IBrowserProvider
             }
             else
             {
+                // Uno Platform 桌面端 CoreWebView2 可能为 null，使用 Source 属性
+                Debug.WriteLine($"[BrowserProvider] Navigating via Source: {url}");
                 _webView.Source = new Uri(url);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // WebView2 不可用时，尝试用系统浏览器打开
+            Debug.WriteLine($"[BrowserProvider] Navigation failed: {ex.Message}");
             SystemBrowserProvider.OpenUrl(url);
         }
     }
