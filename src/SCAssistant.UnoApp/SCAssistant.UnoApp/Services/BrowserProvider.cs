@@ -43,8 +43,23 @@ public class BrowserProvider : IBrowserProvider
         _webView = new WebView2();
         _isReady = false;
 
+        LogHelper.Info($"[Browser] WebView2 type: {_webView.GetType().FullName}, assembly: {_webView.GetType().Assembly.GetName().FullName}");
+
         // Loaded 仅用于触发内核初始化，不直接执行业务导航
         _webView.Loaded += OnWebViewLoaded;
+
+        // ⚠️ 关键诊断：CoreWebView2Initialized 事件
+        // 如果这个事件从未触发 → WebView2 Runtime 缺失或 WPF 程序集加载失败
+        _webView.CoreWebView2Initialized += (sender, e) =>
+        {
+            if (e.Exception is not null)
+            {
+                LogHelper.Error($"[Browser] CoreWebView2Initialized FAILED: {e.Exception.GetType().Name}: {e.Exception.Message}", e.Exception);
+                return;
+            }
+            LogHelper.Info("[Browser] CoreWebView2Initialized OK - runtime is fully functional");
+            LogHelper.Info($"[Browser] CoreWebView2 type: {sender.CoreWebView2?.GetType().FullName ?? "null"}");
+        };
 
         _webView.NavigationStarting += (_, args) =>
         {
@@ -75,6 +90,17 @@ public class BrowserProvider : IBrowserProvider
             LoadingStateChanged?.Invoke(this, false);
         };
 
+        // 诊断：CoreWebView2 属性访问
+        try
+        {
+            var cv = _webView.CoreWebView2;
+            LogHelper.Info($"[Browser] CoreWebView2 prop (pre-init): {(cv is null ? "null" : cv.GetType().FullName)}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Info($"[Browser] CoreWebView2 prop (pre-init) threw: {ex.GetType().Name}: {ex.Message}");
+        }
+
         LogHelper.Info($"[Browser] CreateBrowserControl done, _isReady={_isReady}");
         return _webView;
     }
@@ -101,9 +127,26 @@ public class BrowserProvider : IBrowserProvider
     {
         try
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             LogHelper.Info("[Browser] Calling EnsureCoreWebView2Async...");
             await _webView!.EnsureCoreWebView2Async();
-            LogHelper.Info("[Browser] CoreWebView2 kernel ready");
+            sw.Stop();
+            LogHelper.Info($"[Browser] EnsureCoreWebView2Async completed in {sw.ElapsedMilliseconds}ms");
+
+            // 诊断：初始化后检查 CoreWebView2 状态
+            try
+            {
+                var cv = _webView.CoreWebView2;
+                LogHelper.Info($"[Browser] CoreWebView2 after init: {(cv is null ? "null" : $"type={cv.GetType().FullName}, can navigate")}");
+                if (cv is not null)
+                {
+                    LogHelper.Info($"[Browser] CoreWebView2.Settings={(cv.Settings is null ? "null" : "ok")}");
+                }
+            }
+            catch (Exception ex2)
+            {
+                LogHelper.Error($"[Browser] Failed to inspect CoreWebView2 after init: {ex2.Message}", ex2);
+            }
 
             _isReady = true;
 
@@ -121,7 +164,8 @@ public class BrowserProvider : IBrowserProvider
         }
         catch (Exception ex)
         {
-            LogHelper.Error($"[Browser] CoreWebView2 initialization failed: {ex.Message}", ex);
+            LogHelper.Error($"[Browser] CoreWebView2 initialization FAILED: {ex.GetType().Name}: {ex.Message}", ex);
+            // 注意：Uno 内部可能会吞掉异常，这里显式记录
         }
     }
 
@@ -169,13 +213,25 @@ public class BrowserProvider : IBrowserProvider
 
         try
         {
-            // Uno Platform 中统一使用 Source 属性进行跨平台导航
-            LogHelper.Info("[Browser] Setting Source property to navigate");
-            _webView.Source = new Uri(url);
+            // 尝试 CoreWebView2.Navigate()（如果可用）和 Source 属性两种方式
+            if (_webView.CoreWebView2 is not null)
+            {
+                LogHelper.Info("[Browser] CoreWebView2 available, using CoreWebView2.Navigate()");
+                _webView.CoreWebView2.Navigate(url);
+            }
+            else
+            {
+                LogHelper.Info("[Browser] CoreWebView2 is null, using Source property");
+                _webView.Source = new Uri(url);
+            }
+
+            // 验证导航是否生效：检查 Source 属性值
+            LogHelper.Info($"[Browser] After navigate, Source={(object?)_webView.Source}");
         }
         catch (Exception ex)
         {
-            LogHelper.Error($"[Browser] Navigation failed for {url}, falling back to system browser", ex);
+            LogHelper.Error($"[Browser] Navigation FAILED for {url}: {ex.GetType().Name}: {ex.Message}", ex);
+            LogHelper.Info("[Browser] Falling back to system browser");
             SystemBrowserProvider.OpenUrl(url);
         }
     }

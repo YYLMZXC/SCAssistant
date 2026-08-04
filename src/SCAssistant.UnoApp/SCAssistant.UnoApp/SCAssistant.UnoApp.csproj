@@ -26,5 +26,7 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <!-- WebView2 WPF 后端正确定运行时所需，必须带别名避免与 Uno.UI 内部类型冲突 -->
+        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" Aliases="WpfWebView" />
     </ItemGroup>
 </Project>
