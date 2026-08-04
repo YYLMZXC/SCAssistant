@@ -13,6 +13,7 @@ public partial class MainPage : Page
 
         // Inject DataContext via DI
         DataContext = ServiceLocator.ServiceLocatorObj.GetRequiredService<MainViewModel>();
+        LogHelper.Info("[MainPage] Constructed, DataContext set");
 
         Loaded += OnControlLoaded;
 
@@ -26,12 +27,14 @@ public partial class MainPage : Page
     private void OnControlLoaded(object sender, RoutedEventArgs e)
     {
         Loaded -= OnControlLoaded;
+        LogHelper.Info("[MainPage] Loaded - creating browser");
 
         var browserControl = ServiceLocator.BrowserProvider.CreateBrowserControl();
         BrowserHost.Content = browserControl;
 
         if (DataContext is MainViewModel vm)
         {
+            LogHelper.Info("[MainPage] Calling NavigateToHome");
             vm.NavigateToHome();
         }
     }

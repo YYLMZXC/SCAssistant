@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -13,8 +12,6 @@ namespace SCAssistant.UnoApp.Services;
 /// - iOS: WKWebView
 /// - Desktop Skia: Uno 模拟实现
 ///
-/// 注意：Uno Platform 6.x 的 WebView2 不暴露 CoreWebView2InitializationCompleted 事件，
-/// 仅提供 NavigationStarting / NavigationCompleted / Source / CoreWebView2 / Reload 等基础 API。
 /// 使用 Loaded 事件作为控件就绪信号，确保 WebView2 加入可视化树后再执行导航。
 /// </summary>
 public class BrowserProvider : IBrowserProvider
@@ -36,72 +33,88 @@ public class BrowserProvider : IBrowserProvider
 
     public object CreateBrowserControl()
     {
+        LogHelper.Info("[Browser] CreateBrowserControl - creating WebView2");
         _webView = new WebView2();
         _isReady = false;
 
-        // 使用 Loaded 事件确保 WebView2 已加入可视化树、底层原生控件已创建后再导航
         _webView.Loaded += OnWebViewLoaded;
 
         _webView.NavigationStarting += (_, args) =>
         {
             _isLoading = true;
             _currentUrl = args.Uri?.ToString() ?? string.Empty;
+            LogHelper.Info($"[Browser] NavigationStarting -> {_currentUrl}");
             AddressChanged?.Invoke(this, _currentUrl);
             LoadingStateChanged?.Invoke(this, true);
         };
 
-        _webView.NavigationCompleted += (sender, _) =>
+        _webView.NavigationCompleted += (sender, args) =>
         {
             _isLoading = false;
+            LogHelper.Info($"[Browser] NavigationCompleted success={args.IsSuccess} err={args.WebErrorStatus}");
+
             try
             {
                 if (sender.CoreWebView2 is not null)
                 {
                     _currentTitle = sender.CoreWebView2.DocumentTitle ?? string.Empty;
                 }
+                else
+                {
+                    LogHelper.Info("[Browser] NavigationCompleted - CoreWebView2 is null (Skia/fallback mode)");
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[BrowserProvider] Failed to read document title: {ex.Message}");
+                LogHelper.Error("[Browser] Failed to read document title", ex);
             }
             TitleChanged?.Invoke(this, _currentTitle);
             LoadingStateChanged?.Invoke(this, false);
         };
 
+        LogHelper.Info($"[Browser] CreateBrowserControl done, _isReady={_isReady}");
         return _webView;
     }
 
-    /// <summary>
-    /// WebView2 加入可视化树后触发。在此之前导航可能因底层原生控件未创建而失败/空白。
-    /// </summary>
     private void OnWebViewLoaded(object sender, RoutedEventArgs e)
     {
         if (_webView is null) return;
         _webView.Loaded -= OnWebViewLoaded;
 
-        Debug.WriteLine("[BrowserProvider] WebView2 Loaded - ready to navigate");
+        LogHelper.Info("[Browser] WebView2.Loaded fired - control in visual tree");
         _isReady = true;
 
         if (_pendingNavigateUrl is not null)
         {
             var url = _pendingNavigateUrl;
             _pendingNavigateUrl = null;
+            LogHelper.Info($"[Browser] Executing pending navigation -> {url}");
             DoNavigate(url);
+        }
+        else
+        {
+            LogHelper.Info("[Browser] Loaded but no pending navigation");
         }
     }
 
     public void Initialize(string startUrl)
     {
+        LogHelper.Info($"[Browser] Initialize(startUrl={startUrl}) _isReady={_isReady}");
         _pendingNavigateUrl = startUrl;
         if (_webView is not null && _isReady)
         {
             _pendingNavigateUrl = null;
             DoNavigate(startUrl);
         }
+        else
+        {
+            LogHelper.Info("[Browser] Initialize deferred - waiting for Loaded event");
+        }
     }
 
     public void Navigate(string url)
     {
+        LogHelper.Info($"[Browser] Navigate(url={url}) _isReady={_isReady}");
         _currentUrl = url;
         if (_webView is not null && _isReady)
         {
@@ -109,12 +122,14 @@ public class BrowserProvider : IBrowserProvider
         }
         else
         {
+            LogHelper.Info("[Browser] Navigate deferred - waiting for Loaded event");
             _pendingNavigateUrl = url;
         }
     }
 
     public void Reload()
     {
+        LogHelper.Info("[Browser] Reload requested");
         _webView?.Reload();
     }
 
@@ -122,22 +137,24 @@ public class BrowserProvider : IBrowserProvider
     {
         if (_webView is null) return;
 
+        LogHelper.Info($"[Browser] DoNavigate -> {url}");
+
         try
         {
             if (_webView.CoreWebView2 is not null)
             {
+                LogHelper.Info("[Browser] Using CoreWebView2.Navigate()");
                 _webView.CoreWebView2.Navigate(url);
             }
             else
             {
-                // Uno Platform 桌面端 CoreWebView2 可能为 null，使用 Source 属性
-                Debug.WriteLine($"[BrowserProvider] Navigating via Source: {url}");
+                LogHelper.Info("[Browser] CoreWebView2 is null, using Source property");
                 _webView.Source = new Uri(url);
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[BrowserProvider] Navigation failed: {ex.Message}");
+            LogHelper.Error($"[Browser] Navigation failed for {url}, falling back to system browser", ex);
             SystemBrowserProvider.OpenUrl(url);
         }
     }

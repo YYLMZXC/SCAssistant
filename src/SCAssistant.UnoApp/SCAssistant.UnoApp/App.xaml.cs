@@ -14,11 +14,13 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
+        LogHelper.Info("[App] Constructor - configuring services");
         ConfigureServices();
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        LogHelper.Info("[App] OnLaunched - creating window");
         _mainWindow = new Window();
 
         var mainPage = new MainPage();
@@ -26,6 +28,7 @@ public partial class App : Application
         _mainWindow.Title = "SCAssistant - 生存战争助手";
 
         _mainWindow.Activate();
+        LogHelper.Info("[App] Window activated");
     }
 
     private static void ConfigureServices()
@@ -51,5 +54,7 @@ public partial class App : Application
         ServiceLocator.BrowserProvider = browserProvider;
         ServiceLocator.DownloadHistory = downloadHistory;
         ServiceLocator.ServiceLocatorObj = new ServiceLocatorInstance();
+
+        LogHelper.Info("[App] Services configured");
     }
 }
