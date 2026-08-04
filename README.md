@@ -1,107 +1,95 @@
-
 # SC 助手
 
-SCAssistant（SC 助手）是一个基于 [Avalonia UI](https://avaloniaui.net/) 的**跨平台**应用程序，为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。支持 Windows、macOS、Linux、Android 和 iOS 平台。
+SCAssistant（SC 助手）是一个基于 [Uno Platform](https://platform.uno/) 的**跨平台**应用程序，为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。一套代码同时支持 Windows 桌面、Android 和 iOS 平台。
 
 ## 主要功能
 
 - **快捷导航**：内置首页、[SCKey](https://www.sckey.net) 和 [SCWZ](https://scwz.top/) 一键跳转，方便快速访问生存战争社区资源。
-- **内置浏览器**：各平台均集成浏览器内核，提供流畅的浏览体验：
-  - Windows/macOS/Linux：基于 [Exclr8Cef](https://github.com/alexmehlhorn/exclr8cef)（Chromium Embedded Framework），跨平台一致体验
-  - Android：基于系统原生 WebView
-  - iOS：基于 WKWebView
-- **下载历史管理**：自动记录下载文件信息，支持查看、打开文件夹和删除记录。
-- **跨平台支持**：一套代码，同时编译为 Windows 桌面应用、Android APK 和 iOS 应用。
+- **内置浏览器**：基于 Uno Platform 的跨平台 WebView2，自动映射为各平台原生浏览器：
+  - Windows：Edge WebView2
+  - Android：Android WebView
+  - iOS：WKWebView
+  - 桌面 Skia 环境：自动回退到系统默认浏览器打开
+- **下载历史管理**：自动记录下载文件信息，支持查看记录、打开所在文件夹和删除记录。
+- **跨平台支持**：单一项目（Uno Single Project）同时编译为 Windows 桌面应用、Android APK 和 iOS 应用。
 
 ## 技术架构
 
-- **UI 框架**：Avalonia UI 12 + Fluent 主题
+- **UI 框架**：Uno Platform（Uno.Sdk，SkiaRenderer + WinUI 风格）
 - **运行时**：.NET 10
-- **桌面浏览器引擎**：[Exclr8Cef](https://github.com/alexmehlhorn/exclr8cef) 0.8（自包含 Chromium，无需额外安装浏览器运行时）
-- **架构模式**：MVVM（使用 CommunityToolkit.Mvvm）
+- **架构模式**：MVVM（CommunityToolkit.Mvvm，含依赖注入 IOC）
+- **依赖注入**：Microsoft.Extensions.DependencyInjection
 - **序列化**：Newtonsoft.Json
 
 ## 项目结构
 
 ```
-src/SCAssistant.AvaloniaApp/
-├── SCAssistant.AvaloniaApp/               # 共享核心项目（net10.0）
-│   ├── App.axaml / App.axaml.cs           # 应用入口
-│   ├── ViewModels/                        # MVVM 视图模型层
-│   │   ├── ViewModelBase.cs               # 基类
-│   │   ├── MainViewModel.cs               # 主页面逻辑
-│   │   └── DownloadListViewModel.cs       # 下载列表逻辑
-│   ├── Views/                             # MVVM 视图层
-│   │   ├── MainWindow.axaml               # 桌面主窗口
-│   │   ├── MainView.axaml                 # 主用户控件
-│   │   └── DownloadListWindow.axaml       # 下载列表弹出面板
-│   ├── Models/                            # 数据模型
-│   │   └── DownloadRecord.cs              # 下载记录
-│   └── Services/                          # 服务层
-│       ├── IBrowserProvider.cs            # 浏览器提供者接口
-│       ├── IDownloadHistoryService.cs     # 下载历史接口
-│       ├── DownloadHistoryService.cs      # 下载历史实现
-│       ├── ServiceLocator.cs              # 服务定位器
-│       ├── PlaceholderBrowserProvider.cs  # 占位浏览器（未适配平台时使用）
-│       └── SystemBrowserProvider.cs       # 系统浏览器降级方案
-├── SCAssistant.AvaloniaApp.Desktop/         # 桌面项目（net10.0-windows）
-│   ├── Program.cs                           # 桌面入口点（含 Exclr8Cef 初始化）
-│   └── Services/Exclr8CefBrowserProvider.cs  # Exclr8Cef（CEF）浏览器实现
-├── SCAssistant.AvaloniaApp.Android/       # Android 项目（net10.0-android）
-│   ├── MainActivity.cs                    # Android 主 Activity
-│   └── Services/AndroidBrowserProvider.cs  # Android 原生 WebView 实现
-├── SCAssistant.AvaloniaApp.iOS/           # iOS 项目（net10.0-ios）
-│   ├── AppDelegate.cs                     # iOS 应用代理
-│   └── Services/iOSBrowserProvider.cs      # iOS WKWebView 实现
-├── SCAssistant.AvaloniaApp.slnx           # 解决方案文件
-└── Directory.Packages.props               # 中央包版本管理
+src/SCAssistant.UnoApp/
+├── SCAssistant.UnoApp.slnx           # 解决方案文件
+├── global.json                       # .NET SDK 版本锁定
+├── nuget.config                      # NuGet 源配置
+└── SCAssistant.UnoApp/               # 单一项目（Uno Single Project）
+    ├── App.xaml / App.xaml.cs        # 应用入口与依赖注入配置
+    ├── ViewModels/                   # MVVM 视图模型层
+    │   ├── ViewModelBase.cs          # 基类
+    │   ├── MainViewModel.cs          # 主页面逻辑（导航、浏览器状态）
+    │   └── DownloadListViewModel.cs  # 下载列表逻辑
+    ├── Views/                        # 视图层
+    │   ├── MainPage.xaml             # 主页面（工具栏 + 浏览器宿主 + 下载列表浮层）
+    │   └── DownloadListPanel.xaml    # 下载列表弹出面板
+    ├── Models/                       # 数据模型
+    │   └── DownloadRecord.cs         # 下载记录
+    ├── Services/                     # 服务层
+    │   ├── IBrowserProvider.cs       # 浏览器提供者接口
+    │   ├── BrowserProvider.cs        # 跨平台 WebView2 实现
+    │   ├── SystemBrowserProvider.cs  # 系统浏览器回退方案
+    │   ├── IDownloadHistoryService.cs # 下载历史接口
+    │   ├── DownloadHistoryService.cs  # 下载历史实现
+    │   └── ServiceLocator.cs          # 服务定位器（静态访问）
+    ├── Converters/                   # XAML 值转换器
+    ├── Platforms/                    # 平台特定入口与配置
+    │   ├── Desktop/Program.cs        # 桌面入口
+    │   ├── Android/                  # Android 入口与清单
+    │   └── iOS/                      # iOS 入口与配置
+    └── Assets/                       # 应用资源
 ```
 
 ## 依赖项
 
 | 包名 | 版本 | 说明 |
 |------|------|------|
-| Avalonia | 12.1.0 | Avalonia UI 核心框架 |
-| Avalonia.Themes.Fluent | 12.1.0 | Fluent 风格主题 |
-| Avalonia.Fonts.Inter | 12.1.0 | Inter 字体 |
+| Uno.Sdk | - | Uno Platform SDK（单项目构建，版本由 global.json 锁定） |
 | CommunityToolkit.Mvvm | 8.4.2 | MVVM 工具包 |
 | Newtonsoft.Json | 13.0.3 | JSON 序列化 |
-| Avalonia.Desktop | 12.1.0 | 桌面平台支持 |
-| Exclr8Cef.WebView | 0.8.0 | 跨平台 CEF 浏览器控件 |
-| Exclr8Cef | 0.8.0 | CEF (Chromium) 的 .NET 封装 |
-| Avalonia.Android | 12.1.0 | Android 平台支持 |
-| Avalonia.iOS | 12.1.0 | iOS 平台支持 |
 
 ## 如何运行
 
 ### 环境要求
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- **Windows/macOS/Linux**：无需额外安装浏览器运行时（Exclr8Cef 自包含 Chromium）
+- **Windows 桌面**：无需额外安装浏览器运行时（使用系统 Edge WebView2）
 - **Android**：需要 Android SDK 及相关编译工具
 - **iOS**：需要在 macOS 上使用 Xcode 进行编译
 
 ### 桌面端（Windows）
 
 ```bash
-cd src/SCAssistant.AvaloniaApp
-dotnet run --project SCAssistant.AvaloniaApp.Desktop
+dotnet run --project src/SCAssistant.UnoApp/SCAssistant.UnoApp -f net10.0-desktop
 ```
 
-或直接使用 Visual Studio / Rider 打开 `SCAssistant.AvaloniaApp.slnx`，选择 Desktop 项目运行。
+或直接使用 Visual Studio / Rider 打开 `src/SCAssistant.UnoApp/SCAssistant.UnoApp.slnx` 运行。
 
 ### Android
 
 ```bash
-cd src/SCAssistant.AvaloniaApp
-dotnet build SCAssistant.AvaloniaApp.Android -c Release
+dotnet build src/SCAssistant.UnoApp/SCAssistant.UnoApp -f net10.0-android -c Release
 ```
 
-生成的 APK 位于 `SCAssistant.AvaloniaApp.Android/bin/Release/net10.0-android/`。
+生成的 APK 位于 `src/SCAssistant.UnoApp/SCAssistant.UnoApp/bin/Release/net10.0-android/`。
 
 ### iOS
 
-在 macOS 上使用 Visual Studio for Mac 或 Rider 打开解决方案，选择 iOS 项目编译运行。
+在 macOS 上使用 Visual Studio for Mac 或 Rider 打开解决方案，选择 iOS 目标编译运行。
 
 ## 许可证
 
