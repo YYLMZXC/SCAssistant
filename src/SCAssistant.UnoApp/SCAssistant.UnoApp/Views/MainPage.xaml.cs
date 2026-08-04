@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using SCAssistant.UnoApp.Services;
 using SCAssistant.UnoApp.ViewModels;
 
@@ -25,6 +26,30 @@ public partial class MainPage : Page
             if (DataContext is MainViewModel vm)
                 vm.IsDownloadListVisible = false;
         };
+    }
+
+    /// <summary>
+    /// 地址栏回车键处理
+    /// </summary>
+    private void AddressBar_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter && DataContext is MainViewModel vm)
+        {
+            LogHelper.Info($"[主页面] 地址栏回车 -> {AddressBar.Text}");
+            vm.NavigateToCustomUrl(AddressBar.Text);
+        }
+    }
+
+    /// <summary>
+    /// 跳转按钮点击处理
+    /// </summary>
+    private void GoButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            LogHelper.Info($"[主页面] 跳转按钮点击 -> {AddressBar.Text}");
+            vm.NavigateToCustomUrl(AddressBar.Text);
+        }
     }
 
     private async void OnControlLoaded(object sender, RoutedEventArgs e)

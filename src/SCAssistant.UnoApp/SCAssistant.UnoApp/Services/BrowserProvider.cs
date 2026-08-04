@@ -3,6 +3,11 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+// 桌面端 WebView2 持久化缓存支持
+#if __SKIA__
+extern alias WpfWebView;
+#endif
+
 namespace SCAssistant.UnoApp.Services;
 
 /// <summary>
@@ -77,6 +82,8 @@ public class BrowserProvider : IBrowserProvider
             }
             LogHelper.Info("[浏览器] CoreWebView2Initialized 成功 - 运行时已完全就绪");
             LogHelper.Info($"[浏览器] CoreWebView2 类型: {sender.CoreWebView2?.GetType().FullName ?? "null"}");
+            // 内核就绪后，立即注册新窗口处理
+            RegisterNewWindowHandler();
         };
 
         _webView.NavigationStarting += (_, args) =>
@@ -140,6 +147,10 @@ public class BrowserProvider : IBrowserProvider
     /// 异步初始化 CoreWebView2 内核。
     /// 控件必须在可视化树中才能调用 EnsureCoreWebView2Async。
     /// 内核初始化成功后，_isReady = true，执行挂起的导航请求。
+    /// 
+    /// 桌面端（Windows Skia）：使用持久化用户数据文件夹，
+    /// 使 cookies、localStorage、缓存等在应用重启后得以保留，
+    /// 大幅提升二次启动时的页面加载速度。
     /// </summary>
     private async Task InitializeCoreWebView2Async()
     {
@@ -147,9 +158,31 @@ public class BrowserProvider : IBrowserProvider
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
             LogHelper.Info($"[浏览器] 正在调用 EnsureCoreWebView2Async... (iOS={IsIOSPlatform}, Android={IsAndroidPlatform})");
+
+#if __SKIA__
+            // 桌面端 (Windows Skia): 尝试使用持久化用户数据文件夹
+            // 这样 cookies / localStorage / 浏览器缓存会被保留，
+            // 二次启动无需重新下载 JS/CSS 等静态资源，加载速度显著提升
+            if (OperatingSystem.IsWindows())
+            {
+                await InitializeWithUserDataFolderAsync();
+            }
+            else
+            {
+                await _webView!.EnsureCoreWebView2Async();
+            }
+#else
             await _webView!.EnsureCoreWebView2Async();
+#endif
+
             sw.Stop();
             LogHelper.Info($"[浏览器] EnsureCoreWebView2Async 完成，耗时 {sw.ElapsedMilliseconds}ms");
+
+            // 内核就绪后，优化性能设置
+            ApplyPerformanceSettings();
+
+            // 注册新窗口处理（防止外部链接点击无反应）
+            RegisterNewWindowHandler();
 
             // 移动端：记录原生 WebView 实际尺寸（排查布局问题）
             if (IsMobilePlatform)
@@ -191,6 +224,83 @@ public class BrowserProvider : IBrowserProvider
         {
             LogHelper.Error($"[浏览器] CoreWebView2 初始化失败: {ex.GetType().Name}: {ex.Message}", ex);
             // 注意：Uno 内部可能会吞掉异常，这里显式记录
+        }
+    }
+
+#if __SKIA__
+    /// <summary>
+    /// 桌面端：使用持久化用户数据文件夹初始化 WebView2，
+    /// 使浏览器缓存、cookies、localStorage 在应用重启后保留。
+    /// </summary>
+    private async Task InitializeWithUserDataFolderAsync()
+    {
+        try
+        {
+            var userDataFolder = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SCAssistant", "WebView2Data");
+            System.IO.Directory.CreateDirectory(userDataFolder);
+
+            LogHelper.Info($"[浏览器] 正在创建 CoreWebView2Environment (userDataFolder={userDataFolder})");
+            var env = await WpfWebView::Microsoft.Web.WebView2.Core.CoreWebView2Environment
+                .CreateAsync(userDataFolder: userDataFolder);
+            await _webView!.EnsureCoreWebView2Async(env);
+            LogHelper.Info($"[浏览器] 使用持久化缓存目录初始化成功: {userDataFolder}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 创建自定义 CoreWebView2Environment 失败: {ex.Message}，回退默认初始化");
+            await _webView!.EnsureCoreWebView2Async();
+        }
+    }
+#endif
+
+    /// <summary>
+    /// 内核就绪后应用性能优化设置。
+    /// </summary>
+    private void ApplyPerformanceSettings()
+    {
+        if (_webView?.CoreWebView2?.Settings is null) return;
+
+        try
+        {
+            var settings = _webView.CoreWebView2.Settings;
+            // 确保 Web 消息功能启用（用于与页面通信）
+            settings.IsWebMessageEnabled = true;
+            LogHelper.Info("[浏览器] 性能设置已应用");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 应用性能设置失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 注册 NewWindowRequested 事件处理器。
+    /// 当网页中的链接使用 target="_blank" 或 JavaScript window.open() 时，
+    /// WebView2 会触发此事件。如果不处理，这些链接点击后无反应。
+    /// 这里将新窗口请求拦截并在当前 WebView 中打开，实现普通浏览器般的跳转体验。
+    /// </summary>
+    private void RegisterNewWindowHandler()
+    {
+        if (_webView?.CoreWebView2 is null) return;
+
+        try
+        {
+            _webView.CoreWebView2.NewWindowRequested += (sender, args) =>
+            {
+                var newUri = args.Uri;
+                LogHelper.Info($"[浏览器] NewWindowRequested -> {newUri}，拦截并在当前窗口打开");
+
+                // 阻止打开新窗口，在当前 WebView 中导航
+                args.Handled = true;
+                Navigate(newUri);
+            };
+            LogHelper.Info("[浏览器] NewWindowRequested 事件已注册");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 注册 NewWindowRequested 失败: {ex.Message}");
         }
     }
 

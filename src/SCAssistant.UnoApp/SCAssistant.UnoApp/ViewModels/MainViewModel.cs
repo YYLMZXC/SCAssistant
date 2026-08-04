@@ -94,4 +94,24 @@ public partial class MainViewModel : ViewModelBase
         IsDownloadListVisible = !IsDownloadListVisible;
         LogHelper.Info($"[主视图] 下载列表切换 -> {(IsDownloadListVisible ? "打开" : "关闭")}");
     }
+
+    /// <summary>
+    /// 导航到用户自定义URL，自动补全协议前缀
+    /// </summary>
+    public void NavigateToCustomUrl(string? rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl)) return;
+
+        var url = rawUrl.Trim();
+
+        // 自动补全 https:// 协议前缀
+        if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            url = "https://" + url;
+        }
+
+        LogHelper.Info($"[主视图] NavigateToCustomUrl -> {url}");
+        _browser.Navigate(url);
+    }
 }

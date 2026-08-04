@@ -25,6 +25,18 @@
                     <Button Content="SCKey" Command="{Binding NavigateSCKeyCommand}" Width="60" />
                     <Button Content="SCWZ" Command="{Binding NavigateSCWZCommand}" Width="60" />
                     <StackPanel Width="8" />
+                    <!-- Address bar -->
+                    <TextBox x:Name="AddressBar"
+                             Text="{Binding CurrentUrl, Mode=OneWay}"
+                             PlaceholderText="输入网址后按回车或点跳转"
+                             Width="300"
+                             VerticalAlignment="Center"
+                             KeyDown="AddressBar_KeyDown" />
+                    <Button x:Name="GoButton"
+                            Content="跳转"
+                            Width="50"
+                            Click="GoButton_Click" />
+                    <StackPanel Width="8" />
                     <Button Content="下载列表" Command="{Binding OpenDownloadListCommand}" Width="80" />
                     <!-- Loading indicator -->
                     <TextBlock Text="加载中..." VerticalAlignment="Center" Margin="8,0,0,0"
