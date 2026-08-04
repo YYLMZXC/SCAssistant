@@ -41,6 +41,14 @@
     <dict>
         <key>NSAllowsArbitraryLoads</key>
         <true/>
+        <!-- 允许 WKWebView 加载任意内容（包括内联媒体和 JS） -->
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
+        <true/>
     </dict>
+    <!-- WKWebView: 允许内联媒体播放（避免全屏强制） -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+    </array>
 </dict>
 </plist>
