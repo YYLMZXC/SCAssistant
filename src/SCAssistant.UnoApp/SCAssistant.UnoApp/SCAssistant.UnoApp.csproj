@@ -36,4 +36,9 @@
     <ItemGroup Condition="$(TargetFramework.Contains('desktop'))">
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" Aliases="WpfWebView" />
     </ItemGroup>
+
+    <!-- 桌面平台：嵌入图标到可执行文件（Win32 资源） -->
+    <PropertyGroup Condition="$(TargetFramework.Contains('desktop'))">
+        <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
+    </PropertyGroup>
 </Project>
