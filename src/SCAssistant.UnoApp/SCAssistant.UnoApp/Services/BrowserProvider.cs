@@ -237,15 +237,38 @@ public class BrowserProvider : IBrowserProvider
 
         LogHelper.Info($"[浏览器] DoNavigate -> {url} (iOS={IsIOSPlatform}, Android={IsAndroidPlatform})");
 
+        // 移动端：尺寸检查，如果 WebView 仍为 0x0，延迟导航
+        if (IsMobilePlatform && (_webView.ActualWidth <= 0 || _webView.ActualHeight <= 0))
+        {
+            var platform = IsAndroidPlatform ? "Android" : "iOS";
+            LogHelper.Warn($"[浏览器] {platform}: WebView 尺寸为 {_webView.ActualWidth}x{_webView.ActualHeight}，延迟导航");
+            _pendingNavigateUrl = url;
+            _ = DeferredMobileNavigateAsync(url);
+            return;
+        }
+
         try
         {
             // 移动端 (Android WebView / iOS WKWebView):
             // 优先使用 Source 属性，因为 Uno 的 CoreWebView2 包装层在移动端可能不可靠
-            // 直接用 Source 设置 URL 委托给原生 WebView/WKWebView 加载
             if (IsMobilePlatform)
             {
-                LogHelper.Info($"[浏览器] 移动端: 使用 Source 属性导航");
+                LogHelper.Info("[浏览器] 移动端: 使用 Source 属性导航");
                 _webView.Source = new Uri(url);
+
+                // Android: 双重兜底，也尝试 CoreWebView2.Navigate
+                if (IsAndroidPlatform && _webView.CoreWebView2 is not null)
+                {
+                    try
+                    {
+                        _webView.CoreWebView2.Navigate(url);
+                        LogHelper.Info("[浏览器] Android: 同时触发 CoreWebView2.Navigate 兜底");
+                    }
+                    catch (Exception ex2)
+                    {
+                        LogHelper.Warn($"[浏览器] Android CoreWebView2.Navigate 兜底失败: {ex2.Message}");
+                    }
+                }
             }
             else if (_webView.CoreWebView2 is not null)
             {
@@ -258,10 +281,8 @@ public class BrowserProvider : IBrowserProvider
                 _webView.Source = new Uri(url);
             }
 
-            // 验证导航是否生效：检查 Source 属性值
             LogHelper.Info($"[浏览器] 导航后 Source={(object?)_webView.Source}");
 
-            // 移动端: 二次验证 — 延迟检查导航是否真正触发了页面加载
             if (IsMobilePlatform)
             {
                 _ = VerifyMobileNavigationAsync(url);
@@ -273,6 +294,38 @@ public class BrowserProvider : IBrowserProvider
             LogHelper.Info("[浏览器] 回退到系统浏览器");
             SystemBrowserProvider.OpenUrl(url);
         }
+    }
+
+    /// <summary>
+    /// 移动端尺寸不足时，延迟等待布局完成后再导航。
+    /// </summary>
+    private async Task DeferredMobileNavigateAsync(string url)
+    {
+        var platform = IsAndroidPlatform ? "Android" : "iOS";
+        var maxWait = 3000;
+        var elapsed = 0;
+
+        while (elapsed < maxWait && _webView is not null)
+        {
+            await Task.Delay(200);
+            elapsed += 200;
+
+            if (_webView.ActualWidth > 0 && _webView.ActualHeight > 0)
+            {
+                LogHelper.Info($"[浏览器] {platform}: 尺寸就绪 ({elapsed}ms, {_webView.ActualWidth}x{_webView.ActualHeight})，执行延迟导航");
+                _pendingNavigateUrl = null;
+                DoNavigate(url);
+                return;
+            }
+        }
+
+        LogHelper.Warn($"[浏览器] {platform}: 延迟导航超时 ({maxWait}ms)，强制尝试");
+        _pendingNavigateUrl = null;
+        try
+        {
+            _webView!.Source = new Uri(url);
+        }
+        catch { }
     }
 
     /// <summary>

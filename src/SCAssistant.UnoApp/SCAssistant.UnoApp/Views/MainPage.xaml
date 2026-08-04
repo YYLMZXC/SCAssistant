@@ -11,7 +11,7 @@
 
     <Grid>
         <!-- Main content -->
-        <Grid>
+        <Grid x:Name="RootGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="36" />
                 <RowDefinition Height="*" />
@@ -32,8 +32,9 @@
                 </StackPanel>
             </Border>
 
-            <!-- Browser host area -->
-            <ContentControl Grid.Row="1" x:Name="BrowserHost" />
+            <!-- Browser host — 直接 Grid 容器，消除 ContentControl 中间层导致的布局丢失 -->
+            <Grid Grid.Row="1" x:Name="BrowserHost" 
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
 
         <!-- Download list overlay panel -->
