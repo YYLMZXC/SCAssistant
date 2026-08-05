@@ -17,15 +17,38 @@
     </Page.Resources>
 
     <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="AdaptiveStates">
+                <VisualState x:Name="NarrowState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="WideToolbar.Visibility" Value="Collapsed" />
+                        <Setter Target="NarrowToolbar.Visibility" Value="Visible" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="500" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="WideToolbar.Visibility" Value="Visible" />
+                        <Setter Target="NarrowToolbar.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
         <!-- Main content -->
         <Grid x:Name="RootGrid" utu:SafeArea.Insets="VisibleBounds">
             <Grid.RowDefinitions>
-                <RowDefinition Height="36" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Toolbar -->
-            <Border Grid.Row="0" Padding="4,2"
+            <!-- ========== 宽屏工具栏 (桌面端，单行) ========== -->
+            <Border Grid.Row="0" x:Name="WideToolbar" Padding="4,2"
                     Background="{ThemeResource SystemAltMediumLowColor}">
                 <Grid ColumnSpacing="6">
                     <Grid.ColumnDefinitions>
@@ -61,13 +84,70 @@
                     <Button Grid.Column="6" Content="前进"
                             Command="{Binding NavigateForwardCommand}"
                             Width="50" />
-                    <!-- Spacer 自动撑开，将右侧控件推到右边 -->
+                    <!-- Spacer -->
                     <Border Grid.Column="7" />
                     <!-- Loading indicator -->
                     <TextBlock Grid.Column="8" Text="加载中..." VerticalAlignment="Center"
                                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <Button Grid.Column="9" Content="设置" Command="{Binding OpenSettingsCommand}" Width="60" />
                 </Grid>
+            </Border>
+
+            <!-- ========== 窄屏工具栏 (手机端，双行) ========== -->
+            <Border Grid.Row="0" x:Name="NarrowToolbar" Padding="4,2"
+                    Visibility="Collapsed"
+                    Background="{ThemeResource SystemAltMediumLowColor}">
+                <StackPanel Spacing="3">
+                    <!-- 第1行：首页 + 快捷链接 + 设置 -->
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="SC中文社区" FontSize="12"
+                                Command="{Binding NavigateHomeCommand}" Width="95" Padding="4,4" />
+                        <Button Grid.Column="1" Content="SC联机号" FontSize="12"
+                                Command="{Binding NavigateSCKeyCommand}" Width="70" Padding="4,4" />
+                        <Button Grid.Column="2" Content="SC导航网" FontSize="12"
+                                Command="{Binding NavigateSCWZCommand}" Width="70" Padding="4,4" />
+                        <!-- 加载指示 -->
+                        <TextBlock Grid.Column="3" Text="加载中..." VerticalAlignment="Center" FontSize="11"
+                                   Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <!-- 弹性空白：推动设置按钮到最右 -->
+                        <Border Grid.Column="4" />
+                        <Button Grid.Column="5" Content="设置" FontSize="12"
+                                Command="{Binding OpenSettingsCommand}" Width="55" Padding="4,4" />
+                    </Grid>
+                    <!-- 第2行：地址栏 + 跳转 + 后退 + 前进 -->
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" x:Name="NarrowAddressBar"
+                                 Text="{Binding CurrentUrl, Mode=OneWay}"
+                                 PlaceholderText="输入网址后跳转"
+                                 FontSize="12"
+                                 VerticalAlignment="Center"
+                                 KeyDown="NarrowAddressBar_KeyDown" />
+                        <Button Grid.Column="1" x:Name="NarrowGoButton"
+                                Content="跳转" FontSize="12"
+                                Width="42" Padding="2,4"
+                                Click="NarrowGoButton_Click" />
+                        <Button Grid.Column="2" Content="后退" FontSize="12"
+                                Command="{Binding NavigateBackCommand}"
+                                Width="42" Padding="2,4" />
+                        <Button Grid.Column="3" Content="前进" FontSize="12"
+                                Command="{Binding NavigateForwardCommand}"
+                                Width="42" Padding="2,4" />
+                    </Grid>
+                </StackPanel>
             </Border>
 
             <!-- Browser host -->

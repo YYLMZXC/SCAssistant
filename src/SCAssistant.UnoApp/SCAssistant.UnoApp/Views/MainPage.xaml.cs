@@ -88,4 +88,19 @@ public sealed partial class MainPage : Page
         LogHelper.Info($"[主页] 跳转按钮点击: {AddressBar.Text}");
         ViewModel.NavigateToCustomUrl(AddressBar.Text);
     }
+
+    private void NarrowAddressBar_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            LogHelper.Info($"[主页] 窄屏地址栏回车: {NarrowAddressBar.Text}");
+            ViewModel.NavigateToCustomUrl(NarrowAddressBar.Text);
+        }
+    }
+
+    private void NarrowGoButton_Click(object sender, RoutedEventArgs e)
+    {
+        LogHelper.Info($"[主页] 窄屏跳转按钮点击: {NarrowAddressBar.Text}");
+        ViewModel.NavigateToCustomUrl(NarrowAddressBar.Text);
+    }
 }
