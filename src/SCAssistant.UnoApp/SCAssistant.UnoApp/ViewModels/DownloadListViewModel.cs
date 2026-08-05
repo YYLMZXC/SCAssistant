@@ -109,7 +109,7 @@ public partial class DownloadListViewModel : ViewModelBase
         {
             await _downloadService.StartDownloadAsync(
                 record,
-                progress: null,
+                onProgress: null,
                 ct: CancellationToken.None,
                 cookies: cookies);
             // 下载完成后刷新历史记录
