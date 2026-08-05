@@ -27,10 +27,10 @@
             <!-- Toolbar -->
             <Border Grid.Row="0" Padding="4,2"
                     Background="{ThemeResource SystemAltMediumLowColor}">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <Button Content="首页" Command="{Binding NavigateHomeCommand}" Width="60" />
-                    <Button Content="SCKey" Command="{Binding NavigateSCKeyCommand}" Width="60" />
-                    <Button Content="SCWZ" Command="{Binding NavigateSCWZCommand}" Width="60" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button Content="SC中文社区" Command="{Binding NavigateHomeCommand}" Width="110" />
+                    <Button Content="SC联机号" Command="{Binding NavigateSCKeyCommand}" Width="85" />
+                    <Button Content="SC导航网" Command="{Binding NavigateSCWZCommand}" Width="85" />
                     <Rectangle Width="8" />
                     <!-- Address bar -->
                     <TextBox x:Name="AddressBar"

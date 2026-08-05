@@ -17,7 +17,7 @@ public class MainViewModel : INotifyPropertyChanged
     private string _currentUrl = "https://test.suancaixianyu.cn/";
     private string _statusText = "就绪";
     private bool _isLoading;
-    private string _windowTitle = "SCAssistant";
+    private string _windowTitle = "生存战争助手";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -105,7 +105,7 @@ public class MainViewModel : INotifyPropertyChanged
         Settings = new SettingsViewModel(_settingsService, _browser, DownloadList);
 
         // 命令绑定
-        NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://www.scbbs.top//"));
+        NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://www.scbbs.top/"));
         NavigateSCKeyCommand = new RelayCommand(() => NavigateTo("https://www.sckey.net/"));
         NavigateSCWZCommand = new RelayCommand(() => NavigateTo("https://www.scwz.top/"));
         NavigateBackCommand = new RelayCommand(() => _browser.Reload()); // 简化：回到主页
