@@ -17,7 +17,7 @@ public sealed partial class MainPage : Page
 
         LogHelper.Info("[主页] 正在构造 MainPage");
 
-        _browserProvider = ServiceLocator.ServiceLocatorObj.BrowserProvider;
+        _browserProvider = ServiceLocator.BrowserProvider;
 
         // 注册 Browser WebView2 控件
         var browserControl = _browserProvider.CreateBrowserControl();
@@ -28,7 +28,7 @@ public sealed partial class MainPage : Page
         }
 
         // 获取 ViewModel（DI 创建，含 SettingsViewModel）
-        ViewModel = ServiceLocator.ServiceLocatorObj.GetViewModel<MainViewModel>();
+        ViewModel = ServiceLocator.ServiceLocatorObj.GetRequiredService<MainViewModel>();
         DataContext = ViewModel;
 
         // 监听 ViewModel 的 IsSettingsVisible 变化，控制设置面板可见性

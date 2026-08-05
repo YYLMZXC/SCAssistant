@@ -24,7 +24,8 @@ public partial class SettingsPanel : UserControl
         _tabSelectedBg = new SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
         _tabUnselectedBg = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         _tabSelectedFg = new SolidColorBrush(Microsoft.UI.Colors.White);
-        _tabUnselectedFg = (SolidColorBrush)Application.Current.Resources["SystemBaseMediumColor"];
+        var mediumColor = (Windows.UI.Color)Application.Current.Resources["SystemBaseMediumColor"];
+        _tabUnselectedFg = new SolidColorBrush(mediumColor);
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
