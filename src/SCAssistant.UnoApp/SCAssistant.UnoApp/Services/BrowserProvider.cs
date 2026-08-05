@@ -9,6 +9,11 @@ using SCAssistant.UnoApp.Models;
 extern alias WpfWebView;
 #endif
 
+// Android 平台：自定义 URL scheme 拦截
+#if __ANDROID__
+using Android.Content;
+#endif
+
 namespace SCAssistant.UnoApp.Services;
 
 /// <summary>
@@ -93,14 +98,26 @@ public class BrowserProvider : IBrowserProvider
             ApplyUserAgent();
         };
 
-        _webView.NavigationStarting += (_, args) =>
-        {
-            _isLoading = true;
-            _currentUrl = args.Uri?.ToString() ?? string.Empty;
-            LogHelper.Info($"[浏览器] 导航开始 -> {_currentUrl}");
-            AddressChanged?.Invoke(this, _currentUrl);
-            LoadingStateChanged?.Invoke(this, true);
-        };
+		_webView.NavigationStarting += (_, args) =>
+		{
+			var url = args.Uri?.ToString() ?? string.Empty;
+
+#if __ANDROID__
+			// 拦截非 http/https 自定义 URL scheme（如 wtloginmqq://、mqq:// 等）
+			// Android WebView 默认丢弃这类导航，需通过 Intent 跳转到对应 App
+			if (!string.IsNullOrEmpty(url) && TryHandleCustomScheme(url))
+			{
+				args.Cancel = true;
+				return;
+			}
+#endif
+
+			_isLoading = true;
+			_currentUrl = url;
+			LogHelper.Info($"[浏览器] 导航开始 -> {_currentUrl}");
+			AddressChanged?.Invoke(this, _currentUrl);
+			LoadingStateChanged?.Invoke(this, true);
+		};
 
         _webView.NavigationCompleted += (sender, args) =>
         {
@@ -871,4 +888,44 @@ public class BrowserProvider : IBrowserProvider
         }
         return false;
     }
+
+#if __ANDROID__
+    /// <summary>
+    /// Android：判断 URL 是否属于标准 Web scheme（http/https/file/about/data/javascript/blob），
+    /// 对于自定义 URL scheme（如 wtloginmqq://、mqq:// 等），通过 Android Intent 跳转到对应 App。
+    /// 返回 true 表示已通过 Intent 处理，调用方应取消 WebView 导航。
+    /// </summary>
+    private static bool TryHandleCustomScheme(string url)
+    {
+        // 标准 Web 协议由 WebView 自行处理
+        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("file://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("about:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("blob:", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // 自定义 scheme：通过 Android Intent 跳转到对应 App（QQ、微信等）
+        try
+        {
+            var intent = new Intent(Intent.ActionView);
+            intent.SetData(Android.Net.Uri.Parse(url));
+            intent.AddFlags(ActivityFlags.NewTask);
+            Android.App.Application.Context.StartActivity(intent);
+            LogHelper.Info($"[浏览器] 已通过 Intent 打开自定义 scheme: {url}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 无法处理自定义 scheme {url}: {ex.Message}");
+            // 如果系统没有能处理该 scheme 的 App（如未安装 QQ），返回 false
+            // 让 WebView 尝试处理（虽然大概率会静默失败，但不影响其他逻辑）
+            return false;
+        }
+    }
+#endif
 }
