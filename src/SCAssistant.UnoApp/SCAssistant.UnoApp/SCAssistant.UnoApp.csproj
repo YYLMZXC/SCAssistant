@@ -22,9 +22,9 @@
         -->
         <UnoFeatures>SkiaRenderer;Toolkit;ThemeService;Dsp</UnoFeatures>
 
-        <!-- Android ABI: arm64 for physical devices, x64 for emulators -->
-        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
-        <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
+        <!-- Android ABI: arm64 for physical devices, x64 for emulators (Android-only) -->
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">android-arm64;android-x64</RuntimeIdentifiers>
+        <AndroidCreatePackagePerAbi Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">true</AndroidCreatePackagePerAbi>
     </PropertyGroup>
 
     <ItemGroup>
