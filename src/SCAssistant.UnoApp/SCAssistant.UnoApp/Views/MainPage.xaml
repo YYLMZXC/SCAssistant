@@ -6,6 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:SCAssistant.UnoApp.Views"
     xmlns:converters="using:SCAssistant.UnoApp.Converters"
+    xmlns:utu="using:Uno.Toolkit.UI"
     mc:Ignorable="d"
     d:DesignWidth="1024" d:DesignHeight="768">
 
@@ -17,7 +18,7 @@
 
     <Grid>
         <!-- Main content -->
-        <Grid x:Name="RootGrid">
+        <Grid x:Name="RootGrid" utu:SafeArea.Insets="VisibleBounds">
             <Grid.RowDefinitions>
                 <RowDefinition Height="36" />
                 <RowDefinition Height="*" />
