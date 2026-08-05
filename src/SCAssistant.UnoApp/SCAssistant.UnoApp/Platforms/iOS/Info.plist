@@ -34,7 +34,7 @@
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
     <key>CFBundleDisplayName</key>
-    <string>SCAssistant</string>
+    <string>生存战争助手</string>
     <key>CFBundleName</key>
     <string>SCAssistant</string>
     <key>NSAppTransportSecurity</key>
