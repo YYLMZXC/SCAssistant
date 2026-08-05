@@ -31,6 +31,17 @@ public sealed partial class MainPage : Page
         ViewModel = ServiceLocator.ServiceLocatorObj.GetRequiredService<MainViewModel>();
         DataContext = ViewModel;
 
+        // 绑定浏览历史到设置面板
+        if (ViewModel.Settings is not null)
+        {
+            ViewModel.Settings.History = ViewModel.History;
+            ViewModel.Settings.OnNavigateToHistoryUrl = url =>
+            {
+                ViewModel.NavigateTo(url);
+                ViewModel.IsSettingsVisible = false;
+            };
+        }
+
         // 监听 ViewModel 的 IsSettingsVisible 变化，控制设置面板可见性
         ViewModel.PropertyChanged += (_, e) =>
         {

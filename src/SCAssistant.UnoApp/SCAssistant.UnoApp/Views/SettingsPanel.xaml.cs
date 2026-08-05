@@ -80,17 +80,35 @@ public partial class SettingsPanel : UserControl
             vm.SelectedTabIndex = 1;
     }
 
+    private void HistoryTab_Click(object sender, RoutedEventArgs e)
+    {
+        LogHelper.Info("[设置面板] 切换到历史记录标签");
+        if (DataContext is SettingsViewModel vm)
+            vm.SelectedTabIndex = 2;
+    }
+
+    private void HistoryListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (HistoryListBox.SelectedItem is string url && DataContext is SettingsViewModel vm)
+        {
+            HistoryListBox.SelectedIndex = -1; // 取消选中，允许重复点击
+            vm.NavigateToHistoryCommand.Execute(url);
+        }
+    }
+
     private void SetActiveTab(int index)
     {
-        var isBrowser = index == 0;
+        BrowserSettingsPanel.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+        DownloadSettingsPanel.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
+        HistorySettingsPanel.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
 
-        BrowserSettingsPanel.Visibility = isBrowser ? Visibility.Visible : Visibility.Collapsed;
-        DownloadSettingsPanel.Visibility = isBrowser ? Visibility.Collapsed : Visibility.Visible;
+        BrowserSettingsTab.Background = index == 0 ? _tabSelectedBg : _tabUnselectedBg;
+        BrowserSettingsTab.Foreground = index == 0 ? _tabSelectedFg : _tabUnselectedFg;
 
-        BrowserSettingsTab.Background = isBrowser ? _tabSelectedBg : _tabUnselectedBg;
-        BrowserSettingsTab.Foreground = isBrowser ? _tabSelectedFg : _tabUnselectedFg;
+        DownloadTab.Background = index == 1 ? _tabSelectedBg : _tabUnselectedBg;
+        DownloadTab.Foreground = index == 1 ? _tabSelectedFg : _tabUnselectedFg;
 
-        DownloadTab.Background = isBrowser ? _tabUnselectedBg : _tabSelectedBg;
-        DownloadTab.Foreground = isBrowser ? _tabUnselectedFg : _tabSelectedFg;
+        HistoryTab.Background = index == 2 ? _tabSelectedBg : _tabUnselectedBg;
+        HistoryTab.Foreground = index == 2 ? _tabSelectedFg : _tabUnselectedFg;
     }
 }

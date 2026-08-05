@@ -52,6 +52,11 @@
                         Click="DownloadTab_Click"
                         Background="Transparent"
                         Foreground="{StaticResource TabUnselectedFg}" />
+                <Button x:Name="HistoryTab"
+                        Content="历史记录" FontSize="13" Padding="12,6"
+                        Click="HistoryTab_Click"
+                        Background="Transparent"
+                        Foreground="{StaticResource TabUnselectedFg}" />
             </StackPanel>
 
             <!-- 内容区域 -->
@@ -101,6 +106,36 @@
                                 Command="{Binding OpenDownloadFolderCommand}" />
                         <Button Content="清除历史记录" FontSize="12"
                                 Command="{Binding ClearDownloadHistoryCommand}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Tab 2: 历史记录 -->
+                <StackPanel x:Name="HistorySettingsPanel" Spacing="8" Visibility="Collapsed">
+                    <TextBlock Text="浏览历史" FontSize="15" FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemBaseHighColor}" />
+                    <TextBlock Text="点击条目可跳转到对应页面。" FontSize="12"
+                               Foreground="Gray" TextWrapping="Wrap" />
+
+                    <ListBox x:Name="HistoryListBox"
+                             ItemsSource="{Binding History}"
+                             MaxHeight="400"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             SelectionChanged="HistoryListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Text="{Binding}"
+                                           FontSize="12"
+                                           TextTrimming="CharacterEllipsis"
+                                           Padding="8,6"
+                                           Foreground="{ThemeResource SystemBaseHighColor}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                        <Button Content="清除历史记录" FontSize="12"
+                                Command="{Binding ClearHistoryCommand}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>

@@ -31,15 +31,34 @@ public class SettingsViewModel : INotifyPropertyChanged
         new UaOption { Platform = UserAgentPlatform.Mobile, DisplayName = "移动版 (Android Chrome)" },
     };
 
-    /// <summary>当前选中的标签页索引：0=浏览器设置，1=下载管理。</summary>
+    /// <summary>当前选中的标签页索引：0=浏览器设置，1=下载管理，2=历史记录。</summary>
     public int SelectedTabIndex
     {
         get => _selectedTabIndex;
-        set { _selectedTabIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsBrowserSettingsTab)); OnPropertyChanged(nameof(IsDownloadTab)); }
+        set
+        {
+            _selectedTabIndex = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsBrowserSettingsTab));
+            OnPropertyChanged(nameof(IsDownloadTab));
+            OnPropertyChanged(nameof(IsHistoryTab));
+        }
     }
 
     public bool IsBrowserSettingsTab => _selectedTabIndex == 0;
     public bool IsDownloadTab => _selectedTabIndex == 1;
+    public bool IsHistoryTab => _selectedTabIndex == 2;
+
+    // ===================== 历史记录 =====================
+
+    /// <summary>浏览历史记录（由 MainPage 绑定）。</summary>
+    public ObservableCollection<string> History { get; set; } = new();
+
+    /// <summary>导航到历史 URL 后关闭面板的回调。</summary>
+    public Action<string>? OnNavigateToHistoryUrl { get; set; }
+
+    public IRelayCommand ClearHistoryCommand { get; }
+    public IRelayCommand NavigateToHistoryCommand { get; }
 
     /// <summary>当前选中的 UA 平台索引。</summary>
     public int SelectedUaIndex
@@ -94,6 +113,18 @@ public class SettingsViewModel : INotifyPropertyChanged
             LogHelper.Info("[设置] 切换到下载标签");
             IsVisible = true;
             SelectedTabIndex = 1;
+        });
+
+        ClearHistoryCommand = new RelayCommand(() =>
+        {
+            LogHelper.Info("[设置] 清除浏览历史");
+            History.Clear();
+        });
+        NavigateToHistoryCommand = new RelayCommand<string>(url =>
+        {
+            if (url is null) return;
+            LogHelper.Info($"[设置] 历史记录点击导航: {url}");
+            OnNavigateToHistoryUrl?.Invoke(url);
         });
 
         // 从已保存的设置初始化 UA
