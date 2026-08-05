@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SCAssistant.UnoApp.Models;
@@ -13,16 +16,18 @@ namespace SCAssistant.UnoApp.ViewModels;
 public partial class DownloadListViewModel : ViewModelBase
 {
     private readonly IDownloadHistoryService _historyService;
+    private readonly IDownloadService _downloadService;
 
     public ObservableCollection<DownloadRecord> Records { get; } = [];
 
     [ObservableProperty]
     public partial DownloadRecord? SelectedRecord { get; set; }
 
-    public DownloadListViewModel(IDownloadHistoryService historyService)
+    public DownloadListViewModel(IDownloadHistoryService historyService, IDownloadService downloadService)
     {
         LogHelper.Info("[下载列表] 构造函数 - 初始化");
         _historyService = historyService;
+        _downloadService = downloadService;
         _historyService.HistoryChanged += OnHistoryChanged;
         Refresh();
     }
@@ -30,7 +35,28 @@ public partial class DownloadListViewModel : ViewModelBase
     private void OnHistoryChanged()
     {
         LogHelper.Info("[下载列表] 历史记录变更，刷新列表");
-        Refresh();
+        SyncRecords();
+    }
+
+    /// <summary>
+    /// 智能同步：新记录追加，已有记录保留（以维护正在下载的记录引用）。
+    /// </summary>
+    private void SyncRecords()
+    {
+        // 移除已不在历史中的记录
+        var historyIds = new HashSet<string>(_historyService.Records.Select(r => r.Id));
+        for (int i = Records.Count - 1; i >= 0; i--)
+        {
+            if (!historyIds.Contains(Records[i].Id))
+                Records.RemoveAt(i);
+        }
+
+        // 追加新记录（未在列表中出现的）
+        foreach (var r in _historyService.Records)
+        {
+            if (!Records.Any(rec => rec.Id == r.Id))
+                Records.Add(r);
+        }
     }
 
     private void Refresh()
@@ -41,6 +67,43 @@ public partial class DownloadListViewModel : ViewModelBase
         LogHelper.Info($"[下载列表] 刷新完成，共 {Records.Count} 条记录");
     }
 
+    /// <summary>
+    /// 开始下载文件（从外部调用，如 MainViewModel 收到下载请求时）。
+    /// </summary>
+    public async void StartDownload(string url, string fileName)
+    {
+        var record = new DownloadRecord
+        {
+            Id = Guid.NewGuid().ToString("N")[..12],
+            FileName = fileName,
+            Url = url,
+            State = DownloadState.Pending,
+            DownloadTime = DateTime.Now
+        };
+
+        _historyService.AddRecord(record);
+        Records.Add(record);
+        LogHelper.Info($"[下载列表] 新增下载任务: {fileName}");
+
+        var progress = new Progress<(double Percent, long Received, long Total)>(p =>
+        {
+            // DownloadService 已直接更新 record 的属性（INotifyPropertyChanged），
+            // UI 会自动刷新，这里只打日志。
+        });
+
+        try
+        {
+            await _downloadService.StartDownloadAsync(record, progress, CancellationToken.None);
+            // 下载完成后刷新历史记录
+            _historyService.UpdateRecord(record);
+            LogHelper.Info($"[下载列表] 下载完成: {record.FileName}, 状态={record.State}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"[下载列表] 下载异常: {record.FileName}", ex);
+        }
+    }
+
     [RelayCommand]
     private void OpenFolder()
     {
@@ -49,8 +112,13 @@ public partial class DownloadListViewModel : ViewModelBase
             LogHelper.Warn("[下载列表] OpenFolder - 未选中任何记录");
             return;
         }
+
         var localPath = SelectedRecord.LocalPath;
 
+#if ANDROID
+        // Android: 使用 Intent 打开文件
+        OpenFileOnAndroid(localPath);
+#else
         if (File.Exists(localPath))
         {
             LogHelper.Info($"[下载列表] 打开文件所在位置: {localPath}");
@@ -76,18 +144,78 @@ public partial class DownloadListViewModel : ViewModelBase
                 LogHelper.Error($"[下载列表] 打开文件夹失败: {ex.Message}", ex);
             }
         }
+#endif
     }
 
+#if ANDROID
+    private static void OpenFileOnAndroid(string filePath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                LogHelper.Warn("[下载列表] Android 打开文件失败: 路径为空");
+                return;
+            }
+
+            if (File.Exists(filePath))
+            {
+                var file = new Java.IO.File(filePath);
+                var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
+                    Android.App.Application.Context,
+                    Android.App.Application.Context.PackageName + ".provider",
+                    file);
+
+                var intent = new Android.Content.Intent(Android.Content.Intent.ActionView);
+                intent.SetDataAndType(uri, GetMimeType(filePath));
+                intent.AddFlags(Android.Content.ActivityFlags.GrantReadUriPermission);
+                intent.AddFlags(Android.Content.ActivityFlags.NewTask);
+
+                Android.App.Application.Context.StartActivity(intent);
+                LogHelper.Info($"[下载列表] Android 打开文件: {filePath}");
+            }
+            else
+            {
+                LogHelper.Warn($"[下载列表] Android 文件不存在: {filePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"[下载列表] Android 打开文件异常: {ex.Message}", ex);
+        }
+    }
+
+    private static string GetMimeType(string filePath)
+    {
+        var ext = Path.GetExtension(filePath)?.ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf" => "application/pdf",
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".mp4" => "video/mp4",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".txt" => "text/plain",
+            ".html" or ".htm" => "text/html",
+            ".zip" => "application/zip",
+            ".apk" => "application/vnd.android.package-archive",
+            _ => "*/*"
+        };
+    }
+#else
     private static void RevealFileInFolder(string filePath)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
             LogHelper.Info($"[下载列表] 资源管理器定位文件(Windows): {filePath}");
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            Process.Start("open", $"-R \"{filePath}\"");
+            System.Diagnostics.Process.Start("open", $"-R \"{filePath}\"");
             LogHelper.Info($"[下载列表] Finder 定位文件(macOS): {filePath}");
         }
         else
@@ -102,25 +230,27 @@ public partial class DownloadListViewModel : ViewModelBase
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Process.Start("explorer.exe", $"\"{folderPath}\"");
+            System.Diagnostics.Process.Start("explorer.exe", $"\"{folderPath}\"");
             LogHelper.Info($"[下载列表] 资源管理器打开目录(Windows): {folderPath}");
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            Process.Start("open", $"\"{folderPath}\"");
+            System.Diagnostics.Process.Start("open", $"\"{folderPath}\"");
             LogHelper.Info($"[下载列表] Finder 打开目录(macOS): {folderPath}");
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            Process.Start("xdg-open", $"\"{folderPath}\"");
+            System.Diagnostics.Process.Start("xdg-open", $"\"{folderPath}\"");
             LogHelper.Info($"[下载列表] 文件管理器打开目录(Linux): {folderPath}");
         }
         else
         {
-            Process.Start(new ProcessStartInfo(folderPath) { UseShellExecute = true });
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folderPath)
+            { UseShellExecute = true });
             LogHelper.Info($"[下载列表] 打开目录(其他平台): {folderPath}");
         }
     }
+#endif
 
     [RelayCommand]
     private void DeleteRecord()
@@ -130,8 +260,14 @@ public partial class DownloadListViewModel : ViewModelBase
             LogHelper.Warn("[下载列表] 删除记录 - 未选中任何记录");
             return;
         }
+
+        // 如果正在下载中，先取消
+        if (SelectedRecord.State == DownloadState.Downloading)
+            _downloadService.CancelDownload(SelectedRecord.Id);
+
         LogHelper.Info($"[下载列表] 删除记录: Id={SelectedRecord.Id}, Name={SelectedRecord.FileName}");
         _historyService.RemoveRecord(SelectedRecord);
+        Records.Remove(SelectedRecord);
         SelectedRecord = null;
     }
 }

@@ -10,6 +10,7 @@
 
     <UserControl.Resources>
         <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+        <converters:DownloadStateToTextConverter x:Key="StateToTextConverter" />
     </UserControl.Resources>
 
     <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
@@ -43,8 +44,29 @@
                     <DataTemplate>
                         <Border Padding="4" Margin="0,2">
                             <StackPanel Spacing="2">
-                                <TextBlock Text="{Binding FileName}" FontWeight="Bold"
-                                           TextTrimming="CharacterEllipsis" />
+                                <!-- 文件名 + 文件大小 -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding FileName}" FontWeight="Bold"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="{Binding FileSizeDisplay}"
+                                               FontSize="11" Foreground="Gray"
+                                               VerticalAlignment="Center"
+                                               Margin="8,0,0,0" />
+                                </Grid>
+
+                                <!-- 进度条 -->
+                                <ProgressBar Value="{Binding Progress}" Maximum="100"
+                                             Height="4"
+                                             Visibility="Visible"
+                                             Margin="0,2" />
+
+                                <!-- 状态 + 百分比 -->
+                                <TextBlock FontSize="11" Foreground="Gray">
+                                    <Run Text="{Binding State, Converter={StaticResource StateToTextConverter}}" />
+                                    <Run Text=" - " />
+                                    <Run Text="{Binding Progress, StringFormat={}{0:F0}%}" />
+                                </TextBlock>
+
                                 <TextBlock Text="{Binding Url}" FontSize="11"
                                            Foreground="Gray"
                                            TextTrimming="CharacterEllipsis" />

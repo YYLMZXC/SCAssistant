@@ -51,6 +51,9 @@ public partial class App : Application
         downloadHistory.Load();
         services.AddSingleton<IDownloadHistoryService>(downloadHistory);
 
+        var downloadService = new DownloadService();
+        services.AddSingleton<IDownloadService>(downloadService);
+
         var browserProvider = new BrowserProvider();
         services.AddSingleton<IBrowserProvider>(browserProvider);
 
@@ -64,6 +67,7 @@ public partial class App : Application
         // Populate static ServiceLocator
         ServiceLocator.BrowserProvider = browserProvider;
         ServiceLocator.DownloadHistory = downloadHistory;
+        ServiceLocator.DownloadService = downloadService;
         ServiceLocator.ServiceLocatorObj = new ServiceLocatorInstance();
 
         LogHelper.Info("[应用] 服务配置完成");

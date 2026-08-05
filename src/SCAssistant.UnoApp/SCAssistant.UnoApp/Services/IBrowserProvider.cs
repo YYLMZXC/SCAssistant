@@ -10,6 +10,12 @@ public interface IBrowserProvider
     event EventHandler<string>? AddressChanged;
     event EventHandler<string>? TitleChanged;
     event EventHandler<bool>? LoadingStateChanged;
+    /// <summary>
+    /// 当 WebView 中有文件下载请求时触发（如点击下载链接）。
+    /// 参数为下载 URL。
+    /// 注意：桌面端 WebView2 自带下载对话框，此事件主要用于 Android/iOS。
+    /// </summary>
+    event EventHandler<string>? DownloadRequested;
 
     string CurrentUrl { get; }
     string CurrentTitle { get; }

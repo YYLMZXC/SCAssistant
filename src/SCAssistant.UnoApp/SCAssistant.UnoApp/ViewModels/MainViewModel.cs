@@ -30,11 +30,11 @@ public partial class MainViewModel : ViewModelBase
     private const string SCKeyUrl = "https://www.sckey.net";
     private const string SCWZUrl = "https://scwz.top/";
 
-    public MainViewModel(IBrowserProvider browser, IDownloadHistoryService historyService)
+    public MainViewModel(IBrowserProvider browser, IDownloadHistoryService historyService, IDownloadService downloadService)
     {
         LogHelper.Info("[主视图] 构造函数 - 初始化 MainViewModel");
         _browser = browser;
-        DownloadList = new DownloadListViewModel(historyService);
+        DownloadList = new DownloadListViewModel(historyService, downloadService);
 
         _browser.AddressChanged += (_, url) =>
         {
@@ -50,6 +50,15 @@ public partial class MainViewModel : ViewModelBase
         {
             IsBrowserLoading = loading;
         };
+
+        // 监听 WebView 下载请求（主要用于 Android）
+        _browser.DownloadRequested += (_, url) =>
+        {
+            LogHelper.Info($"[主视图] 收到下载请求 -> {url}");
+            var fileName = GetFileNameFromUrl(url);
+            DownloadList.StartDownload(url, fileName);
+        };
+
         LogHelper.Info("[主视图] 构造函数 - 初始化完成");
     }
 
@@ -93,6 +102,22 @@ public partial class MainViewModel : ViewModelBase
     {
         IsDownloadListVisible = !IsDownloadListVisible;
         LogHelper.Info($"[主视图] 下载列表切换 -> {(IsDownloadListVisible ? "打开" : "关闭")}");
+    }
+
+    /// <summary>
+    /// 从 URL 提取文件名。
+    /// </summary>
+    private static string GetFileNameFromUrl(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            var name = System.IO.Path.GetFileName(uri.AbsolutePath);
+            if (!string.IsNullOrWhiteSpace(name))
+                return Uri.UnescapeDataString(name);
+        }
+        catch { }
+        return "download";
     }
 
     /// <summary>

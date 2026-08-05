@@ -43,6 +43,7 @@ public class BrowserProvider : IBrowserProvider
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
+    public event EventHandler<string>? DownloadRequested;
 
     public string CurrentUrl => _currentUrl;
     public string CurrentTitle => _currentTitle;
@@ -82,8 +83,9 @@ public class BrowserProvider : IBrowserProvider
             }
             LogHelper.Info("[浏览器] CoreWebView2Initialized 成功 - 运行时已完全就绪");
             LogHelper.Info($"[浏览器] CoreWebView2 类型: {sender.CoreWebView2?.GetType().FullName ?? "null"}");
-            // 内核就绪后，立即注册新窗口处理
+            // 内核就绪后，立即注册新窗口处理和下载处理
             RegisterNewWindowHandler();
+            RegisterDownloadHandler();
         };
 
         _webView.NavigationStarting += (_, args) =>
@@ -183,6 +185,9 @@ public class BrowserProvider : IBrowserProvider
 
             // 注册新窗口处理（防止外部链接点击无反应）
             RegisterNewWindowHandler();
+
+            // 注册下载事件处理（Android 需要拦截下载）
+            RegisterDownloadHandler();
 
             // 移动端：记录原生 WebView 实际尺寸（排查布局问题）
             if (IsMobilePlatform)
@@ -463,5 +468,197 @@ public class BrowserProvider : IBrowserProvider
         {
             LogHelper.Warn($"[浏览器] 移动端导航验证异常: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 注册下载事件处理（跨平台）。
+    ///
+    /// 策略:
+    /// - Android: Uno 不暴露 Android WebView 的原生 DownloadListener，也不支持
+    ///   CoreWebView2.DownloadStarting。因此采用双重拦截方案：
+    ///   1) 页面加载完成后注入 JS，拦截 &lt;a&gt; 标签中已知下载扩展名的链接
+    ///   2) NavigationStarting 中检测下载型 URL 作为兜底
+    /// - iOS (WKWebView): 同样不原生支持下载对话框，采用类似策略。
+    /// - 桌面端 (WebView2): WebView2 自带下载对话框，无需额外处理。
+    /// </summary>
+    private void RegisterDownloadHandler()
+    {
+        if (_webView is null) return;
+
+        try
+        {
+            if (IsMobilePlatform)
+            {
+                // 移动端: 在每次页面导航完成后注入下载拦截 JS
+                _webView.NavigationCompleted += (sender, args) =>
+                {
+                    InjectDownloadInterceptorAsync();
+                };
+
+                // 移动端: 也在 NavigationStarting 中检测下载型 URL
+                _webView.NavigationStarting += (sender, args) =>
+                {
+                    var url = args.Uri?.ToString();
+                    if (string.IsNullOrWhiteSpace(url)) return;
+
+                    if (IsDownloadableUrl(url))
+                    {
+                        args.Cancel = true; // 阻止 WebView 导航（否则会空白页）
+                        LogHelper.Info($"[浏览器] NavigationStarting 检测到下载链接，拦截 -> {url}");
+                        DownloadRequested?.Invoke(this, url);
+                    }
+                };
+
+                // 移动端: 监听 WebMessage（JS 通过 postMessage 通知下载）
+                _webView.WebMessageReceived += (_, args) =>
+                {
+                    // JS 通过 chrome.webview.postMessage 发送纯字符串，
+                    // Uno 将其作为 JSON 字符串包裹，需去除首尾引号
+                    var raw = args.WebMessageAsJson;
+                    if (!string.IsNullOrWhiteSpace(raw))
+                    {
+                        var message = raw.Trim('"');
+                        // 格式: "download:{url}"
+                        if (message is not null && message.StartsWith("download:", StringComparison.Ordinal))
+                        {
+                            var downloadUrl = message["download:".Length..];
+                            LogHelper.Info($"[浏览器] JS 通知下载 -> {downloadUrl}");
+                            DownloadRequested?.Invoke(this, downloadUrl);
+                        }
+                    }
+                };
+
+                LogHelper.Info("[浏览器] 移动端下载拦截已注册 (JS注入 + NavigationStarting 检测)");
+            }
+            else
+            {
+                LogHelper.Info("[浏览器] 桌面端: 使用 WebView2 自带下载对话框");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 注册下载处理失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 在当前页面注入下载拦截 JavaScript。
+    /// 拦截已知下载扩展名的 &lt;a&gt; 标签点击，通过 window.chrome.webview.postMessage 通知 C# 层。
+    /// </summary>
+    private async void InjectDownloadInterceptorAsync()
+    {
+        if (_webView?.CoreWebView2 is null) return;
+
+        try
+        {
+            await _webView.CoreWebView2.ExecuteScriptAsync(DownloadInterceptorJs);
+            LogHelper.Info("[浏览器] 下载拦截 JS 注入完成");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] JS 注入失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 下载拦截 JavaScript: 拦截已知下载扩展名的链接点击。
+    /// </summary>
+    private const string DownloadInterceptorJs = @"
+(function() {
+    if (window.__scDownloadInterceptorInstalled) return;
+    window.__scDownloadInterceptorInstalled = true;
+
+    var downloadExtensions = [
+        '.apk','.zip','.rar','.7z','.tar','.gz','.bz2','.xz',
+        '.mp3','.wav','.ogg','.flac','.aac','.m4a',
+        '.mp4','.avi','.mkv','.mov','.wmv','.flv','.webm',
+        '.pdf','.doc','.docx','.xls','.xlsx','.ppt','.pptx',
+        '.txt','.csv','.json','.xml','.log',
+        '.png','.jpg','.jpeg','.gif','.bmp','.svg','.webp',
+        '.exe','.msi','.dmg','.deb','.rpm',
+        '.iso','.img'
+    ];
+
+    function isDownloadLink(url) {
+        if (!url) return false;
+        var lower = url.toLowerCase().split('?')[0].split('#')[0];
+        for (var i = 0; i < downloadExtensions.length; i++) {
+            if (lower.endsWith(downloadExtensions[i])) return true;
+        }
+        return false;
+    }
+
+    // 方案 A: 全局点击委托
+    document.addEventListener('click', function(e) {
+        var target = e.target;
+        while (target && target !== document) {
+            if (target.tagName === 'A' && target.href) {
+                if (isDownloadLink(target.href)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // 通过 postMessage 通知 C# 层
+                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+                        window.chrome.webview.postMessage('download:' + target.href);
+                    }
+                    return false;
+                }
+                return;
+            }
+            target = target.parentElement;
+        }
+    }, true);
+
+    // 方案 B: 拦截所有 <a> 标签的 download 属性
+    var links = document.querySelectorAll('a[download]');
+    for (var i = 0; i < links.length; i++) {
+        (function(link) {
+            link.addEventListener('click', function(e) {
+                if (isDownloadLink(link.href)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+                        window.chrome.webview.postMessage('download:' + link.href);
+                    }
+                }
+            });
+        })(links[i]);
+    }
+})();
+";
+
+    /// <summary>
+    /// 判断 URL 是否指向可下载文件（按扩展名匹配）。
+    /// 作为 JS 注入拦截的兜底方案，处理 JS 注入失败或新页面中的链接。
+    /// </summary>
+    private static bool IsDownloadableUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return false;
+
+        var extensions = new[]
+        {
+            ".apk", ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz",
+            ".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a",
+            ".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm",
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+            ".txt", ".csv", ".json", ".xml", ".log",
+            ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".webp",
+            ".exe", ".msi", ".dmg", ".deb", ".rpm",
+            ".iso", ".img"
+        };
+
+        var path = new Uri(url).AbsolutePath.ToLowerInvariant();
+        // 去掉查询参数
+        var queryIndex = path.IndexOf('?');
+        if (queryIndex >= 0) path = path.Substring(0, queryIndex);
+
+        foreach (var ext in extensions)
+        {
+            if (path.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+            {
+                LogHelper.Info($"[浏览器] IsDownloadableUrl -> {url} (匹配扩展名 {ext})");
+                return true;
+            }
+        }
+        return false;
     }
 }
