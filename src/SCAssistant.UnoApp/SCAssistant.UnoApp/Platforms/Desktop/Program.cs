@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using SCAssistant.UnoApp.Services;
 using Uno.UI.Hosting;
 
@@ -14,6 +15,7 @@ internal class Program
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             AllocConsole();
+            Console.OutputEncoding = Encoding.UTF8;
         }
         LogHelper.Info("[应用] 启动中...");
 

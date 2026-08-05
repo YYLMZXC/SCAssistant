@@ -10,15 +10,20 @@ public interface IBrowserProvider
     event EventHandler<string>? TitleChanged;
     event EventHandler<bool>? LoadingStateChanged;
     event EventHandler<string>? DownloadRequested;
+    event EventHandler? NavigationHistoryChanged;
 
     string CurrentUrl { get; }
     string CurrentTitle { get; }
     bool IsLoading { get; }
+    bool CanGoBack { get; }
+    bool CanGoForward { get; }
 
     object CreateBrowserControl();
     void Initialize(string startUrl);
     void Navigate(string url);
     void Reload();
+    void GoBack();
+    void GoForward();
 
     /// <summary>设置浏览器用户代理标识平台。</summary>
     void SetUserAgent(UserAgentPlatform platform);

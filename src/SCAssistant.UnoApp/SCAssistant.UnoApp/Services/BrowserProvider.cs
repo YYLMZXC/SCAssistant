@@ -32,6 +32,8 @@ public class BrowserProvider : IBrowserProvider
     private string _currentUrl = string.Empty;
     private string _currentTitle = string.Empty;
     private bool _isLoading;
+    private bool _canGoBack;
+    private bool _canGoForward;
     private string? _pendingNavigateUrl;
     private bool _isReady;
     private UserAgentPlatform _userAgentPlatform = UserAgentPlatform.Auto;
@@ -46,10 +48,13 @@ public class BrowserProvider : IBrowserProvider
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
     public event EventHandler<string>? DownloadRequested;
+    public event EventHandler? NavigationHistoryChanged;
 
     public string CurrentUrl => _currentUrl;
     public string CurrentTitle => _currentTitle;
     public bool IsLoading => _isLoading;
+    public bool CanGoBack => _canGoBack;
+    public bool CanGoForward => _canGoForward;
 
     public object CreateBrowserControl()
     {
@@ -107,6 +112,9 @@ public class BrowserProvider : IBrowserProvider
                 if (sender.CoreWebView2 is not null)
                 {
                     _currentTitle = sender.CoreWebView2.DocumentTitle ?? string.Empty;
+                    _canGoBack = sender.CoreWebView2.CanGoBack;
+                    _canGoForward = sender.CoreWebView2.CanGoForward;
+                    NavigationHistoryChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
             catch (Exception ex)
@@ -305,6 +313,24 @@ public class BrowserProvider : IBrowserProvider
         LogHelper.Info("[浏览器] 请求刷新页面");
         _webView?.Reload();
         LogHelper.Info("[浏览器] Reload 已调用");
+    }
+
+    public void GoBack()
+    {
+        LogHelper.Info("[浏览器] 请求后退");
+        if (_webView?.CoreWebView2 is not null && _canGoBack)
+        {
+            _webView.CoreWebView2.GoBack();
+        }
+    }
+
+    public void GoForward()
+    {
+        LogHelper.Info("[浏览器] 请求前进");
+        if (_webView?.CoreWebView2 is not null && _canGoForward)
+        {
+            _webView.CoreWebView2.GoForward();
+        }
     }
 
     private void DoNavigate(string url)

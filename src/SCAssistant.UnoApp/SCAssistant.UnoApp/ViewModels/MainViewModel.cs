@@ -39,6 +39,20 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isLoading = value; OnPropertyChanged(); }
     }
 
+    private bool _canGoBack;
+    public bool CanGoBack
+    {
+        get => _canGoBack;
+        set { _canGoBack = value; OnPropertyChanged(); }
+    }
+
+    private bool _canGoForward;
+    public bool CanGoForward
+    {
+        get => _canGoForward;
+        set { _canGoForward = value; OnPropertyChanged(); }
+    }
+
     public string WindowTitle
     {
         get => _windowTitle;
@@ -84,6 +98,7 @@ public class MainViewModel : INotifyPropertyChanged
     public IRelayCommand NavigateSCKeyCommand { get; }
     public IRelayCommand NavigateSCWZCommand { get; }
     public IRelayCommand NavigateBackCommand { get; }
+    public IRelayCommand NavigateForwardCommand { get; }
     public IRelayCommand ReloadCommand { get; }
     public IRelayCommand OpenSettingsCommand { get; }
     public IRelayCommand CloseSettingsCommand { get; }
@@ -108,7 +123,8 @@ public class MainViewModel : INotifyPropertyChanged
         NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://www.scbbs.top/"));
         NavigateSCKeyCommand = new RelayCommand(() => NavigateTo("https://www.sckey.net/"));
         NavigateSCWZCommand = new RelayCommand(() => NavigateTo("https://www.scwz.top/"));
-        NavigateBackCommand = new RelayCommand(() => _browser.Reload()); // 简化：回到主页
+        NavigateBackCommand = new RelayCommand(() => _browser.GoBack(), () => _browser.CanGoBack);
+        NavigateForwardCommand = new RelayCommand(() => _browser.GoForward(), () => _browser.CanGoForward);
         ReloadCommand = new RelayCommand(() => _browser.Reload());
         OpenSettingsCommand = new RelayCommand(() =>
         {
@@ -139,6 +155,14 @@ public class MainViewModel : INotifyPropertyChanged
         {
             IsLoading = loading;
             StatusText = loading ? "加载中..." : "就绪";
+        };
+        _browser.NavigationHistoryChanged += (_, _) =>
+        {
+            CanGoBack = _browser.CanGoBack;
+            CanGoForward = _browser.CanGoForward;
+            // 刷新命令的 CanExecute 状态
+            NavigateBackCommand.NotifyCanExecuteChanged();
+            NavigateForwardCommand.NotifyCanExecuteChanged();
         };
 
         // 下载请求事件：自动弹出设置面板并触发下载
