@@ -1,142 +1,223 @@
 using System;
-using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.Input;
 using SCAssistant.UnoApp.Services;
 
 namespace SCAssistant.UnoApp.ViewModels;
 
-public partial class MainViewModel : ViewModelBase
+public class MainViewModel : INotifyPropertyChanged
 {
     private readonly IBrowserProvider _browser;
+    private readonly ISettingsService _settingsService;
 
-    [ObservableProperty]
-    public partial string CurrentUrl { get; set; } = string.Empty;
+    // ===================== 浏览器相关 =====================
 
-    [ObservableProperty]
-    public partial string CurrentTitle { get; set; } = "SCAssistant";
+    private string _currentUrl = "https://test.suancaixianyu.cn/";
+    private string _statusText = "就绪";
+    private bool _isLoading;
+    private string _windowTitle = "SCAssistant";
 
-    [ObservableProperty]
-    public partial bool IsBrowserLoading { get; set; }
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    [ObservableProperty]
-    public partial bool IsDownloadListVisible { get; set; }
+    public string CurrentUrl
+    {
+        get => _currentUrl;
+        set { _currentUrl = value; OnPropertyChanged(); }
+    }
 
-    [ObservableProperty]
-    public partial bool IsInitialized { get; set; }
+    public string StatusText
+    {
+        get => _statusText;
+        set { _statusText = value; OnPropertyChanged(); }
+    }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set { _isLoading = value; OnPropertyChanged(); }
+    }
+
+    public string WindowTitle
+    {
+        get => _windowTitle;
+        set { _windowTitle = value; OnPropertyChanged(); }
+    }
+
+    // ===================== 历史记录 =====================
+
+    public ObservableCollection<string> History { get; } = new();
+
+    // ===================== 设置面板 =====================
+
+    private SettingsViewModel? _settings;
+    public SettingsViewModel? Settings
+    {
+        get => _settings;
+        set { _settings = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>设置面板是否可见（绑定 MainPage 中设置面板的 Visibility）。</summary>
+    private bool _isSettingsVisible;
+    public bool IsSettingsVisible
+    {
+        get => _isSettingsVisible;
+        set { _isSettingsVisible = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>旧版兼容属性：下载列表是否可见。</summary>
+    private bool _isDownloadListVisible;
+    public bool IsDownloadListVisible
+    {
+        get => _isDownloadListVisible;
+        set { _isDownloadListVisible = value; OnPropertyChanged(); }
+    }
+
+    // ===================== 下载列表（保留兼容） =====================
 
     public DownloadListViewModel DownloadList { get; }
 
-    private const string HomeUrl = "https://test.suancaixianyu.cn/";
-    private const string SCKeyUrl = "https://www.sckey.net";
-    private const string SCWZUrl = "https://scwz.top/";
+    // ===================== 命令 =====================
 
-    public MainViewModel(IBrowserProvider browser, IDownloadHistoryService historyService, IDownloadService downloadService)
+    public IRelayCommand NavigateHomeCommand { get; }
+    public IRelayCommand NavigateSCKeyCommand { get; }
+    public IRelayCommand NavigateSCWZCommand { get; }
+    public IRelayCommand NavigateBackCommand { get; }
+    public IRelayCommand ReloadCommand { get; }
+    public IRelayCommand OpenSettingsCommand { get; }
+    public IRelayCommand CloseSettingsCommand { get; }
+
+    // ===================== 构造函数 =====================
+
+    public MainViewModel(IBrowserProvider browser, ISettingsService settingsService)
     {
-        LogHelper.Info("[主视图] 构造函数 - 初始化 MainViewModel");
         _browser = browser;
-        DownloadList = new DownloadListViewModel(historyService, downloadService);
+        _settingsService = settingsService;
 
+        // 创建 DownloadListViewModel 并传入下载管线（包含 Cookie 获取）
+        DownloadList = new DownloadListViewModel(
+            ServiceLocator.ServiceLocatorObj.GetRequiredService<IDownloadHistoryService>(),
+            ServiceLocator.ServiceLocatorObj.GetRequiredService<IDownloadService>(),
+            browser);
+
+        // 创建 SettingsViewModel
+        Settings = new SettingsViewModel(_settingsService, _browser, DownloadList);
+
+        // 命令绑定
+        NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://test.suancaixianyu.cn/"));
+        NavigateSCKeyCommand = new RelayCommand(() => NavigateTo("https://www.sckey.cn/"));
+        NavigateSCWZCommand = new RelayCommand(() => NavigateTo("https://www.scwz.cn/"));
+        NavigateBackCommand = new RelayCommand(() => _browser.Reload()); // 简化：回到主页
+        ReloadCommand = new RelayCommand(() => _browser.Reload());
+        OpenSettingsCommand = new RelayCommand(() =>
+        {
+            LogHelper.Info("[主页] 打开设置面板");
+            IsSettingsVisible = true;
+        });
+        CloseSettingsCommand = new RelayCommand(() =>
+        {
+            LogHelper.Info("[主页] 关闭设置面板");
+            IsSettingsVisible = false;
+        });
+
+        // 订阅浏览器事件
         _browser.AddressChanged += (_, url) =>
         {
-            LogHelper.Info($"[主视图] 地址变更 -> {url}");
             CurrentUrl = url;
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                History.Insert(0, url);
+                if (History.Count > 100) History.RemoveAt(100);
+            }
         };
         _browser.TitleChanged += (_, title) =>
         {
-            LogHelper.Info($"[主视图] 标题变更 -> {title}");
-            CurrentTitle = title;
+            WindowTitle = string.IsNullOrWhiteSpace(title) ? "SCAssistant" : $"SCAssistant - {title}";
         };
         _browser.LoadingStateChanged += (_, loading) =>
         {
-            IsBrowserLoading = loading;
+            IsLoading = loading;
+            StatusText = loading ? "加载中..." : "就绪";
         };
 
-        // 监听 WebView 下载请求（主要用于 Android）
-        _browser.DownloadRequested += (_, url) =>
-        {
-            LogHelper.Info($"[主视图] 收到下载请求 -> {url}");
-            var fileName = GetFileNameFromUrl(url);
-            DownloadList.StartDownload(url, fileName);
-        };
+        // 下载请求事件：自动弹出设置面板并触发下载
+        _browser.DownloadRequested += OnDownloadRequested;
 
-        LogHelper.Info("[主视图] 构造函数 - 初始化完成");
+        // 加载持久化设置
+        _settingsService.Load();
+
+        LogHelper.Info("[主页] MainViewModel 初始化完成");
     }
 
-    public void NavigateToHome()
+    // ===================== 导航方法 =====================
+
+    public void NavigateTo(string url)
     {
-        LogHelper.Info($"[主视图] NavigateToHome -> {HomeUrl}");
-        _browser.Initialize(HomeUrl);
-    }
+        if (string.IsNullOrWhiteSpace(url)) return;
+        LogHelper.Info($"[主页] NavigateTo -> {url}");
 
-    public void InitializeBrowser(object window)
-    {
-        if (IsInitialized) return;
-        LogHelper.Info("[主视图] InitializeBrowser - 首次初始化浏览器");
-        IsInitialized = true;
-        NavigateToHome();
-    }
-
-    [RelayCommand]
-    private void NavigateHome()
-    {
-        LogHelper.Info($"[主视图] NavigateHome -> {HomeUrl}");
-        _browser.Navigate(HomeUrl);
-    }
-
-    [RelayCommand]
-    private void NavigateSCKey()
-    {
-        LogHelper.Info($"[主视图] NavigateSCKey -> {SCKeyUrl}");
-        _browser.Navigate(SCKeyUrl);
-    }
-
-    [RelayCommand]
-    private void NavigateSCWZ()
-    {
-        LogHelper.Info($"[主视图] NavigateSCWZ -> {SCWZUrl}");
-        _browser.Navigate(SCWZUrl);
-    }
-
-    [RelayCommand]
-    private void OpenDownloadList()
-    {
-        IsDownloadListVisible = !IsDownloadListVisible;
-        LogHelper.Info($"[主视图] 下载列表切换 -> {(IsDownloadListVisible ? "打开" : "关闭")}");
-    }
-
-    /// <summary>
-    /// 从 URL 提取文件名。
-    /// </summary>
-    private static string GetFileNameFromUrl(string url)
-    {
-        try
-        {
-            var uri = new Uri(url);
-            var name = System.IO.Path.GetFileName(uri.AbsolutePath);
-            if (!string.IsNullOrWhiteSpace(name))
-                return Uri.UnescapeDataString(name);
-        }
-        catch { }
-        return "download";
-    }
-
-    /// <summary>
-    /// 导航到用户自定义URL，自动补全协议前缀
-    /// </summary>
-    public void NavigateToCustomUrl(string? rawUrl)
-    {
-        if (string.IsNullOrWhiteSpace(rawUrl)) return;
-
-        var url = rawUrl.Trim();
-
-        // 自动补全 https:// 协议前缀
         if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
             !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
             url = "https://" + url;
         }
 
-        LogHelper.Info($"[主视图] NavigateToCustomUrl -> {url}");
+        CurrentUrl = url;
         _browser.Navigate(url);
+    }
+
+    public void NavigateToCustomUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return;
+        LogHelper.Info($"[主页] NavigateToCustomUrl -> {url}");
+        NavigateTo(url);
+    }
+
+    public void NavigateToHome()
+    {
+        LogHelper.Info("[主页] NavigateToHome");
+        _browser.Initialize("https://test.suancaixianyu.cn/");
+        CurrentUrl = "https://test.suancaixianyu.cn/";
+    }
+
+    // ===================== 下载处理 =====================
+
+    /// <summary>
+    /// 当 BrowserProvider 检测到可下载文件时触发。
+    /// 自动弹出设置面板并切换到下载标签，启动下载。
+    /// </summary>
+    private void OnDownloadRequested(object? sender, string url)
+    {
+        LogHelper.Info($"[主页] OnDownloadRequested -> {url}");
+
+        var fileName = GetFileNameFromUrl(url);
+
+        // 自动显示设置面板（下载标签页）
+        Settings?.ShowDownloads();
+        IsSettingsVisible = true;
+
+        // 启动下载
+        DownloadList.StartDownload(url, fileName);
+    }
+
+    private static string GetFileNameFromUrl(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            var path = uri.AbsolutePath;
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrWhiteSpace(name)) return name;
+        }
+        catch { }
+        return "download";
+    }
+
+    // ===================== INPC =====================
+
+    protected void OnPropertyChanged([CallerMemberName] string? name = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

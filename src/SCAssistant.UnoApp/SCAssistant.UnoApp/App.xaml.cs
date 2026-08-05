@@ -57,6 +57,10 @@ public partial class App : Application
         var browserProvider = new BrowserProvider();
         services.AddSingleton<IBrowserProvider>(browserProvider);
 
+        var settingsService = new SettingsService();
+        settingsService.Load();
+        services.AddSingleton<ISettingsService>(settingsService);
+
         // ViewModels
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<DownloadListViewModel>();
@@ -68,6 +72,7 @@ public partial class App : Application
         ServiceLocator.BrowserProvider = browserProvider;
         ServiceLocator.DownloadHistory = downloadHistory;
         ServiceLocator.DownloadService = downloadService;
+        ServiceLocator.SettingsService = settingsService;
         ServiceLocator.ServiceLocatorObj = new ServiceLocatorInstance();
 
         LogHelper.Info("[应用] 服务配置完成");

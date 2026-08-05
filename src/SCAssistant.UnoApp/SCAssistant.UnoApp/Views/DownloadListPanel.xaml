@@ -11,6 +11,7 @@
     <UserControl.Resources>
         <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
         <converters:DownloadStateToTextConverter x:Key="StateToTextConverter" />
+        <converters:ProgressToPercentTextConverter x:Key="ProgressToPercentTextConverter" />
     </UserControl.Resources>
 
     <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
@@ -64,7 +65,7 @@
                                 <TextBlock FontSize="11" Foreground="Gray">
                                     <Run Text="{Binding State, Converter={StaticResource StateToTextConverter}}" />
                                     <Run Text=" - " />
-                                    <Run Text="{Binding Progress, StringFormat={}{0:F0}%}" />
+                                    <Run Text="{Binding Progress, Converter={StaticResource ProgressToPercentTextConverter}}" />
                                 </TextBlock>
 
                                 <TextBlock Text="{Binding Url}" FontSize="11"

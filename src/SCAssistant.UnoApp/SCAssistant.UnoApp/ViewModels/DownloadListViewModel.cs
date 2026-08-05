@@ -17,17 +17,22 @@ public partial class DownloadListViewModel : ViewModelBase
 {
     private readonly IDownloadHistoryService _historyService;
     private readonly IDownloadService _downloadService;
+    private readonly IBrowserProvider? _browserProvider;
 
     public ObservableCollection<DownloadRecord> Records { get; } = [];
 
     [ObservableProperty]
     public partial DownloadRecord? SelectedRecord { get; set; }
 
-    public DownloadListViewModel(IDownloadHistoryService historyService, IDownloadService downloadService)
+    public DownloadListViewModel(
+        IDownloadHistoryService historyService,
+        IDownloadService downloadService,
+        IBrowserProvider? browserProvider = null)
     {
         LogHelper.Info("[下载列表] 构造函数 - 初始化");
         _historyService = historyService;
         _downloadService = downloadService;
+        _browserProvider = browserProvider;
         _historyService.HistoryChanged += OnHistoryChanged;
         Refresh();
     }
@@ -68,7 +73,7 @@ public partial class DownloadListViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 开始下载文件（从外部调用，如 MainViewModel 收到下载请求时）。
+    /// 开始下载文件。自动从 WebView 获取 Cookie 以支持鉴权下载。
     /// </summary>
     public async void StartDownload(string url, string fileName)
     {
@@ -85,15 +90,28 @@ public partial class DownloadListViewModel : ViewModelBase
         Records.Add(record);
         LogHelper.Info($"[下载列表] 新增下载任务: {fileName}");
 
-        var progress = new Progress<(double Percent, long Received, long Total)>(p =>
+        // 从浏览器获取 Cookie 用于鉴权
+        string? cookies = null;
+        if (_browserProvider is not null)
         {
-            // DownloadService 已直接更新 record 的属性（INotifyPropertyChanged），
-            // UI 会自动刷新，这里只打日志。
-        });
+            try
+            {
+                cookies = await _browserProvider.GetCookiesAsync(url);
+                LogHelper.Info($"[下载列表] 获取到 Cookie: {(string.IsNullOrEmpty(cookies) ? "无" : $"{cookies.Length} 字符")}");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Warn($"[下载列表] 获取 Cookie 失败: {ex.Message}");
+            }
+        }
 
         try
         {
-            await _downloadService.StartDownloadAsync(record, progress, CancellationToken.None);
+            await _downloadService.StartDownloadAsync(
+                record,
+                progress: null,
+                ct: CancellationToken.None,
+                cookies: cookies);
             // 下载完成后刷新历史记录
             _historyService.UpdateRecord(record);
             LogHelper.Info($"[下载列表] 下载完成: {record.FileName}, 状态={record.State}");
@@ -102,6 +120,36 @@ public partial class DownloadListViewModel : ViewModelBase
         {
             LogHelper.Error($"[下载列表] 下载异常: {record.FileName}", ex);
         }
+    }
+
+    /// <summary>打开下载目录（供 SettingsViewModel 调用）。</summary>
+    public void OpenDownloadFolder()
+    {
+        var dir = _downloadService.GetDownloadDirectory();
+        LogHelper.Info($"[下载列表] 打开下载文件夹: {dir}");
+        try
+        {
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+#if ANDROID
+            OpenFolderOnAndroid(dir);
+#else
+            OpenFolderInExplorer(dir);
+#endif
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"[下载列表] 打开下载文件夹失败: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>清除所有下载历史记录（供 SettingsViewModel 调用）。</summary>
+    public void ClearHistory()
+    {
+        LogHelper.Info("[下载列表] 清除下载历史");
+        _historyService.ClearHistory();
+        Records.Clear();
     }
 
     [RelayCommand]
@@ -182,6 +230,44 @@ public partial class DownloadListViewModel : ViewModelBase
         catch (Exception ex)
         {
             LogHelper.Error($"[下载列表] Android 打开文件异常: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>在 Android 上打开文件夹（使用文件管理器 Intent）。</summary>
+    private static void OpenFolderOnAndroid(string folderPath)
+    {
+        try
+        {
+            var dir = new Java.IO.File(folderPath);
+            if (!dir.Exists())
+            {
+                dir.Mkdirs();
+            }
+
+            var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(
+                Android.App.Application.Context,
+                Android.App.Application.Context.PackageName + ".provider",
+                dir);
+
+            var intent = new Android.Content.Intent(Android.Content.Intent.ActionView);
+            intent.SetDataAndType(uri, Android.Provider.DocumentsContract.Document.MimeTypeDir);
+            intent.AddFlags(Android.Content.ActivityFlags.GrantReadUriPermission);
+            intent.AddFlags(Android.Content.ActivityFlags.NewTask);
+
+            Android.App.Application.Context.StartActivity(intent);
+            LogHelper.Info($"[下载列表] Android 打开文件夹: {folderPath}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[下载列表] Android 用文件管理器打开文件夹失败，尝试备用方式: {ex.Message}");
+            try
+            {
+                // 备用：通过 SAW Intent 让用户选择文件管理器
+                var intent = new Android.Content.Intent(Android.Content.Intent.ActionOpenDocumentTree);
+                intent.AddFlags(Android.Content.ActivityFlags.NewTask);
+                Android.App.Application.Context.StartActivity(intent);
+            }
+            catch { /* 放弃 */ }
         }
     }
 

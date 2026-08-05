@@ -9,6 +9,12 @@
     mc:Ignorable="d"
     d:DesignWidth="1024" d:DesignHeight="768">
 
+    <!-- 资源 -->
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+    </Page.Resources>
+
     <Grid>
         <!-- Main content -->
         <Grid x:Name="RootGrid">
@@ -24,7 +30,7 @@
                     <Button Content="首页" Command="{Binding NavigateHomeCommand}" Width="60" />
                     <Button Content="SCKey" Command="{Binding NavigateSCKeyCommand}" Width="60" />
                     <Button Content="SCWZ" Command="{Binding NavigateSCWZCommand}" Width="60" />
-                    <StackPanel Width="8" />
+                    <Rectangle Width="8" />
                     <!-- Address bar -->
                     <TextBox x:Name="AddressBar"
                              Text="{Binding CurrentUrl, Mode=OneWay}"
@@ -36,30 +42,30 @@
                             Content="跳转"
                             Width="50"
                             Click="GoButton_Click" />
-                    <StackPanel Width="8" />
-                    <Button Content="下载列表" Command="{Binding OpenDownloadListCommand}" Width="80" />
+                    <Rectangle Width="8" />
+                    <Button Content="设置" Command="{Binding OpenSettingsCommand}" Width="60" />
                     <!-- Loading indicator -->
                     <TextBlock Text="加载中..." VerticalAlignment="Center" Margin="8,0,0,0"
-                               Visibility="{Binding IsBrowserLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
+                               Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </StackPanel>
             </Border>
 
-            <!-- Browser host — 直接 Grid 容器，消除 ContentControl 中间层导致的布局丢失 -->
-            <Grid Grid.Row="1" x:Name="BrowserHost" 
+            <!-- Browser host -->
+            <Grid Grid.Row="1" x:Name="BrowserHost"
                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Grid>
 
-        <!-- Download list overlay panel -->
-        <Grid Visibility="{Binding IsDownloadListVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+        <!-- 设置面板覆盖层 -->
+        <Grid x:Name="SettingsOverlay"
+              Visibility="Collapsed"
               Canvas.ZIndex="100">
-            <Grid Background="#80000000">
-                <views:DownloadListPanel x:Name="DownloadListPanelControl"
-                                          DataContext="{Binding DownloadList}"
-                                          MaxWidth="480"
-                                          MaxHeight="500"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center" />
-            </Grid>
+            <Grid Background="#80000000" />
+            <!-- 设置面板靠右显示 -->
+            <views:SettingsPanel x:Name="SettingsPanelControl"
+                                  DataContext="{Binding Settings}"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Stretch"
+                                  Width="380" />
         </Grid>
     </Grid>
 </Page>

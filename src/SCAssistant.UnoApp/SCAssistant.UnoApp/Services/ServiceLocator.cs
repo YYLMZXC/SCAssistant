@@ -20,5 +20,6 @@ public static class ServiceLocator
     public static IBrowserProvider BrowserProvider { get; set; } = null!;
     public static IDownloadHistoryService DownloadHistory { get; set; } = null!;
     public static IDownloadService DownloadService { get; set; } = null!;
+    public static ISettingsService SettingsService { get; set; } = null!;
     internal static ServiceLocatorInstance ServiceLocatorObj { get; set; } = null!;
 }

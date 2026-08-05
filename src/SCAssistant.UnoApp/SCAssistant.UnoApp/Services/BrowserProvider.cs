@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using SCAssistant.UnoApp.Models;
 
 // 桌面端 WebView2 持久化缓存支持
 #if __SKIA__
@@ -33,6 +34,7 @@ public class BrowserProvider : IBrowserProvider
     private bool _isLoading;
     private string? _pendingNavigateUrl;
     private bool _isReady;
+    private UserAgentPlatform _userAgentPlatform = UserAgentPlatform.Auto;
 
     // 移动端平台标志：Android WebView / iOS WKWebView 行为与桌面 Edge WebView2 不同
     // 两者都是 Skia 渲染层上的原生覆盖视图，需特殊处理布局和导航时序
@@ -56,7 +58,6 @@ public class BrowserProvider : IBrowserProvider
         _isReady = false;
 
         // 确保 WebView2 拉伸填满父容器
-        // 移动端原生 WebView (Android/iOS) 需要显式设置对齐属性，否则可能尺寸为 0 导致空白页
         _webView.HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Stretch;
         _webView.VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Stretch;
 
@@ -72,8 +73,7 @@ public class BrowserProvider : IBrowserProvider
             LogHelper.Info($"[浏览器] SizeChanged: ActualWidth={wv?.ActualWidth}, ActualHeight={wv?.ActualHeight}, Width={wv?.Width}, Height={wv?.Height}, DesiredSize={wv?.DesiredSize}");
         };
 
-        // ⚠️ 关键诊断：CoreWebView2Initialized 事件
-        // 如果这个事件从未触发 → WebView2 Runtime 缺失或 WPF 程序集加载失败
+        // CoreWebView2Initialized 事件
         _webView.CoreWebView2Initialized += (sender, e) =>
         {
             if (e.Exception is not null)
@@ -83,9 +83,9 @@ public class BrowserProvider : IBrowserProvider
             }
             LogHelper.Info("[浏览器] CoreWebView2Initialized 成功 - 运行时已完全就绪");
             LogHelper.Info($"[浏览器] CoreWebView2 类型: {sender.CoreWebView2?.GetType().FullName ?? "null"}");
-            // 内核就绪后，立即注册新窗口处理和下载处理
             RegisterNewWindowHandler();
             RegisterDownloadHandler();
+            ApplyUserAgent();
         };
 
         _webView.NavigationStarting += (_, args) =>
@@ -132,10 +132,6 @@ public class BrowserProvider : IBrowserProvider
         return _webView;
     }
 
-    /// <summary>
-    /// Loaded 表示 WebView2 UI 控件已挂入可视化树。
-    /// 此时启动 CoreWebView2 内核初始化，但内核未就绪，不可导航。
-    /// </summary>
     private void OnWebViewLoaded(object sender, RoutedEventArgs e)
     {
         if (_webView is null) return;
@@ -145,15 +141,6 @@ public class BrowserProvider : IBrowserProvider
         _ = InitializeCoreWebView2Async();
     }
 
-    /// <summary>
-    /// 异步初始化 CoreWebView2 内核。
-    /// 控件必须在可视化树中才能调用 EnsureCoreWebView2Async。
-    /// 内核初始化成功后，_isReady = true，执行挂起的导航请求。
-    /// 
-    /// 桌面端（Windows Skia）：使用持久化用户数据文件夹，
-    /// 使 cookies、localStorage、缓存等在应用重启后得以保留，
-    /// 大幅提升二次启动时的页面加载速度。
-    /// </summary>
     private async Task InitializeCoreWebView2Async()
     {
         try
@@ -162,9 +149,6 @@ public class BrowserProvider : IBrowserProvider
             LogHelper.Info($"[浏览器] 正在调用 EnsureCoreWebView2Async... (iOS={IsIOSPlatform}, Android={IsAndroidPlatform})");
 
 #if __SKIA__
-            // 桌面端 (Windows Skia): 尝试使用持久化用户数据文件夹
-            // 这样 cookies / localStorage / 浏览器缓存会被保留，
-            // 二次启动无需重新下载 JS/CSS 等静态资源，加载速度显著提升
             if (OperatingSystem.IsWindows())
             {
                 await InitializeWithUserDataFolderAsync();
@@ -180,23 +164,17 @@ public class BrowserProvider : IBrowserProvider
             sw.Stop();
             LogHelper.Info($"[浏览器] EnsureCoreWebView2Async 完成，耗时 {sw.ElapsedMilliseconds}ms");
 
-            // 内核就绪后，优化性能设置
             ApplyPerformanceSettings();
-
-            // 注册新窗口处理（防止外部链接点击无反应）
             RegisterNewWindowHandler();
-
-            // 注册下载事件处理（Android 需要拦截下载）
             RegisterDownloadHandler();
+            ApplyUserAgent();
 
-            // 移动端：记录原生 WebView 实际尺寸（排查布局问题）
             if (IsMobilePlatform)
             {
                 var platform = IsAndroidPlatform ? "Android" : "iOS";
                 LogHelper.Info($"[浏览器] {platform} 原生 WebView 初始化完成: ActualWidth={_webView.ActualWidth}, ActualHeight={_webView.ActualHeight}");
             }
 
-            // 诊断：初始化后检查 CoreWebView2 状态
             try
             {
                 var cv = _webView.CoreWebView2;
@@ -228,15 +206,10 @@ public class BrowserProvider : IBrowserProvider
         catch (Exception ex)
         {
             LogHelper.Error($"[浏览器] CoreWebView2 初始化失败: {ex.GetType().Name}: {ex.Message}", ex);
-            // 注意：Uno 内部可能会吞掉异常，这里显式记录
         }
     }
 
 #if __SKIA__
-    /// <summary>
-    /// 桌面端：使用持久化用户数据文件夹初始化 WebView2，
-    /// 使浏览器缓存、cookies、localStorage 在应用重启后保留。
-    /// </summary>
     private async Task InitializeWithUserDataFolderAsync()
     {
         try
@@ -260,9 +233,6 @@ public class BrowserProvider : IBrowserProvider
     }
 #endif
 
-    /// <summary>
-    /// 内核就绪后应用性能优化设置。
-    /// </summary>
     private void ApplyPerformanceSettings()
     {
         if (_webView?.CoreWebView2?.Settings is null) return;
@@ -270,7 +240,6 @@ public class BrowserProvider : IBrowserProvider
         try
         {
             var settings = _webView.CoreWebView2.Settings;
-            // 确保 Web 消息功能启用（用于与页面通信）
             settings.IsWebMessageEnabled = true;
             LogHelper.Info("[浏览器] 性能设置已应用");
         }
@@ -280,12 +249,6 @@ public class BrowserProvider : IBrowserProvider
         }
     }
 
-    /// <summary>
-    /// 注册 NewWindowRequested 事件处理器。
-    /// 当网页中的链接使用 target="_blank" 或 JavaScript window.open() 时，
-    /// WebView2 会触发此事件。如果不处理，这些链接点击后无反应。
-    /// 这里将新窗口请求拦截并在当前 WebView 中打开，实现普通浏览器般的跳转体验。
-    /// </summary>
     private void RegisterNewWindowHandler()
     {
         if (_webView?.CoreWebView2 is null) return;
@@ -296,8 +259,6 @@ public class BrowserProvider : IBrowserProvider
             {
                 var newUri = args.Uri;
                 LogHelper.Info($"[浏览器] NewWindowRequested -> {newUri}，拦截并在当前窗口打开");
-
-                // 阻止打开新窗口，在当前 WebView 中导航
                 args.Handled = true;
                 Navigate(newUri);
             };
@@ -352,7 +313,7 @@ public class BrowserProvider : IBrowserProvider
 
         LogHelper.Info($"[浏览器] DoNavigate -> {url} (iOS={IsIOSPlatform}, Android={IsAndroidPlatform})");
 
-        // 移动端：尺寸检查，如果 WebView 仍为 0x0，延迟导航
+        // 移动端：尺寸检查
         if (IsMobilePlatform && (_webView.ActualWidth <= 0 || _webView.ActualHeight <= 0))
         {
             var platform = IsAndroidPlatform ? "Android" : "iOS";
@@ -364,14 +325,11 @@ public class BrowserProvider : IBrowserProvider
 
         try
         {
-            // 移动端 (Android WebView / iOS WKWebView):
-            // 优先使用 Source 属性，因为 Uno 的 CoreWebView2 包装层在移动端可能不可靠
             if (IsMobilePlatform)
             {
                 LogHelper.Info("[浏览器] 移动端: 使用 Source 属性导航");
                 _webView.Source = new Uri(url);
 
-                // Android: 双重兜底，也尝试 CoreWebView2.Navigate
                 if (IsAndroidPlatform && _webView.CoreWebView2 is not null)
                 {
                     try
@@ -411,9 +369,6 @@ public class BrowserProvider : IBrowserProvider
         }
     }
 
-    /// <summary>
-    /// 移动端尺寸不足时，延迟等待布局完成后再导航。
-    /// </summary>
     private async Task DeferredMobileNavigateAsync(string url)
     {
         var platform = IsAndroidPlatform ? "Android" : "iOS";
@@ -436,17 +391,9 @@ public class BrowserProvider : IBrowserProvider
 
         LogHelper.Warn($"[浏览器] {platform}: 延迟导航超时 ({maxWait}ms)，强制尝试");
         _pendingNavigateUrl = null;
-        try
-        {
-            _webView!.Source = new Uri(url);
-        }
-        catch { }
+        try { _webView!.Source = new Uri(url); } catch { }
     }
 
-    /// <summary>
-    /// 移动端 (Android/iOS) 导航二次验证：短暂延迟后检查是否已开始加载，
-    /// 如果导航没有触发（仍然白屏），尝试重新使用 Source 属性导航。
-    /// </summary>
     private async Task VerifyMobileNavigationAsync(string url)
     {
         try
@@ -470,16 +417,141 @@ public class BrowserProvider : IBrowserProvider
         }
     }
 
+    // =============================================================================
+    // 用户代理（User-Agent）设置
+    // =============================================================================
+
+    public void SetUserAgent(UserAgentPlatform platform)
+    {
+        LogHelper.Info($"[浏览器] SetUserAgent: {platform}");
+        _userAgentPlatform = platform;
+        ApplyUserAgent();
+    }
+
     /// <summary>
-    /// 注册下载事件处理（跨平台）。
+    /// 将 UA 设置应用到 WebView。
+    /// 桌面端: 直接设置 CoreWebView2.Settings.UserAgent。
+    /// 移动端: 注入 JS 覆盖 navigator.userAgent（Uno WebView2 可能不暴露原生 UA 设置）。
+    /// </summary>
+    private void ApplyUserAgent()
+    {
+        if (_webView is null) return;
+
+        var ua = GetUserAgentString(_userAgentPlatform);
+        LogHelper.Info($"[浏览器] ApplyUserAgent 平台={_userAgentPlatform}, UA={(ua is null ? "跟随系统" : ua)}");
+
+        // 桌面端：直接设置 WebView2 的 UA
+        if (!IsMobilePlatform && _webView.CoreWebView2?.Settings is not null)
+        {
+            try
+            {
+                _webView.CoreWebView2.Settings.UserAgent = ua;
+                LogHelper.Info("[浏览器] UA 已通过 CoreWebView2.Settings 设置");
+                return;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Warn($"[浏览器] 直接设置 UA 失败: {ex.Message}，尝试 JS 注入");
+            }
+        }
+
+        // 移动端 / 桌面端 UA 设置失败时的兜底：JS 覆盖 navigator.userAgent
+        if (ua is not null && _webView.CoreWebView2 is not null)
+        {
+            _ = InjectUserAgentAsync(ua);
+        }
+    }
+
+    private async Task InjectUserAgentAsync(string ua)
+    {
+        try
+        {
+            var escapedUa = ua.Replace("'", "\\'");
+            var js = $$"""
+            Object.defineProperty(navigator, 'userAgent', {
+                get: function() { return '{{escapedUa}}'; }
+            });
+            Object.defineProperty(navigator, 'appVersion', {
+                get: function() { return '{{escapedUa}}'; }
+            });
+            """;
+            if (_webView?.CoreWebView2 is not null)
+            {
+                await _webView.CoreWebView2.ExecuteScriptAsync(js);
+                LogHelper.Info("[浏览器] UA JS 覆盖已注入");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] UA JS 注入失败: {ex.Message}");
+        }
+    }
+
+    private static string? GetUserAgentString(UserAgentPlatform platform)
+    {
+        return platform switch
+        {
+            UserAgentPlatform.Desktop => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            UserAgentPlatform.Mobile => "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+            _ => null // Auto — 不覆盖
+        };
+    }
+
+    // =============================================================================
+    // Cookie 获取（用于下载鉴权）
+    // =============================================================================
+
+    public async Task<string> GetCookiesAsync(string url)
+    {
+        try
+        {
+            // 桌面端: CoreWebView2.CookieManager
+            if (!IsMobilePlatform && _webView?.CoreWebView2?.CookieManager is not null)
+            {
+                var cookies = await _webView.CoreWebView2.CookieManager.GetCookiesAsync(url);
+                var cookieStrings = new System.Collections.Generic.List<string>();
+                foreach (var c in cookies)
+                {
+                    cookieStrings.Add($"{c.Name}={c.Value}");
+                }
+                var result = string.Join("; ", cookieStrings);
+                LogHelper.Info($"[浏览器] 获取了 {cookieStrings.Count} 个 Cookie");
+                return result;
+            }
+
+            // 移动端：通过 JS 获取 document.cookie
+            if (_webView?.CoreWebView2 is not null)
+            {
+                var cookieStr = await _webView.CoreWebView2.ExecuteScriptAsync("document.cookie");
+                if (cookieStr is not null)
+                {
+                    var trimmed = cookieStr.Trim('"');
+                    LogHelper.Info($"[浏览器] JS document.cookie 获取成功，长度={trimmed.Length}");
+                    return trimmed;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 获取 Cookie 失败: {ex.Message}");
+        }
+        return string.Empty;
+    }
+
+    // =============================================================================
+    // 下载处理（跨平台统一管线）
+    // =============================================================================
+
+    /// <summary>
+    /// 注册下载事件处理（跨平台统一下载管线）。
     ///
     /// 策略:
-    /// - Android: Uno 不暴露 Android WebView 的原生 DownloadListener，也不支持
-    ///   CoreWebView2.DownloadStarting。因此采用双重拦截方案：
-    ///   1) 页面加载完成后注入 JS，拦截 &lt;a&gt; 标签中已知下载扩展名的链接
+    /// - 桌面端 (WebView2): 拦截 CoreWebView2.DownloadStarting，取消原生下载对话框，
+    ///   统一走本系统自定义下载管线（显示进度、保存到下载目录）。
+    /// - Android/iOS: 使用双重拦截方案：
+    ///   1) 页面加载后注入 JS，拦截已知扩展名的 &lt;a&gt; 点击
     ///   2) NavigationStarting 中检测下载型 URL 作为兜底
-    /// - iOS (WKWebView): 同样不原生支持下载对话框，采用类似策略。
-    /// - 桌面端 (WebView2): WebView2 自带下载对话框，无需额外处理。
+    ///   3) WebMessageReceived 接收 JS 通知
     /// </summary>
     private void RegisterDownloadHandler()
     {
@@ -487,53 +559,20 @@ public class BrowserProvider : IBrowserProvider
 
         try
         {
+            // === 桌面端: 拦截 DownloadStarting，取消原生对话框，统一走自定义下载 ===
+            if (!IsMobilePlatform)
+            {
+                RegisterDesktopDownloadHandler();
+            }
+
+            // === 移动端: JS 注入 + NavigationStarting 双重拦截 ===
             if (IsMobilePlatform)
             {
-                // 移动端: 在每次页面导航完成后注入下载拦截 JS
-                _webView.NavigationCompleted += (sender, args) =>
-                {
-                    InjectDownloadInterceptorAsync();
-                };
-
-                // 移动端: 也在 NavigationStarting 中检测下载型 URL
-                _webView.NavigationStarting += (sender, args) =>
-                {
-                    var url = args.Uri?.ToString();
-                    if (string.IsNullOrWhiteSpace(url)) return;
-
-                    if (IsDownloadableUrl(url))
-                    {
-                        args.Cancel = true; // 阻止 WebView 导航（否则会空白页）
-                        LogHelper.Info($"[浏览器] NavigationStarting 检测到下载链接，拦截 -> {url}");
-                        DownloadRequested?.Invoke(this, url);
-                    }
-                };
-
-                // 移动端: 监听 WebMessage（JS 通过 postMessage 通知下载）
-                _webView.WebMessageReceived += (_, args) =>
-                {
-                    // JS 通过 chrome.webview.postMessage 发送纯字符串，
-                    // Uno 将其作为 JSON 字符串包裹，需去除首尾引号
-                    var raw = args.WebMessageAsJson;
-                    if (!string.IsNullOrWhiteSpace(raw))
-                    {
-                        var message = raw.Trim('"');
-                        // 格式: "download:{url}"
-                        if (message is not null && message.StartsWith("download:", StringComparison.Ordinal))
-                        {
-                            var downloadUrl = message["download:".Length..];
-                            LogHelper.Info($"[浏览器] JS 通知下载 -> {downloadUrl}");
-                            DownloadRequested?.Invoke(this, downloadUrl);
-                        }
-                    }
-                };
-
-                LogHelper.Info("[浏览器] 移动端下载拦截已注册 (JS注入 + NavigationStarting 检测)");
+                RegisterMobileDownloadHandler();
             }
-            else
-            {
-                LogHelper.Info("[浏览器] 桌面端: 使用 WebView2 自带下载对话框");
-            }
+
+            // === 所有平台: WebMessageReceived（JS 通知下载） ===
+            RegisterWebMessageHandler();
         }
         catch (Exception ex)
         {
@@ -542,10 +581,92 @@ public class BrowserProvider : IBrowserProvider
     }
 
     /// <summary>
-    /// 在当前页面注入下载拦截 JavaScript。
-    /// 拦截已知下载扩展名的 &lt;a&gt; 标签点击，通过 window.chrome.webview.postMessage 通知 C# 层。
+    /// 桌面端：拦截 WebView2 原生下载，取消默认对话框，统一走自定义下载管线。
     /// </summary>
-    private async void InjectDownloadInterceptorAsync()
+    private void RegisterDesktopDownloadHandler()
+    {
+        if (_webView?.CoreWebView2 is null) return;
+
+        try
+        {
+            _webView.CoreWebView2.DownloadStarting += (sender, args) =>
+            {
+                var dlUrl = args.DownloadOperation.Uri;
+                var filePath = args.DownloadOperation.ResultFilePath ?? string.Empty;
+                LogHelper.Info($"[浏览器] 桌面端 DownloadStarting 拦截 -> URL={dlUrl}, Path={filePath}");
+
+                // 取消 WebView2 原生下载对话框
+                args.Cancel = true;
+
+                // 走统一的自定义下载管线
+                DownloadRequested?.Invoke(this, dlUrl);
+            };
+            LogHelper.Info("[浏览器] 桌面端 DownloadStarting 拦截已注册 — 下载将走统一管线");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 注册 DownloadStarting 失败，回退原生下载: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 移动端：JS 注入拦截 + NavigationStarting 检测。
+    /// </summary>
+    private void RegisterMobileDownloadHandler()
+    {
+        // 每次页面导航完成后注入下载拦截 JS
+        _webView!.NavigationCompleted += (sender, args) =>
+        {
+            _ = InjectDownloadInterceptorAsync();
+        };
+
+        // NavigationStarting 中检测下载型 URL（兜底）
+        _webView.NavigationStarting += (sender, args) =>
+        {
+            var url = args.Uri?.ToString();
+            if (string.IsNullOrWhiteSpace(url)) return;
+
+            if (IsDownloadableUrl(url))
+            {
+                args.Cancel = true;
+                LogHelper.Info($"[浏览器] 移动端 NavigationStarting 检测到下载链接，拦截 -> {url}");
+                DownloadRequested?.Invoke(this, url);
+            }
+        };
+
+        LogHelper.Info("[浏览器] 移动端下载拦截已注册 (JS注入 + NavigationStarting 检测)");
+    }
+
+    /// <summary>
+    /// 所有平台：监听 WebMessage，处理 JS postMessage 通知的下载请求。
+    /// </summary>
+    private void RegisterWebMessageHandler()
+    {
+        if (_webView is null) return;
+
+        _webView.WebMessageReceived += (_, args) =>
+        {
+            var raw = args.WebMessageAsJson;
+            if (string.IsNullOrWhiteSpace(raw)) return;
+
+            var message = raw.Trim('"');
+            if (message is not null && message.StartsWith("download:", StringComparison.Ordinal))
+            {
+                var downloadUrl = message["download:".Length..];
+                LogHelper.Info($"[浏览器] JS postMessage 通知下载 -> {downloadUrl}");
+                DownloadRequested?.Invoke(this, downloadUrl);
+            }
+        };
+
+        LogHelper.Info("[浏览器] WebMessageReceived 已注册");
+    }
+
+    /// <summary>
+    /// 在当前页面注入下载拦截 JavaScript。
+    /// 拦截已知下载扩展名的 &lt;a&gt; 标签点击，通过 postMessage 通知 C# 层。
+    /// 使用跨平台兼容的 postMessage 封装，兼容 Uno 各平台 WebView2 桥接。
+    /// </summary>
+    private async Task InjectDownloadInterceptorAsync()
     {
         if (_webView?.CoreWebView2 is null) return;
 
@@ -561,7 +682,9 @@ public class BrowserProvider : IBrowserProvider
     }
 
     /// <summary>
-    /// 下载拦截 JavaScript: 拦截已知下载扩展名的链接点击。
+    /// 下载拦截 JavaScript。
+    /// 跨平台兼容：优先使用 window.chrome.webview.postMessage（Uno 在桌面端 polyfill），
+    /// 同时存在 window.external.notify 作为移动端兜底。
     /// </summary>
     private const string DownloadInterceptorJs = @"
 (function() {
@@ -588,7 +711,33 @@ public class BrowserProvider : IBrowserProvider
         return false;
     }
 
-    // 方案 A: 全局点击委托
+    // 跨平台 postMessage 封装
+    function notifyApp(msg) {
+        var fullMsg = 'download:' + msg;
+        try {
+            // Uno 桌面端: chrome.webview.postMessage (主要)
+            if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
+                window.chrome.webview.postMessage(fullMsg);
+                return;
+            }
+        } catch(e) {}
+        try {
+            // Uno 移动端 / 旧版本兼容: external.notify
+            if (window.external && typeof window.external.notify === 'function') {
+                window.external.notify(fullMsg);
+                return;
+            }
+        } catch(e) {}
+        try {
+            // Android WebView JavaScriptInterface 兼容
+            if (window.__scBridge) {
+                window.__scBridge.postMessage(fullMsg);
+                return;
+            }
+        } catch(e) {}
+    }
+
+    // 方案 A: 全局点击委托（捕获阶段）
     document.addEventListener('click', function(e) {
         var target = e.target;
         while (target && target !== document) {
@@ -596,10 +745,7 @@ public class BrowserProvider : IBrowserProvider
                 if (isDownloadLink(target.href)) {
                     e.preventDefault();
                     e.stopPropagation();
-                    // 通过 postMessage 通知 C# 层
-                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
-                        window.chrome.webview.postMessage('download:' + target.href);
-                    }
+                    notifyApp(target.href);
                     return false;
                 }
                 return;
@@ -608,7 +754,7 @@ public class BrowserProvider : IBrowserProvider
         }
     }, true);
 
-    // 方案 B: 拦截所有 <a> 标签的 download 属性
+    // 方案 B: 拦截所有带 download 属性的 <a> 标签
     var links = document.querySelectorAll('a[download]');
     for (var i = 0; i < links.length; i++) {
         (function(link) {
@@ -616,19 +762,33 @@ public class BrowserProvider : IBrowserProvider
                 if (isDownloadLink(link.href)) {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
-                        window.chrome.webview.postMessage('download:' + link.href);
-                    }
+                    notifyApp(link.href);
                 }
             });
         })(links[i]);
+    }
+
+    // 方案 C: 拦截所有 <a> 标签（全面覆盖）
+    var allLinks = document.querySelectorAll('a');
+    for (var j = 0; j < allLinks.length; j++) {
+        (function(link) {
+            if (link.__scDownloadHooked) return;
+            link.__scDownloadHooked = true;
+            link.addEventListener('click', function(e) {
+                if (isDownloadLink(link.href)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notifyApp(link.href);
+                }
+            });
+        })(allLinks[j]);
     }
 })();
 ";
 
     /// <summary>
     /// 判断 URL 是否指向可下载文件（按扩展名匹配）。
-    /// 作为 JS 注入拦截的兜底方案，处理 JS 注入失败或新页面中的链接。
+    /// 作为 JS 注入拦截的兜底方案。
     /// </summary>
     private static bool IsDownloadableUrl(string url)
     {
@@ -647,7 +807,6 @@ public class BrowserProvider : IBrowserProvider
         };
 
         var path = new Uri(url).AbsolutePath.ToLowerInvariant();
-        // 去掉查询参数
         var queryIndex = path.IndexOf('?');
         if (queryIndex >= 0) path = path.Substring(0, queryIndex);
 

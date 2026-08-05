@@ -28,7 +28,8 @@ public class DownloadService : IDownloadService
     public async Task StartDownloadAsync(
         DownloadRecord record,
         IProgress<(double Percent, long Received, long Total)>? onProgress = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        string? cookies = null)
     {
         if (string.IsNullOrWhiteSpace(record.Url))
             throw new ArgumentException("下载 URL 不能为空", nameof(record));
@@ -39,13 +40,20 @@ public class DownloadService : IDownloadService
 
         try
         {
-            LogHelper.Info($"[下载服务] 开始下载: {record.FileName}, URL={record.Url}");
+            LogHelper.Info($"[下载服务] 开始下载: {record.FileName}, URL={record.Url}, Cookies={(string.IsNullOrEmpty(cookies) ? "无" : $"有({cookies.Length}字符)")}");
 
             record.State = DownloadState.Downloading;
             record.DownloadTime = DateTime.Now;
 
-            using var response = await _httpClient.GetAsync(
-                record.Url, HttpCompletionOption.ResponseHeadersRead, internalCts.Token);
+            // 构建请求，附加 Cookie 用于鉴权
+            using var request = new HttpRequestMessage(HttpMethod.Get, record.Url);
+            if (!string.IsNullOrWhiteSpace(cookies))
+            {
+                request.Headers.TryAddWithoutValidation("Cookie", cookies);
+            }
+
+            using var response = await _httpClient.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, internalCts.Token);
 
             response.EnsureSuccessStatusCode();
 
