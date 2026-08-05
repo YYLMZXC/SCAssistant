@@ -105,9 +105,9 @@ public class MainViewModel : INotifyPropertyChanged
         Settings = new SettingsViewModel(_settingsService, _browser, DownloadList);
 
         // 命令绑定
-        NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://test.suancaixianyu.cn/"));
-        NavigateSCKeyCommand = new RelayCommand(() => NavigateTo("https://www.sckey.cn/"));
-        NavigateSCWZCommand = new RelayCommand(() => NavigateTo("https://www.scwz.cn/"));
+        NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://www.scbbs.top//"));
+        NavigateSCKeyCommand = new RelayCommand(() => NavigateTo("https://www.sckey.net/"));
+        NavigateSCWZCommand = new RelayCommand(() => NavigateTo("https://www.scwz.top/"));
         NavigateBackCommand = new RelayCommand(() => _browser.Reload()); // 简化：回到主页
         ReloadCommand = new RelayCommand(() => _browser.Reload());
         OpenSettingsCommand = new RelayCommand(() =>
