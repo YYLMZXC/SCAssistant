@@ -156,39 +156,35 @@ public class DownloadService : IDownloadService
 
 #if ANDROID
     /// <summary>
-    /// 获取 Android 下载目录。
-    /// Android 10+: 优先使用 MediaStore 公共 Downloads 目录，
-    /// 如果无法写入则回退到应用私有目录。
-    /// Android 9-: 使用 Environment 公共目录。
+    /// 获取 Android 下载目录（统一放在 SCAssistant/Downloads/ 下）。
+    /// Android 10+: 优先使用应用专属外部存储（不需要运行时权限），
+    /// 回退到内部存储。
+    /// 路径示例: {externalFilesDir}/SCAssistant/Downloads/
     /// </summary>
     private static string AndroidDownloadDirectory()
     {
         try
         {
-            // 尝试应用专属外部存储（不需要运行时权限，Android API 29+）
             var appContext = Android.App.Application.Context;
             if (appContext is not null)
             {
-                var externalDir = appContext.GetExternalFilesDir(
-                    Android.OS.Environment.DirectoryDownloads);
+                var externalDir = appContext.GetExternalFilesDir(null);
                 if (externalDir is not null)
-                    return externalDir.AbsolutePath;
+                {
+                    var downloadsDir = Path.Combine(externalDir.AbsolutePath, "SCAssistant", "Downloads");
+                    Directory.CreateDirectory(downloadsDir);
+                    return downloadsDir;
+                }
             }
         }
-        catch { /* 回退到公共目录 */ }
+        catch { /* 回退到内部存储 */ }
 
-        // 回退：公共 Downloads 目录（API 28 以下或需要权限的旧设备）
-        try
-        {
-            var publicDir = Android.OS.Environment.GetExternalStoragePublicDirectory(
-                Android.OS.Environment.DirectoryDownloads);
-            if (publicDir is not null)
-                return publicDir.AbsolutePath;
-        }
-        catch { /* 最终回退 */ }
-
-        // 最终回退
-        return "/sdcard/Download";
+        // 回退：内部存储数据目录
+        var fallbackDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SCAssistant", "Downloads");
+        Directory.CreateDirectory(fallbackDir);
+        return fallbackDir;
     }
 #endif
 
