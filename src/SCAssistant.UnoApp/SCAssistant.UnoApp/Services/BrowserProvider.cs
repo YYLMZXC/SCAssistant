@@ -257,6 +257,7 @@ public class BrowserProvider : IBrowserProvider
         }
     }
 
+    private bool _isHandlingNewWindow; // 防止 NewWindowRequested 重入
     private void RegisterNewWindowHandler()
     {
         if (_webView?.CoreWebView2 is null) return;
@@ -265,10 +266,30 @@ public class BrowserProvider : IBrowserProvider
         {
             _webView.CoreWebView2.NewWindowRequested += (sender, args) =>
             {
-                var newUri = args.Uri;
-                LogHelper.Info($"[浏览器] NewWindowRequested -> {newUri}，拦截并在当前窗口打开");
-                args.Handled = true;
-                Navigate(newUri);
+                if (_isHandlingNewWindow) return; // 防止重入
+                _isHandlingNewWindow = true;
+
+                try
+                {
+                    var newUri = args.Uri;
+                    LogHelper.Info($"[浏览器] NewWindowRequested -> {newUri}，拦截并在当前窗口打开");
+                    args.Handled = true;
+
+                    // 如果是可下载文件，直接触发下载，不要导航
+                    if (IsDownloadableUrl(newUri))
+                    {
+                        LogHelper.Info($"[浏览器] NewWindowRequested 检测到下载链接，触发下载: {newUri}");
+                        DownloadRequested?.Invoke(this, newUri);
+                    }
+                    else
+                    {
+                        Navigate(newUri);
+                    }
+                }
+                finally
+                {
+                    _isHandlingNewWindow = false;
+                }
             };
             LogHelper.Info("[浏览器] NewWindowRequested 事件已注册");
         }
@@ -725,7 +746,9 @@ public class BrowserProvider : IBrowserProvider
         '.txt','.csv','.json','.xml','.log',
         '.png','.jpg','.jpeg','.gif','.bmp','.svg','.webp',
         '.exe','.msi','.dmg','.deb','.rpm',
-        '.iso','.img'
+        '.iso','.img',
+        // SurvivalCraft 模组与地图文件
+        '.scmod','.scworld','.scmap','.scskin','.sctexture'
     ];
 
     function isDownloadLink(url) {
@@ -829,7 +852,9 @@ public class BrowserProvider : IBrowserProvider
             ".txt", ".csv", ".json", ".xml", ".log",
             ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".webp",
             ".exe", ".msi", ".dmg", ".deb", ".rpm",
-            ".iso", ".img"
+            ".iso", ".img",
+            // SurvivalCraft 模组与地图文件
+            ".scmod", ".scworld", ".scmap", ".scskin", ".sctexture"
         };
 
         var path = new Uri(url).AbsolutePath.ToLowerInvariant();

@@ -144,12 +144,19 @@ public partial class DownloadListViewModel : ViewModelBase
         }
     }
 
+    /// <summary>清除所有下载历史记录。</summary>
+    [RelayCommand]
+    private void DeleteAllRecords()
+    {
+        LogHelper.Info("[下载列表] 删除所有记录");
+        _historyService.ClearHistory();
+        Records.Clear();
+    }
+
     /// <summary>清除所有下载历史记录（供 SettingsViewModel 调用）。</summary>
     public void ClearHistory()
     {
-        LogHelper.Info("[下载列表] 清除下载历史");
-        _historyService.ClearHistory();
-        Records.Clear();
+        DeleteAllRecords();
     }
 
     [RelayCommand]

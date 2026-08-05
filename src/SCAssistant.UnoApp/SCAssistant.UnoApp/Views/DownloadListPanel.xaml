@@ -25,16 +25,8 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="下载文件列表" FontSize="16" FontWeight="Bold"
-                           VerticalAlignment="Center" />
-                <Button Grid.Column="1" Content="X" Width="32" Height="32"
-                        Click="CloseButton_Click" />
-            </Grid>
+            <TextBlock Grid.Row="0" Text="下载文件列表" FontSize="16" FontWeight="Bold"
+                       Margin="0,0,0,8" />
 
             <!-- List -->
             <ListView Grid.Row="1"
@@ -87,6 +79,7 @@
                         IsEnabled="{Binding ElementName=RootList, Path=SelectedItem, Converter={StaticResource IsNotNullConverter}}" />
                 <Button Content="删除记录" Command="{Binding DeleteRecordCommand}"
                         IsEnabled="{Binding ElementName=RootList, Path=SelectedItem, Converter={StaticResource IsNotNullConverter}}" />
+                <Button Content="删除所有记录" Command="{Binding DeleteAllRecordsCommand}" />
             </StackPanel>
         </Grid>
     </Border>

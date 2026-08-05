@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -26,6 +27,37 @@ public partial class SettingsPanel : UserControl
         _tabSelectedFg = new SolidColorBrush(Microsoft.UI.Colors.White);
         var mediumColor = (Windows.UI.Color)Application.Current.Resources["SystemBaseMediumColor"];
         _tabUnselectedFg = new SolidColorBrush(mediumColor);
+
+        // 监听 DataContext 变化以绑定 ViewModel 的 SelectedTabIndex
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private SettingsViewModel? _currentVm;
+
+    private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+    {
+        // 解除旧 ViewModel 的绑定
+        if (_currentVm is not null)
+            _currentVm.PropertyChanged -= OnViewModelPropertyChanged;
+
+        _currentVm = DataContext as SettingsViewModel;
+
+        // 绑定新 ViewModel
+        if (_currentVm is not null)
+        {
+            _currentVm.PropertyChanged += OnViewModelPropertyChanged;
+            // 同步当前标签状态
+            SetActiveTab(_currentVm.SelectedTabIndex);
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsViewModel.SelectedTabIndex) &&
+            sender is SettingsViewModel vm)
+        {
+            SetActiveTab(vm.SelectedTabIndex);
+        }
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -37,7 +69,6 @@ public partial class SettingsPanel : UserControl
     private void BrowserSettingsTab_Click(object sender, RoutedEventArgs e)
     {
         LogHelper.Info("[设置面板] 切换到浏览器设置标签");
-        SetActiveTab(0);
         if (DataContext is SettingsViewModel vm)
             vm.SelectedTabIndex = 0;
     }
@@ -45,7 +76,6 @@ public partial class SettingsPanel : UserControl
     private void DownloadTab_Click(object sender, RoutedEventArgs e)
     {
         LogHelper.Info("[设置面板] 切换到下载管理标签");
-        SetActiveTab(1);
         if (DataContext is SettingsViewModel vm)
             vm.SelectedTabIndex = 1;
     }
