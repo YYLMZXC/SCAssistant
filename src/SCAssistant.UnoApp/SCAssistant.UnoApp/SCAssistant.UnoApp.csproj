@@ -28,7 +28,7 @@
 
         <!-- Android 签名配置 -->
         <AndroidKeyStore>true</AndroidKeyStore>
-        <AndroidSigningStoreFile>key\scassistant.keystore</AndroidSigningStoreFile>
+        <AndroidSigningKeyStore>key\scassistant.keystore</AndroidSigningKeyStore>
         <AndroidSigningStorePass>sc123456</AndroidSigningStorePass>
         <AndroidSigningKeyAlias>scassistant</AndroidSigningKeyAlias>
         <AndroidSigningKeyPass>sc123456</AndroidSigningKeyPass>
