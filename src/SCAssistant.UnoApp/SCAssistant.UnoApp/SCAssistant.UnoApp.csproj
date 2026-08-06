@@ -25,6 +25,13 @@
         <!-- Android ABI: arm64 for physical devices, x64 for emulators (Android-only) -->
         <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">android-arm64;android-x64</RuntimeIdentifiers>
         <AndroidCreatePackagePerAbi Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">true</AndroidCreatePackagePerAbi>
+
+        <!-- Android 签名配置 -->
+        <AndroidKeyStore>true</AndroidKeyStore>
+        <AndroidSigningStoreFile>key\scassistant.keystore</AndroidSigningStoreFile>
+        <AndroidSigningStorePass>sc123456</AndroidSigningStorePass>
+        <AndroidSigningKeyAlias>scassistant</AndroidSigningKeyAlias>
+        <AndroidSigningKeyPass>sc123456</AndroidSigningKeyPass>
     </PropertyGroup>
 
     <ItemGroup>

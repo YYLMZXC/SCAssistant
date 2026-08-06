@@ -30,4 +30,7 @@ public interface IBrowserProvider
 
     /// <summary>获取当前 WebView 的 Cookie 字符串，用于下载鉴权。</summary>
     Task<string> GetCookiesAsync(string url);
+
+    /// <summary>当应用从后台恢复时调用，刷新页面以检测登录状态。</summary>
+    void HandleAppResumed();
 }

@@ -43,6 +43,12 @@ public class BrowserProvider : IBrowserProvider
     private bool _isReady;
     private UserAgentPlatform _userAgentPlatform = UserAgentPlatform.Auto;
 
+    /// <summary>上一个有效的 HTTP/HTTPS 页面 URL，用于 scheme 跳转后恢复黑屏。</summary>
+    private string _lastKnownGoodUrl = string.Empty;
+
+    /// <summary>是否正在从 scheme 跳转恢复（防止恢复期间的递归处理）。</summary>
+    private bool _isRestoringFromScheme;
+
     // 移动端平台标志：Android WebView / iOS WKWebView 行为与桌面 Edge WebView2 不同
     // 两者都是 Skia 渲染层上的原生覆盖视图，需特殊处理布局和导航时序
     private static readonly bool IsIOSPlatform = OperatingSystem.IsIOS();
@@ -98,7 +104,7 @@ public class BrowserProvider : IBrowserProvider
             ApplyUserAgent();
         };
 
-		_webView.NavigationStarting += (_, args) =>
+		_webView.NavigationStarting += (sender, args) =>
 		{
 			var url = args.Uri?.ToString() ?? string.Empty;
 
@@ -108,9 +114,24 @@ public class BrowserProvider : IBrowserProvider
 			if (!string.IsNullOrEmpty(url) && TryHandleCustomScheme(url))
 			{
 				args.Cancel = true;
+				// 自定义 scheme 跳转（如 QQ 登录 wtloginmqq://）后，Android WebView
+				// 通常会因为导航被中途取消而变为空白页。
+				// 延迟恢复到上一个有效的 HTTP 页面，防止黑屏。
+				if (!_isRestoringFromScheme)
+				{
+					_ = RestoreAfterSchemeRedirectAsync();
+				}
 				return;
 			}
 #endif
+
+			// 记录正常的 HTTP/HTTPS 导航 URL，用于 scheme 跳转后页面恢复
+			if (!string.IsNullOrEmpty(url) &&
+				(url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+				 url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+			{
+				_lastKnownGoodUrl = url;
+			}
 
 			_isLoading = true;
 			_currentUrl = url;
@@ -320,6 +341,7 @@ public class BrowserProvider : IBrowserProvider
     {
         LogHelper.Info($"[浏览器] Initialize(startUrl={startUrl}) _isReady={_isReady}");
         _pendingNavigateUrl = startUrl;
+        _lastKnownGoodUrl = startUrl;
         if (_webView is not null && _isReady)
         {
             _pendingNavigateUrl = null;
@@ -765,7 +787,9 @@ public class BrowserProvider : IBrowserProvider
         '.exe','.msi','.dmg','.deb','.rpm',
         '.iso','.img',
         // SurvivalCraft 模组与地图文件
-        '.scmod','.scworld','.scmap','.scskin','.sctexture'
+        '.scmod','.scworld','.scmap','.scskin','.sctexture',
+        // SurvivalCraft netmod 与 dll 模组文件
+        '.netmod','.dll'
     ];
 
     function isDownloadLink(url) {
@@ -871,7 +895,9 @@ public class BrowserProvider : IBrowserProvider
             ".exe", ".msi", ".dmg", ".deb", ".rpm",
             ".iso", ".img",
             // SurvivalCraft 模组与地图文件
-            ".scmod", ".scworld", ".scmap", ".scskin", ".sctexture"
+            ".scmod", ".scworld", ".scmap", ".scskin", ".sctexture",
+            // SurvivalCraft netmod 与 dll 模组文件
+            ".netmod", ".dll"
         };
 
         var path = new Uri(url).AbsolutePath.ToLowerInvariant();
@@ -927,5 +953,61 @@ public class BrowserProvider : IBrowserProvider
             return false;
         }
     }
+
+    /// <summary>
+    /// 自定义 scheme 跳转（如 QQ 登录的 wtloginmqq://）后，
+    /// Android WebView 常因导航被中途取消而变为空白页。
+    /// 此方法在短暂延迟后重新加载上一个有效页面，防止黑屏。
+    /// </summary>
+    private async Task RestoreAfterSchemeRedirectAsync()
+    {
+        _isRestoringFromScheme = true;
+        try
+        {
+            // 短暂延迟，让 WebView 完成内部状态回滚
+            await Task.Delay(400);
+
+            if (_webView is null || !_isReady) return;
+
+            // 优先尝试直接刷新当前页面（保持页面状态，不产生额外历史记录）
+            if (!string.IsNullOrEmpty(_currentUrl) &&
+                (_currentUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                 _currentUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+            {
+                LogHelper.Info($"[浏览器] scheme跳转后刷新当前页面 -> {_currentUrl}");
+                _webView.Reload();
+            }
+            else if (!string.IsNullOrEmpty(_lastKnownGoodUrl))
+            {
+                // 当前 URL 不可用（如 about:blank），恢复到上一个有效页面
+                LogHelper.Info($"[浏览器] scheme跳转后恢复到上一个页面 -> {_lastKnownGoodUrl}");
+                DoNavigate(_lastKnownGoodUrl);
+            }
+            else
+            {
+                LogHelper.Warn("[浏览器] scheme跳转后无可恢复的有效页面");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] scheme跳转后恢复页面失败: {ex.Message}");
+        }
+        finally
+        {
+            _isRestoringFromScheme = false;
+        }
+    }
 #endif
+
+    /// <summary>
+    /// 当应用从后台恢复时调用（如用户从 QQ 授权返回）。
+    /// 刷新当前页面，使登录页面能够检测到最新的登录状态。
+    /// </summary>
+    public void HandleAppResumed()
+    {
+        if (_webView is null || !_isReady) return;
+
+        LogHelper.Info("[浏览器] 应用从后台恢复，刷新页面以检测登录状态");
+        Reload();
+    }
 }

@@ -39,6 +39,14 @@ public partial class App : Application
             _mainWindow.DispatcherQueue.TryEnqueue(SetNativeWindowIcon);
         }
 
+        // 监听应用恢复事件（Android 从后台切回 / iOS 进入前台）
+        // 用于在用户从 QQ 等外部 App 授权返回时刷新页面检测登录状态
+        this.Resuming += (s, e) =>
+        {
+            LogHelper.Info("[应用] 检测到应用恢复事件，通知浏览器刷新");
+            ServiceLocator.BrowserProvider?.HandleAppResumed();
+        };
+
         LogHelper.Info("[应用] 窗口已激活");
     }
 
