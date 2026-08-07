@@ -7,7 +7,7 @@ using SCAssistant.AvaloniaApp.Services;
 namespace SCAssistant.AvaloniaApp.ViewModels;
 
 /// <summary>
-/// 主界面 ViewModel — 底部5标签页导航 + 顶部地址栏 + 设置面板。
+/// 主界面 ViewModel — 底部4标签页导航 + 浏览器顶部地址栏 + 设置面板叠加层。
 /// </summary>
 public partial class MainViewModel : ViewModelBase
 {
@@ -17,8 +17,8 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>默认标签页 URL（当用户未自定义时使用）。</summary>
     private static readonly string[] DefaultTabUrls = { "https://www.scbbs.top/", "https://www.sckey.net/", "https://scwz.top/", "" };
 
-    /// <summary>底部 5 个标签页的中文名称。</summary>
-    private static readonly string[] TabNames = { "SC中文社区", "SC联机号", "SC导航网", "工具", "设置" };
+    /// <summary>底部 4 个标签页的中文名称。</summary>
+    private static readonly string[] TabNames = { "SC中文社区", "SC联机号", "SC导航网", "工具" };
 
     /// <summary>当前地址栏 URL。</summary>
     [ObservableProperty]
@@ -120,9 +120,9 @@ public partial class MainViewModel : ViewModelBase
             ? appSettings.TabUrls
             : DefaultTabUrls;
 
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 4; i++)
         {
-            var url = i < 4 && i < urls.Length ? urls[i] : string.Empty;
+            var url = i < urls.Length ? urls[i] : string.Empty;
             Tabs.Add(new TabItem { Name = TabNames[i], Url = url });
         }
 
@@ -163,22 +163,14 @@ public partial class MainViewModel : ViewModelBase
             LogHelper.Info("[MainVM] 切换到工具主页");
             return;
         }
-
-        // 设置标签页 (4): 打开设置面板
-        if (value == 4)
-        {
-            IsSettingsOpen = true;
-            LogHelper.Info("[MainVM] 打开设置面板");
-        }
     }
 
-    /// <summary>关闭设置面板。</summary>
+    /// <summary>切换设置面板的显示/隐藏。</summary>
     [RelayCommand]
-    private void CloseSettings()
+    private void ToggleSettings()
     {
-        LogHelper.Info("[MainVM] 关闭设置面板，返回首页");
-        IsSettingsOpen = false;
-        SelectedTabIndex = 0;
+        IsSettingsOpen = !IsSettingsOpen;
+        LogHelper.Info($"[MainVM] 设置面板: {(IsSettingsOpen ? "打开" : "关闭")}");
     }
 
     /// <summary>设置保存后刷新标签页 URL。</summary>
@@ -255,7 +247,4 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void GoToTab3() => SelectedTabIndex = 3;
-
-    [RelayCommand]
-    private void GoToTab4() => SelectedTabIndex = 4;
 }

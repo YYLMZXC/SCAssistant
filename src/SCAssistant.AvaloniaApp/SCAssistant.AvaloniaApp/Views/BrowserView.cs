@@ -1,22 +1,18 @@
 using System;
 using System.Reflection;
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using SCAssistant.AvaloniaApp.Services;
 
 namespace SCAssistant.AvaloniaApp.Views;
 
 /// <summary>
 /// 跨平台浏览器视图 — 负责创建和管理平台原生 WebView 控件。
-/// 内置简易地址栏（后退/前进/地址输入/跳转），通过工厂模式支持桌面端 WebView2、移动端原生 WebView 以及 Linux/macOS WebKit。
+/// 通过工厂模式支持桌面端 WebView2、移动端原生 WebView 以及 Linux/macOS WebKit。
+/// 地址栏 UI 已移至 MainWindow / MainView，本视图仅包含 WebView 容器。
 /// </summary>
 public partial class BrowserView : UserControl
 {
     private IBrowserProvider? _browserProvider;
-
-    /// <summary>防止地址栏回环：地址同步时暂时抑制更新以阻止文本框循环刷新。</summary>
-    private bool _suppressAddressSync;
 
     /// <summary>
     /// 平台浏览器控件工厂 — 由各平台入口点（Program.cs / MainActivity.cs / Main.cs）设置。
@@ -37,10 +33,6 @@ public partial class BrowserView : UserControl
     {
         _browserProvider = browserProvider;
 
-        // 订阅地址栏更新事件
-        _browserProvider.AddressChanged += OnAddressChanged;
-        _browserProvider.NavigationHistoryChanged += OnNavigationHistoryChanged;
-
         try
         {
             // 优先使用平台工厂创建真正的浏览器控件（由各平台入口点注册）
@@ -49,37 +41,38 @@ public partial class BrowserView : UserControl
                 var control = BrowserControlFactory(browserProvider);
                 WebViewContainer.Content = control;
                 LogHelper.Info("[BrowserView] 通过工厂创建浏览器控件");
-                return;
-            }
-
-            // 回退：根据运行时平台选择实现
-            Control? browserControl = null;
-
-            if (OperatingSystem.IsWindows())
-            {
-                browserControl = CreateWindowsBrowserControl();
-            }
-            else if (OperatingSystem.IsAndroid())
-            {
-                browserControl = CreateAndroidBrowserControl();
-            }
-            else if (OperatingSystem.IsIOS())
-            {
-                browserControl = CreateIosBrowserControl();
-            }
-            else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-            {
-                browserControl = CreateDesktopBrowserControl();
-            }
-
-            if (browserControl != null)
-            {
-                WebViewContainer.Content = browserControl;
-                LogHelper.Info($"[BrowserView] 浏览器控件已创建 (平台: {Environment.OSVersion})");
             }
             else
             {
-                ShowPlaceholder("浏览器初始化中...");
+                // 回退：根据运行时平台选择实现
+                Control? browserControl = null;
+
+                if (OperatingSystem.IsWindows())
+                {
+                    browserControl = CreateWindowsBrowserControl();
+                }
+                else if (OperatingSystem.IsAndroid())
+                {
+                    browserControl = CreateAndroidBrowserControl();
+                }
+                else if (OperatingSystem.IsIOS())
+                {
+                    browserControl = CreateIosBrowserControl();
+                }
+                else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                {
+                    browserControl = CreateDesktopBrowserControl();
+                }
+
+                if (browserControl != null)
+                {
+                    WebViewContainer.Content = browserControl;
+                    LogHelper.Info($"[BrowserView] 浏览器控件已创建 (平台: {Environment.OSVersion})");
+                }
+                else
+                {
+                    ShowPlaceholder("浏览器初始化中...");
+                }
             }
         }
         catch (Exception ex)
@@ -88,88 +81,6 @@ public partial class BrowserView : UserControl
             ShowPlaceholder($"浏览器加载失败: {ex.Message}");
         }
     }
-
-    #region 地址栏事件处理
-
-    /// <summary>地址栏后退按钮点击。</summary>
-    private void BtnBack_Click(object? sender, RoutedEventArgs e)
-    {
-        LogHelper.Debug("[BrowserView] 地址栏后退");
-        _browserProvider?.GoBack();
-    }
-
-    /// <summary>地址栏前进按钮点击。</summary>
-    private void BtnForward_Click(object? sender, RoutedEventArgs e)
-    {
-        LogHelper.Debug("[BrowserView] 地址栏前进");
-        _browserProvider?.GoForward();
-    }
-
-    /// <summary>地址栏 Go 按钮点击。</summary>
-    private void BtnGo_Click(object? sender, RoutedEventArgs e)
-    {
-        NavigateFromAddressBar();
-    }
-
-    /// <summary>地址栏回车键导航。</summary>
-    private void AddressTextBox_KeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            NavigateFromAddressBar();
-            e.Handled = true;
-        }
-    }
-
-    private void NavigateFromAddressBar()
-    {
-        if (_browserProvider == null) return;
-
-        var target = AddressTextBox.Text?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            LogHelper.Warn("[BrowserView] 地址栏导航取消: URL 为空");
-            return;
-        }
-
-        // 自动补全协议
-        if (!target.StartsWith("http://") && !target.StartsWith("https://") && !target.StartsWith("file://"))
-        {
-            target = "https://" + target;
-            _suppressAddressSync = true;
-            AddressTextBox.Text = target;
-            _suppressAddressSync = false;
-        }
-
-        LogHelper.Info($"[BrowserView] 地址栏导航: {target}");
-        _browserProvider.Navigate(target);
-    }
-
-    private void OnAddressChanged(object? sender, string url)
-    {
-        if (_suppressAddressSync) return;
-
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            if (AddressTextBox.Text != url)
-            {
-                _suppressAddressSync = true;
-                AddressTextBox.Text = url;
-                _suppressAddressSync = false;
-            }
-        });
-    }
-
-    private void OnNavigationHistoryChanged(object? sender, EventArgs e)
-    {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            BtnBack.IsEnabled = _browserProvider?.CanGoBack ?? false;
-            BtnForward.IsEnabled = _browserProvider?.CanGoForward ?? false;
-        });
-    }
-
-    #endregion
 
     #region 平台浏览器控件创建
 
