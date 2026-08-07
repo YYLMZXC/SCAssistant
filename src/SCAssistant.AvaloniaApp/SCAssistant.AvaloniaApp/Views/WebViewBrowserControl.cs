@@ -75,7 +75,6 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private WebView? _webView;
     private Activity? _activity;
     private FrameLayout? _container;
-    private FrameLayout.LayoutParams? _layoutParams;
 #elif IOS
     private WKWebView? _webView;
     private UIViewController? _viewController;
@@ -163,19 +162,20 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (!_isInitialized)
-        {
+        if (_isInitialized || _disposed) return;
 #if WINDOWS
-            _ = InitializeWindowsAsync();
+        _ = InitializeWindowsAsync();
 #elif ANDROID
-            InitializeAndroid();
+        InitializeAndroid();
 #elif IOS
-            InitializeIos();
+        InitializeIos();
 #else
-            InitializeUnixWebView();
+        InitializeUnixWebView();
 #endif
-        }
     }
+
+    protected override Size MeasureOverride(Size availableSize) => availableSize;
+    protected override Size ArrangeOverride(Size finalSize) => finalSize;
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -328,18 +328,6 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         {
             if (_activity == null || _disposed) return;
             _container = new FrameLayout(_activity);
-            var density = _activity.Resources.DisplayMetrics?.Density ?? 1.5f;
-            var offset = CalculateOffsetFromTopLevel();
-            int widthPx = Bounds.Width > 0 ? (int)(Bounds.Width * density) : ViewGroup.LayoutParams.MatchParent;
-            int heightPx = Bounds.Height > 0 ? (int)(Bounds.Height * density) : ViewGroup.LayoutParams.MatchParent;
-            // 通过 LeftMargin/TopMargin 将容器定位到 Avalonia 视觉树中 BrowserView 的实际位置
-            // （顶栏下方），否则容器默认从屏幕左上角 (0,0) 开始覆盖顶部地址栏。
-            _layoutParams = new FrameLayout.LayoutParams(widthPx, heightPx)
-            {
-                LeftMargin = (int)(offset.X * density),
-                TopMargin = (int)(offset.Y * density)
-            };
-            _activity.AddContentView(_container, _layoutParams);
 
             _webView = new WebView(_activity);
             var settings = _webView.Settings;
@@ -359,10 +347,12 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             _container.AddView(_webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MatchParent, FrameLayout.LayoutParams.MatchParent));
 
-            SizeChanged += OnAndroidSizeChanged;
-            // 位置变化（SafeArea 应用、设置面板开关、标签切换等）不会触发 SizeChanged，
-            // 需额外监听 LayoutUpdated 同步容器的 LeftMargin/TopMargin，避免覆盖顶栏或留白。
-            LayoutUpdated += (_, _) => UpdateAndroidLayout();
+            // 使用 IAndroidViewSurface 将原生容器嵌入 Avalonia 控件内部，自动跟随布局
+            if (this.PlatformImpl is IAndroidViewSurface androidSurface)
+            {
+                androidSurface.SetNativeView(_container);
+            }
+
             _isInitialized = true;
             LogHelper.Info("[Android WebView] 初始化完成");
             ReadyChanged?.Invoke(this, EventArgs.Empty);
@@ -375,37 +365,6 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             LogHelper.Error("[Android WebView] UI 线程创建失败", ex);
         }
     }
-
-    /// <summary>
-    /// 同步原生 WebView 容器的大小与位置到 Avalonia 视觉树中 BrowserView 的实际区域。
-    /// 同时更新 LeftMargin/TopMargin（位置）与 Width/Height（尺寸），避免容器停留在
-    /// 屏幕左上角覆盖顶部地址栏，或在底部留白。
-    /// </summary>
-    private void UpdateAndroidLayout()
-    {
-        if (_activity == null || _container == null || _layoutParams == null) return;
-        try
-        {
-            _activity.RunOnUiThread(() =>
-            {
-                if (_container == null || _layoutParams == null || _activity == null) return;
-                var density = _activity!.Resources.DisplayMetrics?.Density ?? 1.5f;
-                var size = Bounds.Size;
-                var offset = CalculateOffsetFromTopLevel();
-                _layoutParams.Width = size.Width > 0 ? (int)(size.Width * density) : ViewGroup.LayoutParams.MatchParent;
-                _layoutParams.Height = size.Height > 0 ? (int)(size.Height * density) : ViewGroup.LayoutParams.MatchParent;
-                _layoutParams.LeftMargin = (int)(offset.X * density);
-                _layoutParams.TopMargin = (int)(offset.Y * density);
-                _container.LayoutParameters = _layoutParams;
-            });
-        }
-        catch (Exception ex)
-        {
-            LogHelper.Error("[Android WebView] 布局更新失败", ex);
-        }
-    }
-
-    private void OnAndroidSizeChanged(object? sender, SizeChangedEventArgs e) => UpdateAndroidLayout();
 
     private Activity? GetAndroidActivity()
     {
@@ -469,6 +428,13 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             if (cm != null) LogHelper.Debug($"[Android JS] {cm.Message()}");
             return base.OnConsoleMessage(cm);
         }
+    }
+
+    private class ValueCallbackCallback : Java.Lang.Object, IValueCallback
+    {
+        private readonly Action<Java.Lang.Object?> _callback;
+        public ValueCallbackCallback(Action<Java.Lang.Object?> callback) { _callback = callback; }
+        public void OnReceiveValue(Java.Lang.Object? value) => _callback(value);
     }
 
 #endif
@@ -805,16 +771,12 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     // ═══════════════════════════════════════════════════════════
     protected Avalonia.Point CalculateOffsetFromTopLevel()
     {
-        double x = 0, y = 0;
-        Control? current = this;
-        while (current != null)
-        {
-            var b = current.Bounds;
-            x += b.X; y += b.Y;
-            if (current is TopLevel) break;
-            current = current.Parent as Control;
-        }
-        return new Avalonia.Point(x, y);
+        if (VisualRoot is not TopLevel topLevel)
+            return new Point(0, 0);
+        var transform = this.TransformToVisual(topLevel);
+        if (transform.HasValue)
+            return transform.Value.Transform(new Point(0, 0));
+        return new Point(0, 0);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -935,8 +897,16 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         if (_coreWebView != null) return await _coreWebView.ExecuteScriptAsync(script);
         return string.Empty;
 #elif ANDROID
-        // Android WebView 需要用 EvaluateJavaScript 实现，基础版本留空
-        return await Task.FromResult(string.Empty);
+        if (_webView == null) return string.Empty;
+        var tcs = new TaskCompletionSource<string>();
+        _activity!.RunOnUiThread(() =>
+        {
+            _webView.EvaluateJavascript(script, new ValueCallbackCallback(o =>
+            {
+                tcs.TrySetResult(o?.ToString() ?? string.Empty);
+            }));
+        });
+        return await tcs.Task.WaitAsync(TimeSpan.FromSeconds(8000));
 #elif IOS
         if (_webView == null) return string.Empty;
         try
@@ -1034,6 +1004,10 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             if (_controller != null) { _controller.Close(); _controller = null; }
             _coreWebView = null; _environment = null;
 #elif ANDROID
+            if (this.PlatformImpl is IAndroidViewSurface s)
+            {
+                s.SetNativeView(null);
+            }
             if (_webView != null)
             {
                 _webView.StopLoading(); _webView.ClearHistory(); _webView.ClearCache(true);
