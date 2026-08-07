@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
@@ -18,6 +19,9 @@ public class AppSettings : INotifyPropertyChanged
     private int _themeIndex;
     private string _theme = "System";
     private double _fontScale = 1.0;
+
+    // 底部标签页 URL
+    private string[] _tabUrls = Array.Empty<string>();
 
     [JsonPropertyName("homePageUrl")]
     public string HomePageUrl
@@ -69,7 +73,6 @@ public class AppSettings : INotifyPropertyChanged
         {
             _themeIndex = value;
             OnPropertyChanged();
-            // 自动同步 Theme 字符串
             Theme = value switch
             {
                 1 => "Light",
@@ -91,6 +94,13 @@ public class AppSettings : INotifyPropertyChanged
     {
         get => _fontScale;
         set { _fontScale = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("tabUrls")]
+    public string[] TabUrls
+    {
+        get => _tabUrls;
+        set { _tabUrls = value; OnPropertyChanged(); }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -35,8 +34,6 @@ public partial class App : Application
             mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
             desktop.MainWindow = mainWindow;
 
-            // 初始化 MainViewModel
-            _ = InitializeMainViewModelAsync();
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
@@ -44,28 +41,11 @@ public partial class App : Application
             var mainView = _serviceProvider.GetRequiredService<MainView>();
             mainView.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
             singleView.MainView = mainView;
-
-            // 初始化 MainViewModel
-            _ = InitializeMainViewModelAsync();
         }
 
         base.OnFrameworkInitializationCompleted();
 
         LogHelper.Info("[App] 框架初始化完成");
-    }
-
-    private async Task InitializeMainViewModelAsync()
-    {
-        try
-        {
-            var vm = _serviceProvider?.GetService<MainViewModel>();
-            if (vm != null)
-                await vm.InitializeAsync();
-        }
-        catch (Exception ex)
-        {
-            LogHelper.Error("[App] MainViewModel 初始化失败", ex);
-        }
     }
 
     private static IServiceProvider ConfigureServices()

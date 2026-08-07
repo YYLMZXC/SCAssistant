@@ -1,55 +1,201 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:SCAssistant.AvaloniaApp.ViewModels"
-             x:Class="SCAssistant.AvaloniaApp.Views.SettingsView">
+             xmlns:vm="clr-namespace:SCAssistant.AvaloniaApp.ViewModels"
+             xmlns:conv="clr-namespace:SCAssistant.AvaloniaApp.Converters"
+             x:Class="SCAssistant.AvaloniaApp.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel"
+             Background="#141416">
 
-    <Design.DataContext>
-        <vm:SettingsViewModel />
-    </Design.DataContext>
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="CardBg" Color="#1E1E22" />
+        <SolidColorBrush x:Key="InputBg" Color="#252528" />
+        <SolidColorBrush x:Key="TextPrimary" Color="#D0D0D0" />
+        <SolidColorBrush x:Key="TextMuted" Color="#888" />
+        <SolidColorBrush x:Key="Accent" Color="#0078D4" />
+        <SolidColorBrush x:Key="BorderColor" Color="#3A3A3E" />
+    </UserControl.Resources>
 
-    <Grid Background="#1E1E1E">
-        <ScrollViewer>
-            <StackPanel Margin="24" Spacing="16" MaxWidth="600">
-                <TextBlock Text="设置" FontSize="24" FontWeight="Bold" Foreground="White" />
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  Padding="16,12,16,32">
+        <StackPanel Spacing="20">
 
-                <StackPanel Spacing="6">
-                    <TextBlock Text="主页URL" Foreground="#CCCCCC" FontSize="13" />
-                    <TextBox Text="{Binding HomePageUrl}"
-                             Background="#3E3E42" Foreground="White"
-                             BorderThickness="1" BorderBrush="#555"
-                             CornerRadius="4" Padding="8,6" />
+            <!-- ══════ 标签页网址 ══════ -->
+            <Border Background="{StaticResource CardBg}"
+                    CornerRadius="8"
+                    BorderBrush="{StaticResource BorderColor}"
+                    BorderThickness="1"
+                    Padding="16,14">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="标签页网址"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimary}" />
+                    <TextBlock Text="设置底部导航栏各标签页对应的网址"
+                               FontSize="12"
+                               Foreground="{StaticResource TextMuted}" />
+
+                    <!-- SC中文社区 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="SC中文社区" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox Text="{Binding TabUrl0, Mode=TwoWay}"
+                                 PlaceholderText="输入网址..."
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,8" />
+                    </StackPanel>
+
+                    <!-- SC联机号 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="SC联机号" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox Text="{Binding TabUrl1, Mode=TwoWay}"
+                                 PlaceholderText="输入网址..."
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,8" />
+                    </StackPanel>
+
+                    <!-- SC导航网 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="SC导航网" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox Text="{Binding TabUrl2, Mode=TwoWay}"
+                                 PlaceholderText="输入网址..."
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,8" />
+                    </StackPanel>
+
+                    <!-- 工具 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="工具" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox Text="{Binding TabUrl3, Mode=TwoWay}"
+                                 PlaceholderText="输入网址..."
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,8" />
+                    </StackPanel>
                 </StackPanel>
+            </Border>
 
-                <StackPanel Spacing="6">
-                    <TextBlock Text="默认搜索引擎" Foreground="#CCCCCC" FontSize="13" />
-                    <TextBox Text="{Binding DefaultSearchEngine}"
-                             Background="#3E3E42" Foreground="White"
-                             BorderThickness="1" BorderBrush="#555"
-                             CornerRadius="4" Padding="8,6" />
-                </StackPanel>
-
-                <StackPanel Spacing="6">
-                    <TextBlock Text="下载目录" Foreground="#CCCCCC" FontSize="13" />
-                    <TextBox Text="{Binding DownloadDirectory}"
-                             Background="#3E3E42" Foreground="White" IsReadOnly="True"
-                             BorderThickness="1" BorderBrush="#555"
-                             CornerRadius="4" Padding="8,6" />
-                </StackPanel>
-
+            <!-- ══════ 通用设置 ══════ -->
+            <Border Background="{StaticResource CardBg}"
+                    CornerRadius="8"
+                    BorderBrush="{StaticResource BorderColor}"
+                    BorderThickness="1"
+                    Padding="16,14">
                 <StackPanel Spacing="12">
-                    <CheckBox Content="启用下载历史记录"
-                              IsChecked="{Binding EnableDownloadHistory}"
-                              Foreground="#CCCCCC" />
-                    <CheckBox Content="启用广告过滤"
-                              IsChecked="{Binding EnableAdBlock}"
-                              Foreground="#CCCCCC" />
-                </StackPanel>
+                    <TextBlock Text="通用"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimary}" />
 
-                <Button Content="保存" Command="{Binding SaveCommand}"
-                        Background="#0078D4" Foreground="White"
-                        HorizontalAlignment="Stretch" Padding="0,10"
-                        CornerRadius="4" FontSize="15" Margin="0,12,0,0" />
-            </StackPanel>
-        </ScrollViewer>
-    </Grid>
+                    <!-- 主页 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="主页网址" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox Text="{Binding HomePageUrl, Mode=TwoWay}"
+                                 PlaceholderText="https://..."
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,8" />
+                    </StackPanel>
+
+                    <!-- 下载目录 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="下载目录" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox Text="{Binding DownloadDirectory, Mode=TwoWay}"
+                                 PlaceholderText="默认：系统下载目录"
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,8" />
+                    </StackPanel>
+
+                    <!-- 主题 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="主题" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <ComboBox ItemsSource="{Binding ThemeOptions}"
+                                  SelectedIndex="{Binding ThemeIndex, Mode=TwoWay}"
+                                  Background="{StaticResource InputBg}"
+                                  Foreground="{StaticResource TextPrimary}"
+                                  BorderBrush="{StaticResource BorderColor}"
+                                  BorderThickness="1"
+                                  CornerRadius="4"
+                                  Padding="10,4"
+                                  FontSize="13" />
+                    </StackPanel>
+
+                    <!-- 最大并行下载 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="最大并行下载数" FontSize="13"
+                                   Foreground="{StaticResource TextPrimary}" />
+                        <TextBox HorizontalAlignment="Left" Width="80"
+                                 Text="{Binding MaxConcurrentDownloads, Mode=TwoWay}"
+                                 Background="{StaticResource InputBg}"
+                                 Foreground="{StaticResource TextPrimary}"
+                                 CaretBrush="{StaticResource Accent}"
+                                 BorderBrush="{StaticResource BorderColor}"
+                                 BorderThickness="1"
+                                 CornerRadius="4"
+                                 FontSize="13"
+                                 Padding="10,6" />
+                    </StackPanel>
+
+                    <!-- 开关项 -->
+                    <CheckBox IsChecked="{Binding EnableDownloadHistory, Mode=TwoWay}"
+                              Foreground="{StaticResource TextPrimary}"
+                              Content="启用下载历史" />
+
+                    <CheckBox IsChecked="{Binding EnableAdBlock, Mode=TwoWay}"
+                              Foreground="{StaticResource TextPrimary}"
+                              Content="启用广告拦截" />
+                </StackPanel>
+            </Border>
+
+            <!-- ══════ 保存按钮 ══════ -->
+            <Button Command="{Binding SaveCommand}"
+                    Background="{StaticResource Accent}"
+                    Foreground="White"
+                    FontSize="15"
+                    CornerRadius="6"
+                    Padding="0,12"
+                    HorizontalAlignment="Stretch"
+                    Content="保存设置" />
+
+            <!-- 底部留白 -->
+            <Border Height="8" Background="Transparent" />
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

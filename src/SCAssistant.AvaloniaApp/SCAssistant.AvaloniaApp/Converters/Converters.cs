@@ -119,6 +119,36 @@ public class StringNotEmptyConverter : IValueConverter
         => string.Empty;
 }
 
+/// <summary>标签页索引 → 选中/未选中 文本颜色。</summary>
+public class TabIndexToBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int selected && parameter is string s && int.TryParse(s, out int index))
+            return selected == index
+                ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0078D4"))
+                : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#888888"));
+        return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#888888"));
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Avalonia.AvaloniaProperty.UnsetValue;
+}
+
+/// <summary>整数相等比较 → 布尔（用于标签页选中样式）。</summary>
+public class IntEqualsConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int v && parameter is string s && int.TryParse(s, out int p))
+            return v == p;
+        return false;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value;
+}
+
 /// <summary>进度（0-100）→ 显示文本。</summary>
 public class ProgressToTextConverter : IValueConverter
 {

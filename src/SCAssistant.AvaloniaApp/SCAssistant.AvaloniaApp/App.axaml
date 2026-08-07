@@ -17,6 +17,8 @@
             <converters:FileSizeConverter x:Key="FileSizeConverter" />
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
             <converters:ProgressToTextConverter x:Key="ProgressToTextConverter" />
+            <converters:IntEqualsConverter x:Key="IntEqualsConverter" />
+            <converters:TabIndexToBrushConverter x:Key="TabIndexToBrushConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

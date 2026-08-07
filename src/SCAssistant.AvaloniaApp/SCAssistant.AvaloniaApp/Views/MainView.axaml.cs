@@ -1,17 +1,13 @@
-using Avalonia.Controls;
 using SCAssistant.AvaloniaApp.ViewModels;
+using Avalonia.Controls;
 
 namespace SCAssistant.AvaloniaApp.Views;
 
 public partial class MainView : UserControl
 {
-    public MainView()
+    public MainView(SettingsViewModel settingsVm)
     {
         InitializeComponent();
-    }
-
-    public MainView(MainViewModel viewModel) : this()
-    {
-        DataContext = viewModel;
+        SettingsPanel.DataContext = settingsVm;
     }
 }
