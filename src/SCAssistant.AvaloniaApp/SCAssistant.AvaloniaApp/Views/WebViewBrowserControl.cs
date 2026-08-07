@@ -18,6 +18,7 @@ using Android.OS;
 using Android.Views;
 using Android.Webkit;
 using Android.Widget;
+using Avalonia.Controls.Platform;
 #elif IOS
 using CoreGraphics;
 using Foundation;
@@ -75,6 +76,8 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private WebView? _webView;
     private Activity? _activity;
     private FrameLayout? _container;
+    private bool _contentViewAdded;
+    private FrameLayout.LayoutParams? _layoutParams;
 #elif IOS
     private WKWebView? _webView;
     private UIViewController? _viewController;
@@ -328,6 +331,15 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         {
             if (_activity == null || _disposed) return;
             _container = new FrameLayout(_activity);
+            var density = _activity.Resources.DisplayMetrics?.Density ?? 1.5f;
+            var offset = CalculateOffsetFromTopLevel();
+            int widthPx = Bounds.Width > 0 ? (int)(Bounds.Width * density) : ViewGroup.LayoutParams.MatchParent;
+            int heightPx = Bounds.Height > 0 ? (int)(Bounds.Height * density) : ViewGroup.LayoutParams.MatchParent;
+            _layoutParams = new FrameLayout.LayoutParams(widthPx, heightPx)
+            {
+                LeftMargin = (int)(offset.X * density),
+                TopMargin = (int)(offset.Y * density)
+            };
 
             _webView = new WebView(_activity);
             var settings = _webView.Settings;
@@ -347,10 +359,17 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             _container.AddView(_webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MatchParent, FrameLayout.LayoutParams.MatchParent));
 
-            // 使用 IAndroidViewSurface 将原生容器嵌入 Avalonia 控件内部，自动跟随布局
-            if (this.PlatformImpl is IAndroidViewSurface androidSurface)
+            // 优先尝试 IAndroidViewSurface 反射嵌入（若 Avalonia 版本支持）；
+            // 失败则回退到 AddContentView，并由 SizeChanged / LayoutUpdated 同步位置。
+            if (!TrySetAndroidViewSurface(_container))
             {
-                androidSurface.SetNativeView(_container);
+                if (!_contentViewAdded && _activity != null)
+                {
+                    _activity.AddContentView(_container, _layoutParams);
+                    _contentViewAdded = true;
+                }
+                SizeChanged += OnAndroidSizeChanged;
+                LayoutUpdated += (_, _) => UpdateAndroidLayout();
             }
 
             _isInitialized = true;
@@ -365,6 +384,84 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             LogHelper.Error("[Android WebView] UI 线程创建失败", ex);
         }
     }
+
+    /// <summary>
+    /// 尝试通过反射调用 IAndroidViewSurface.SetNativeView。
+    /// 若当前 Avalonia 版本提供该接口则返回 true，否则返回 false 让调用方回退到 AddContentView。
+    /// </summary>
+    private bool TrySetAndroidViewSurface(global::Android.Views.View nativeView)
+    {
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return false;
+            var platformImplProp = typeof(TopLevel).GetProperty("PlatformImpl",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var platformImpl = platformImplProp?.GetValue(topLevel);
+            if (platformImpl == null) return false;
+            var iface = platformImpl.GetType().GetInterface("Avalonia.Android.IAndroidViewSurface");
+            if (iface != null)
+            {
+                var setMethod = iface.GetMethod("SetNativeView", new[] { typeof(global::Android.Views.View) });
+                if (setMethod != null)
+                {
+                    setMethod.Invoke(platformImpl, new object?[] { nativeView });
+                    return true;
+                }
+            }
+            // Control 级 PlatformImpl（若存在）
+            var controlPlatformImpl = this.GetType().GetProperty("PlatformImpl",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(this);
+            if (controlPlatformImpl != null)
+            {
+                var iface2 = controlPlatformImpl.GetType().GetInterface("Avalonia.Android.IAndroidViewSurface");
+                if (iface2 != null)
+                {
+                    var setMethod2 = iface2.GetMethod("SetNativeView", new[] { typeof(global::Android.Views.View) });
+                    if (setMethod2 != null)
+                    {
+                        setMethod2.Invoke(controlPlatformImpl, new object?[] { nativeView });
+                        return true;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Debug($"[Android WebView] IAndroidViewSurface 反射跳过: {ex.Message}");
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 回退模式（AddContentView）下同步容器尺寸与位置。
+    /// IAndroidViewSurface 模式下此方法不会被调用。
+    /// </summary>
+    private void UpdateAndroidLayout()
+    {
+        if (_activity == null || _container == null || _layoutParams == null) return;
+        try
+        {
+            _activity.RunOnUiThread(() =>
+            {
+                if (_container == null || _layoutParams == null || _activity == null) return;
+                var density = _activity!.Resources.DisplayMetrics?.Density ?? 1.5f;
+                var size = Bounds.Size;
+                var offset = CalculateOffsetFromTopLevel();
+                _layoutParams.Width = size.Width > 0 ? (int)(size.Width * density) : ViewGroup.LayoutParams.MatchParent;
+                _layoutParams.Height = size.Height > 0 ? (int)(size.Height * density) : ViewGroup.LayoutParams.MatchParent;
+                _layoutParams.LeftMargin = (int)(offset.X * density);
+                _layoutParams.TopMargin = (int)(offset.Y * density);
+                _container.LayoutParameters = _layoutParams;
+            });
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error("[Android WebView] 布局更新失败", ex);
+        }
+    }
+
+    private void OnAndroidSizeChanged(object? sender, SizeChangedEventArgs e) => UpdateAndroidLayout();
 
     private Activity? GetAndroidActivity()
     {
@@ -395,8 +492,8 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
         public override bool ShouldOverrideUrlLoading(WebView? view, IWebResourceRequest? request)
         {
-            if (request?.Url == null) return false;
-            var url = request.Url.ToString();
+            var url = request?.Url?.ToString();
+            if (url == null) return false;
             if (url.StartsWith("app://") || url.StartsWith("scassistant://")) return true;
             return false;
         }
@@ -772,11 +869,11 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     protected Avalonia.Point CalculateOffsetFromTopLevel()
     {
         if (VisualRoot is not TopLevel topLevel)
-            return new Point(0, 0);
+            return new Avalonia.Point(0, 0);
         var transform = this.TransformToVisual(topLevel);
         if (transform.HasValue)
-            return transform.Value.Transform(new Point(0, 0));
-        return new Point(0, 0);
+            return transform.Value.Transform(new Avalonia.Point(0, 0));
+        return new Avalonia.Point(0, 0);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -1004,10 +1101,8 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             if (_controller != null) { _controller.Close(); _controller = null; }
             _coreWebView = null; _environment = null;
 #elif ANDROID
-            if (this.PlatformImpl is IAndroidViewSurface s)
-            {
-                s.SetNativeView(null);
-            }
+            // 反射清理 IAndroidViewSurface（若使用了该模式嵌入）
+            TrySetAndroidViewSurface(null!);
             if (_webView != null)
             {
                 _webView.StopLoading(); _webView.ClearHistory(); _webView.ClearCache(true);
@@ -1025,6 +1120,8 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
                     try { _container!.Visibility = ViewStates.Gone; _container.RemoveAllViews(); _container = null; } catch { }
                 });
             }
+            _contentViewAdded = false;
+            _layoutParams = null;
 #elif IOS
             _titleObserver?.Dispose(); _urlObserver?.Dispose(); _loadingObserver?.Dispose();
             _titleObserver = null; _urlObserver = null; _loadingObserver = null;
