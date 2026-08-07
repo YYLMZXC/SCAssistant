@@ -2,11 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SCAssistant.AvaloniaApp.ViewModels"
              x:Class="SCAssistant.AvaloniaApp.Views.AddressBarView"
-             x:DataType="vm:AddressBarViewModel">
+             x:DataType="vm:AddressBarViewModel"
+             Background="#FF0000">
 
-    <Design.DataContext>
-        <vm:AddressBarViewModel />
-    </Design.DataContext>
+    <!--Design.DataContext 已移除，AddressBarViewModel 有无参构造可供设计时使用-->
 
     <UserControl.Styles>
         <!-- 导航按钮：后退 / 前进 -->
