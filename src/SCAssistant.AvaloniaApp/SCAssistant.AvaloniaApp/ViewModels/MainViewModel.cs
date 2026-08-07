@@ -7,7 +7,8 @@ using SCAssistant.AvaloniaApp.Services;
 namespace SCAssistant.AvaloniaApp.ViewModels;
 
 /// <summary>
-/// 主界面 ViewModel — 底部4标签页导航 + 浏览器顶部地址栏 + 设置面板叠加层。
+/// 主界面 ViewModel — 底部4标签页导航 + 设置面板叠加层。
+/// 地址栏逻辑已移至独立的 AddressBarViewModel，本类不再管理地址栏状态。
 /// </summary>
 public partial class MainViewModel : ViewModelBase
 {
@@ -20,29 +21,9 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>底部 4 个标签页的中文名称。</summary>
     private static readonly string[] TabNames = { "SC中文社区", "SC联机号", "SC导航网", "工具" };
 
-    /// <summary>当前地址栏 URL。</summary>
-    [ObservableProperty]
-    private string _currentUrl = string.Empty;
-
     /// <summary>当前选中的标签页索引（-1 表示未选中）。</summary>
     [ObservableProperty]
     private int _selectedTabIndex = -1;
-
-    /// <summary>浏览器是否可以后退。</summary>
-    [ObservableProperty]
-    private bool _canGoBack;
-
-    /// <summary>浏览器是否可以前进。</summary>
-    [ObservableProperty]
-    private bool _canGoForward;
-
-    /// <summary>浏览器是否正在加载页面。</summary>
-    [ObservableProperty]
-    private bool _isLoading;
-
-    /// <summary>平台 WebView 是否已初始化就绪。</summary>
-    [ObservableProperty]
-    private bool _isBrowserReady;
 
     /// <summary>设置面板是否打开。</summary>
     [ObservableProperty]
@@ -52,44 +33,16 @@ public partial class MainViewModel : ViewModelBase
     public ObservableCollection<TabItem> Tabs { get; } = new();
 
     /// <summary>
-    /// 构造函数：注入浏览器服务和设置服务，订阅浏览器事件并初始化标签页。
+    /// 构造函数：注入浏览器服务和设置服务，初始化标签页。
     /// </summary>
     public MainViewModel(IBrowserProvider browser, ISettingsService settings)
     {
         _browser = browser;
         _settings = settings;
 
-        _browser.AddressChanged += (_, url) =>
-        {
-            CurrentUrl = url;
-            LogHelper.Debug($"[MainVM] 地址变更: {url}");
-        };
-        _browser.TitleChanged += (_, title) =>
-        {
-            LogHelper.Debug($"[MainVM] 标题变更: {title}");
-        };
-        _browser.LoadingStateChanged += (_, loading) =>
-        {
-            IsLoading = loading;
-            LogHelper.Debug($"[MainVM] 加载状态: {(loading ? "加载中" : "完成")}");
-        };
-        _browser.NavigationHistoryChanged += (_, _) =>
-        {
-            CanGoBack = _browser.CanGoBack;
-            CanGoForward = _browser.CanGoForward;
-        };
         _browser.DownloadRequested += (_, url) =>
         {
             LogHelper.Info($"[MainVM] 下载请求: {url}");
-        };
-        _browser.ReadyChanged += (_, _) =>
-        {
-            IsBrowserReady = _browser.IsReady;
-            LogHelper.Info($"[MainVM] 浏览器就绪状态: {IsBrowserReady}");
-
-            // 浏览器就绪后同步一次导航按钮状态
-            CanGoBack = _browser.CanGoBack;
-            CanGoForward = _browser.CanGoForward;
         };
 
         // 订阅设置保存事件
@@ -146,7 +99,6 @@ public partial class MainViewModel : ViewModelBase
             var url = Tabs[value].Url;
             if (!string.IsNullOrWhiteSpace(url))
             {
-                CurrentUrl = url;
                 _browser.Navigate(url);
             }
             else
@@ -198,42 +150,6 @@ public partial class MainViewModel : ViewModelBase
         {
             LogHelper.Error("[MainVM] 刷新标签页 URL 失败", ex);
         }
-    }
-
-    /// <summary>地址栏回车 / Go 按钮。</summary>
-    [RelayCommand]
-    private void NavigateToUrl(string? url = null)
-    {
-        var target = url?.Trim() ?? CurrentUrl?.Trim();
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            LogHelper.Warn("[MainVM] 导航取消: URL 为空");
-            return;
-        }
-
-        // 自动补全协议
-        if (!target.StartsWith("http://") && !target.StartsWith("https://") && !target.StartsWith("file://"))
-        {
-            target = "https://" + target;
-            CurrentUrl = target;
-        }
-
-        LogHelper.Info($"[MainVM] 地址栏导航: {target}");
-        _browser.Navigate(target);
-    }
-
-    [RelayCommand]
-    private void GoBack()
-    {
-        LogHelper.Debug("[MainVM] 后退");
-        _browser.GoBack();
-    }
-
-    [RelayCommand]
-    private void GoForward()
-    {
-        LogHelper.Debug("[MainVM] 前进");
-        _browser.GoForward();
     }
 
     [RelayCommand]

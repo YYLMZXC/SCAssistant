@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SCAssistant.AvaloniaApp.ViewModels"
+             x:Class="SCAssistant.AvaloniaApp.Views.AddressBarView"
+             x:DataType="vm:AddressBarViewModel">
+
+    <Design.DataContext>
+        <vm:AddressBarViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <!-- 导航按钮：后退 / 前进 -->
+        <Style Selector="Button.NavBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#555555" />
+            <Setter Property="BorderBrush" Value="#D0D0D0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="MinWidth" Value="42" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.NavBtn:pointerover">
+            <Setter Property="Foreground" Value="#222222" />
+            <Setter Property="Background" Value="#E8E8E8" />
+            <Setter Property="BorderBrush" Value="#B0B0B0" />
+        </Style>
+        <Style Selector="Button.NavBtn:disabled">
+            <Setter Property="Foreground" Value="#BBBBBB" />
+            <Setter Property="BorderBrush" Value="#E0E0E0" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+
+        <!-- 跳转按钮 -->
+        <Style Selector="Button.GoBtn">
+            <Setter Property="Background" Value="#0078D4" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#006CBE" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="MinWidth" Value="52" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.GoBtn:pointerover">
+            <Setter Property="Background" Value="#106EBE" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+          ColumnSpacing="6"
+          Height="38">
+        <!-- 后退按钮 -->
+        <Button Grid.Column="0"
+                Classes="NavBtn"
+                Command="{Binding GoBackCommand}"
+                IsEnabled="{Binding CanGoBack}"
+                Content="◀" />
+
+        <!-- 前进按钮 -->
+        <Button Grid.Column="1"
+                Classes="NavBtn"
+                Command="{Binding GoForwardCommand}"
+                IsEnabled="{Binding CanGoForward}"
+                Content="▶" />
+
+        <!-- 地址栏输入框 -->
+        <TextBox Grid.Column="2"
+                 x:Name="AddressTextBox"
+                 Text="{Binding UrlText, Mode=TwoWay}"
+                 PlaceholderText="输入网址或搜索..."
+                 Background="#FFFFFF"
+                 Foreground="#222222"
+                 CaretBrush="#0078D4"
+                 BorderBrush="#CCCCCC"
+                 BorderThickness="1"
+                 FontSize="14"
+                 Padding="12,0"
+                 MinHeight="32"
+                 Height="32"
+                 VerticalAlignment="Center"
+                 VerticalContentAlignment="Center" />
+
+        <!-- 跳转按钮 -->
+        <Button Grid.Column="3"
+                Classes="GoBtn"
+                Command="{Binding NavigateCommand}"
+                Content="→" />
+    </Grid>
+</UserControl>

@@ -1,6 +1,5 @@
 using System;
 using Avalonia.Controls;
-using Avalonia.Input;
 using SCAssistant.AvaloniaApp.Services;
 using SCAssistant.AvaloniaApp.ViewModels;
 
@@ -14,11 +13,12 @@ public partial class MainLayout : UserControl
 {
     private readonly IBrowserProvider _browser;
 
-    public MainLayout(IBrowserProvider browser, SettingsViewModel settingsVm)
+    public MainLayout(IBrowserProvider browser, SettingsViewModel settingsVm, AddressBarViewModel addressBarVm)
     {
         _browser = browser;
         InitializeComponent();
         SettingsPanel.DataContext = settingsVm;
+        AddressBar.DataContext = addressBarVm;
         Loaded += OnLoaded;
         LogHelper.Info("[MainLayout] 布局构造完成");
     }
@@ -29,18 +29,5 @@ public partial class MainLayout : UserControl
         LogHelper.Info("[MainLayout] 布局加载 — 初始化浏览器区域");
         BrowserArea.Initialize(_browser);
         LogHelper.Info("[MainLayout] 浏览器区域初始化完成");
-    }
-
-    /// <summary>地址栏回车键 — 触发导航。</summary>
-    private void AddressTextBox_KeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            if (DataContext is MainViewModel vm)
-            {
-                vm.NavigateToUrlCommand.Execute(AddressTextBox.Text);
-            }
-            e.Handled = true;
-        }
     }
 }

@@ -83,6 +83,7 @@ public partial class App : Application
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<DownloadListViewModel>();
         services.AddTransient<HomeViewModel>();
+        services.AddTransient<AddressBarViewModel>();
         services.AddSingleton<MainViewModel>();
 
         // ─── View 注册 ───
