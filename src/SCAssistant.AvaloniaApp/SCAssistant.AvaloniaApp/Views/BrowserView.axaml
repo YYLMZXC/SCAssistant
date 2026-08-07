@@ -5,19 +5,23 @@
     <UserControl.Styles>
         <Style Selector="Button.NavBtn">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#666666" />
+            <Setter Property="Foreground" Value="#555555" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.NavBtn:pointerover">
-            <Setter Property="Foreground" Value="#333333" />
-            <Setter Property="Background" Value="#F0F0F0" />
+            <Setter Property="Foreground" Value="#222222" />
+            <Setter Property="Background" Value="#E8E8E8" />
         </Style>
         <Style Selector="Button.NavBtn:disabled">
-            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="Foreground" Value="#BBBBBB" />
+            <Setter Property="Cursor" Value="Default" />
         </Style>
     </UserControl.Styles>
 
@@ -25,11 +29,11 @@
 
         <!-- ===== 顶部地址栏 ===== -->
         <Border Grid.Row="0"
-                Background="#F8F8F8"
-                Padding="6,4"
-                BorderBrush="#E0E0E0"
+                Background="#F0F0F0"
+                Padding="8,6"
+                BorderBrush="#DDDDDD"
                 BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto" Height="40">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                 <Button Grid.Column="0" Classes="NavBtn"
                         x:Name="BtnBack"
                         Click="BtnBack_Click"
@@ -45,21 +49,26 @@
                          Text=""
                          PlaceholderText="输入网址或搜索..."
                          Background="#FFFFFF"
-                         Foreground="#333333"
+                         Foreground="#222222"
                          CaretBrush="#0078D4"
-                         BorderBrush="#D0D0D0"
+                         BorderBrush="#CCCCCC"
                          BorderThickness="1"
                          CornerRadius="6"
-                         FontSize="13"
-                         Padding="10,6"
+                         FontSize="14"
+                         Padding="12,8"
+                         Margin="6,0"
                          VerticalContentAlignment="Center"
                          KeyDown="AddressTextBox_KeyDown" />
                 <Button Grid.Column="3" Classes="NavBtn"
                         x:Name="BtnGo"
                         Click="BtnGo_Click"
-                        Foreground="#0078D4"
+                        Background="#0078D4"
+                        Foreground="#FFFFFF"
                         FontWeight="Bold"
                         FontSize="16"
+                        Width="44"
+                        Height="32"
+                        CornerRadius="6"
                         Content="→" />
             </Grid>
         </Border>

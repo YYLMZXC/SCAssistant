@@ -122,24 +122,36 @@ public partial class MainViewModel : ViewModelBase
         var tabName = Tabs[value].Name;
         LogHelper.Info($"[MainVM] 切换标签: [{value}] {tabName}");
 
-        // 第5个标签是设置，打开设置面板
+        // 浏览器标签页 (0-2): 导航到对应 URL
+        if (value <= 2)
+        {
+            IsSettingsOpen = false;
+            var url = Tabs[value].Url;
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                CurrentUrl = url;
+                _browser.Navigate(url);
+            }
+            else
+            {
+                LogHelper.Warn($"[MainVM] 标签 '{tabName}' URL 为空，跳过导航");
+            }
+            return;
+        }
+
+        // 工具标签页 (3): 显示主页，不需要浏览器导航
+        if (value == 3)
+        {
+            IsSettingsOpen = false;
+            LogHelper.Info("[MainVM] 切换到工具主页");
+            return;
+        }
+
+        // 设置标签页 (4): 打开设置面板
         if (value == 4)
         {
             IsSettingsOpen = true;
             LogHelper.Info("[MainVM] 打开设置面板");
-            return;
-        }
-
-        IsSettingsOpen = false;
-        var url = Tabs[value].Url;
-        if (!string.IsNullOrWhiteSpace(url))
-        {
-            CurrentUrl = url;
-            _browser.Navigate(url);
-        }
-        else
-        {
-            LogHelper.Warn($"[MainVM] 标签 '{tabName}' URL 为空，跳过导航");
         }
     }
 

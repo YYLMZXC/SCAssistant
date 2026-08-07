@@ -11,6 +11,8 @@
         <SolidColorBrush x:Key="PageBg" Color="#FFFFFF" />
         <conv:TabIndexToBrushConverter x:Key="TabIndexToBrush" />
         <conv:InverseBoolToVisibilityConverter x:Key="InvertBoolVis" />
+        <conv:IntInRangeConverter x:Key="IntInRange" />
+        <conv:IntEqualsConverter x:Key="IntEquals" />
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -35,14 +37,18 @@
 
     <Grid RowDefinitions="*,Auto" Background="{StaticResource PageBg}">
 
-        <!-- ===== 内容区：浏览器 + 设置面板叠加 ===== -->
+        <!-- ===== 内容区：浏览器 + 主页 + 设置面板 ===== -->
         <Grid Grid.Row="0">
-            <!-- 浏览器 -->
+            <!-- 浏览器 (Tab 0-2) -->
             <views:BrowserView x:Name="BrowserArea"
-                               IsVisible="{Binding IsSettingsOpen, Converter={StaticResource InvertBoolVis}}" />
+                               IsVisible="{Binding SelectedTabIndex, Converter={StaticResource IntInRange}, ConverterParameter=0-2}" />
 
-            <!-- 设置面板 -->
-            <Grid IsVisible="{Binding IsSettingsOpen, FallbackValue=False}"
+            <!-- 主页/工具 (Tab 3) -->
+            <views:HomeView x:Name="HomeArea"
+                            IsVisible="{Binding SelectedTabIndex, Converter={StaticResource IntEquals}, ConverterParameter=3}" />
+
+            <!-- 设置面板 (Tab 4) -->
+            <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource IntEquals}, ConverterParameter=4}"
                   RowDefinitions="Auto,*"
                   Background="{StaticResource PageBg}">
                 <!-- 设置页顶栏 -->

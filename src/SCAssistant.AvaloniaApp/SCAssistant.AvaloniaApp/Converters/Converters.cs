@@ -165,3 +165,21 @@ public class ProgressToTextConverter : IValueConverter
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => 0.0;
 }
+
+/// <summary>整数是否在指定范围内（参数格式: "min-max"）。</summary>
+public class IntInRangeConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int v && parameter is string s)
+        {
+            var parts = s.Split('-');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int min) && int.TryParse(parts[1], out int max))
+                return v >= min && v <= max;
+        }
+        return false;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value;
+}
