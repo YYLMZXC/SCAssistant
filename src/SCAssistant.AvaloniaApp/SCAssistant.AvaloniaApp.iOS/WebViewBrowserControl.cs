@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using CoreGraphics;
 using Foundation;
 using UIKit;
 using WebKit;
@@ -95,10 +96,11 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             var config = new WKWebViewConfiguration();
             config.Preferences.JavaScriptCanOpenWindowsAutomatically = true;
 
-            _webView = new WKWebView(_viewController.View.Bounds, config)
-            {
-                AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
-            };
+            // 以空 Frame 创建，实际位置/尺寸由 UpdateFrame 依据控件在 Avalonia 可视树中的
+            // 实际矩形计算后设置，避免 WKWebView 占满整个 VC 视图而遮住顶部地址栏与底部标签栏。
+            // 不使用 AutoresizingMask——Frame 完全由 UpdateFrame 手动管理，防止旋转时先被
+            // 自动撑满全屏再修正造成的闪烁。
+            _webView = new WKWebView(CGRect.Empty, config);
 
             _webView.Configuration.Preferences.JavaScriptEnabled = true;
 
@@ -166,22 +168,56 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         UpdateFrame();
     }
 
+    /// <summary>
+    /// 依据控件在 Avalonia 可视树中的实际矩形，计算其相对于顶级视图的偏移并设置 WKWebView.Frame。
+    /// 这样 WKWebView 只占据 BrowserView 区域（地址栏下方、标签栏上方），不再遮住顶/底导航。
+    /// 与桌面端 WebView2 的 UpdateBounds/CalculateOffsetFromTopLevel 保持一致逻辑。
+    /// </summary>
     private void UpdateFrame()
     {
         if (_webView == null || _viewController == null) return;
 
         try
         {
-            var frame = _viewController.View.Bounds;
-            if (frame.Width > 0 && frame.Height > 0)
-            {
-                _webView.Frame = frame;
-            }
+            var size = Bounds.Size;
+            if (size.Width <= 0 || size.Height <= 0) return;
+
+            // 遍历可视树累加 Bounds.X/Y，得到控件相对于顶级视图的偏移（DIP == iOS point）
+            var offset = CalculateOffsetFromTopLevel();
+
+            _webView.Frame = new CGRect(
+                (float)offset.X,
+                (float)offset.Y,
+                (float)size.Width,
+                (float)size.Height);
+
+            LogHelper.Debug($"[iOS WebView] UpdateFrame: offset=({offset.X:F0},{offset.Y:F0}), size=({size.Width:F0}x{size.Height:F0})");
         }
         catch (Exception ex)
         {
             LogHelper.Error("[iOS WebView] 更新布局失败", ex);
         }
+    }
+
+    /// <summary>
+    /// 计算控件相对于顶级视图（TopLevel，对应 root VC View）的偏移位置。
+    /// </summary>
+    private Point CalculateOffsetFromTopLevel()
+    {
+        double x = 0, y = 0;
+        Control? current = this;
+
+        while (current != null)
+        {
+            var b = current.Bounds;
+            x += b.X;
+            y += b.Y;
+
+            if (current is TopLevel) break;
+            current = current.Parent as Control;
+        }
+
+        return new Point(x, y);
     }
 
     private UIViewController? GetViewController()
