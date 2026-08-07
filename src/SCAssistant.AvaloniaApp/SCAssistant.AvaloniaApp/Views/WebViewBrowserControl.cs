@@ -329,9 +329,16 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             if (_activity == null || _disposed) return;
             _container = new FrameLayout(_activity);
             var density = _activity.Resources.DisplayMetrics?.Density ?? 1.5f;
+            var offset = CalculateOffsetFromTopLevel();
             int widthPx = Bounds.Width > 0 ? (int)(Bounds.Width * density) : ViewGroup.LayoutParams.MatchParent;
             int heightPx = Bounds.Height > 0 ? (int)(Bounds.Height * density) : ViewGroup.LayoutParams.MatchParent;
-            _layoutParams = new FrameLayout.LayoutParams(widthPx, heightPx);
+            // 通过 LeftMargin/TopMargin 将容器定位到 Avalonia 视觉树中 BrowserView 的实际位置
+            // （顶栏下方），否则容器默认从屏幕左上角 (0,0) 开始覆盖顶部地址栏。
+            _layoutParams = new FrameLayout.LayoutParams(widthPx, heightPx)
+            {
+                LeftMargin = (int)(offset.X * density),
+                TopMargin = (int)(offset.Y * density)
+            };
             _activity.AddContentView(_container, _layoutParams);
 
             _webView = new WebView(_activity);
@@ -353,6 +360,9 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
                 FrameLayout.LayoutParams.MatchParent, FrameLayout.LayoutParams.MatchParent));
 
             SizeChanged += OnAndroidSizeChanged;
+            // 位置变化（SafeArea 应用、设置面板开关、标签切换等）不会触发 SizeChanged，
+            // 需额外监听 LayoutUpdated 同步容器的 LeftMargin/TopMargin，避免覆盖顶栏或留白。
+            LayoutUpdated += (_, _) => UpdateAndroidLayout();
             _isInitialized = true;
             LogHelper.Info("[Android WebView] 初始化完成");
             ReadyChanged?.Invoke(this, EventArgs.Empty);
@@ -366,17 +376,26 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         }
     }
 
-    private void OnAndroidSizeChanged(object? sender, SizeChangedEventArgs e)
+    /// <summary>
+    /// 同步原生 WebView 容器的大小与位置到 Avalonia 视觉树中 BrowserView 的实际区域。
+    /// 同时更新 LeftMargin/TopMargin（位置）与 Width/Height（尺寸），避免容器停留在
+    /// 屏幕左上角覆盖顶部地址栏，或在底部留白。
+    /// </summary>
+    private void UpdateAndroidLayout()
     {
         if (_activity == null || _container == null || _layoutParams == null) return;
         try
         {
             _activity.RunOnUiThread(() =>
             {
-                if (_container == null || _layoutParams == null) return;
+                if (_container == null || _layoutParams == null || _activity == null) return;
                 var density = _activity!.Resources.DisplayMetrics?.Density ?? 1.5f;
-                _layoutParams.Width = Bounds.Width > 0 ? (int)(Bounds.Width * density) : ViewGroup.LayoutParams.MatchParent;
-                _layoutParams.Height = Bounds.Height > 0 ? (int)(Bounds.Height * density) : ViewGroup.LayoutParams.MatchParent;
+                var size = Bounds.Size;
+                var offset = CalculateOffsetFromTopLevel();
+                _layoutParams.Width = size.Width > 0 ? (int)(size.Width * density) : ViewGroup.LayoutParams.MatchParent;
+                _layoutParams.Height = size.Height > 0 ? (int)(size.Height * density) : ViewGroup.LayoutParams.MatchParent;
+                _layoutParams.LeftMargin = (int)(offset.X * density);
+                _layoutParams.TopMargin = (int)(offset.Y * density);
                 _container.LayoutParameters = _layoutParams;
             });
         }
@@ -385,6 +404,8 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             LogHelper.Error("[Android WebView] 布局更新失败", ex);
         }
     }
+
+    private void OnAndroidSizeChanged(object? sender, SizeChangedEventArgs e) => UpdateAndroidLayout();
 
     private Activity? GetAndroidActivity()
     {
