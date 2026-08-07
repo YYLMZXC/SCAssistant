@@ -139,6 +139,39 @@ public class TabIndexToBrushConverter : IValueConverter
 }
 
 /// <summary>
+/// 底部标签按钮背景/前景色。
+/// 用法：ConverterParameter = "0:bg"（标签0的背景）或 "0:fg"（标签0的前景）。
+/// 选中 → bg=#0078D4, fg=#FFFFFF；未选中 → bg=Transparent, fg=#666666。
+/// </summary>
+public class TabButtonBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is int selected && parameter is string s)
+        {
+            var parts = s.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int index))
+            {
+                bool isSelected = selected == index;
+                bool isBg = parts[1] == "bg";
+
+                return isBg
+                    ? (isSelected
+                        ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0078D4"))
+                        : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.Transparent))
+                    : (isSelected
+                        ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.White)
+                        : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666")));
+            }
+        }
+        return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666"));
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Avalonia.AvaloniaProperty.UnsetValue;
+}
+
+/// <summary>
 /// 整数相等比较 → 布尔。
 /// 用法：ConverterParameter 为目标值，当前值等于目标值时返回 true。
 /// </summary>

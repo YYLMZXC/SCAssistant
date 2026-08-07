@@ -86,6 +86,7 @@ public partial class App : Application
         services.AddSingleton<MainViewModel>();
 
         // ─── View 注册 ───
+        services.AddTransient<MainLayout>();
         services.AddTransient<MainWindow>();
         services.AddTransient<MainView>();
         services.AddTransient<SettingsView>();

@@ -19,6 +19,8 @@
             <converters:ProgressToTextConverter x:Key="ProgressToTextConverter" />
             <converters:IntEqualsConverter x:Key="IntEqualsConverter" />
             <converters:TabIndexToBrushConverter x:Key="TabIndexToBrushConverter" />
+            <converters:IntInRangeConverter x:Key="IntInRangeConverter" />
+            <converters:TabButtonBrushConverter x:Key="TabButtonBrushConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
