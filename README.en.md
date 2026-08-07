@@ -1,21 +1,22 @@
 # SC Assistant
 
-SCAssistant is a **cross-platform** application built with [Uno Platform](https://platform.uno/), providing convenient access to Survivalcraft game community sites and download management. A single codebase targets Windows desktop, Android, and iOS.
+SCAssistant is a **cross-platform** application built with [Avalonia UI](https://www.avaloniaui.net/), providing convenient access to Survivalcraft game community sites and download management. A single codebase targets Windows desktop, Android, and iOS.
 
 ## Key Features
 
 - **Quick Navigation**: Built-in shortcuts to the homepage, [SCKey](https://www.sckey.net), and [SCWZ](https://scwz.top/) for quick access to Survivalcraft community resources.
-- **Built-in Browser**: Based on Uno Platform's cross-platform WebView2, automatically mapped to each platform's native browser:
+- **Built-in Browser**: Based on Avalonia's cross-platform WebView, automatically mapped to each platform's native browser:
   - Windows: Edge WebView2
   - Android: Android WebView
   - iOS: WKWebView
-  - Desktop Skia: falls back to the system default browser
+- **Download Management**: Multi-task concurrent downloads, progress display, pause/cancel support.
 - **Download History Management**: Automatically records downloaded files, supports viewing records, opening folders, and deleting records.
-- **Cross-Platform Support**: A single project (Uno Single Project) compiled into Windows desktop apps, Android APKs, and iOS apps.
+- **Settings Management**: Configurable homepage URL, search engine, download directory, max concurrent downloads, etc.
+- **Cross-Platform Support**: Compiled into Windows desktop apps, Android APKs, and iOS apps.
 
 ## Technical Architecture
 
-- **UI Framework**: Uno Platform (Uno.Sdk, SkiaRenderer + WinUI style)
+- **UI Framework**: Avalonia UI (Avalonia 12.x, Fluent Theme)
 - **Runtime**: .NET 10
 - **Architecture Pattern**: MVVM (CommunityToolkit.Mvvm with IOC)
 - **Dependency Injection**: Microsoft.Extensions.DependencyInjection
@@ -24,68 +25,83 @@ SCAssistant is a **cross-platform** application built with [Uno Platform](https:
 ## Project Structure
 
 ```
-src/SCAssistant.UnoApp/
-├── SCAssistant.UnoApp.slnx           # Solution file
-├── global.json                       # .NET SDK version pinning
-├── nuget.config                      # NuGet source configuration
-└── SCAssistant.UnoApp/               # Single project (Uno Single Project)
-    ├── App.xaml / App.xaml.cs        # Application entry point & DI configuration
-    ├── ViewModels/                   # MVVM ViewModel layer
-    │   ├── ViewModelBase.cs          # Base class
-    │   ├── MainViewModel.cs          # Main page logic (navigation, browser state)
-    │   └── DownloadListViewModel.cs  # Download list logic
-    ├── Views/                        # View layer
-    │   ├── MainPage.xaml             # Main page (toolbar + browser host + download list overlay)
-    │   └── DownloadListPanel.xaml    # Download list popup panel
-    ├── Models/                       # Data models
-    │   └── DownloadRecord.cs         # Download record
-    ├── Services/                     # Service layer
-    │   ├── IBrowserProvider.cs       # Browser provider interface
-    │   ├── BrowserProvider.cs        # Cross-platform WebView2 implementation
-    │   ├── SystemBrowserProvider.cs  # System browser fallback
-    │   ├── IDownloadHistoryService.cs # Download history interface
-    │   ├── DownloadHistoryService.cs  # Download history implementation
-    │   └── ServiceLocator.cs          # Service locator (static access)
-    ├── Converters/                   # XAML value converters
-    ├── Platforms/                    # Platform-specific entry points & config
-    │   ├── Desktop/Program.cs        # Desktop entry point
-    │   ├── Android/                  # Android entry point & manifest
-    │   └── iOS/                      # iOS entry point & config
-    └── Assets/                       # App resources
+src/SCAssistant.AvaloniaApp/
+├── SCAssistant.AvaloniaApp.slnx           # Solution file
+├── Directory.Packages.props               # Central package version management
+├── SCAssistant.AvaloniaApp/               # Shared project
+│   ├── App.axaml / App.axaml.cs           # Application entry point & DI configuration
+│   ├── ViewModels/                        # MVVM ViewModel layer
+│   │   ├── ViewModelBase.cs               # Base class
+│   │   ├── MainViewModel.cs               # Main page logic (navigation, browser state, download)
+│   │   ├── DownloadListViewModel.cs        # Download list logic
+│   │   └── SettingsViewModel.cs           # Settings panel logic
+│   ├── Views/                             # View layer
+│   │   ├── MainWindow.axaml               # Desktop main window (toolbar + WebView + overlays)
+│   │   ├── MainView.axaml                 # Mobile main view
+│   │   ├── HomeView.axaml                 # Home/welcome page
+│   │   └── SettingsView.axaml             # Settings panel
+│   ├── Models/                            # Data models
+│   │   ├── DownloadRecord.cs              # Download record
+│   │   └── AppSettings.cs                 # Application settings
+│   ├── Services/                          # Service layer
+│   │   ├── IBrowserProvider.cs            # Browser provider interface
+│   │   ├── BrowserProvider.cs             # Cross-platform WebView implementation
+│   │   ├── SystemBrowserProvider.cs        # System browser fallback
+│   │   ├── IDownloadService.cs            # Download service interface
+│   │   ├── DownloadService.cs             # Download service implementation
+│   │   ├── IDownloadHistoryService.cs      # Download history interface
+│   │   ├── DownloadHistoryService.cs       # Download history implementation
+│   │   ├── ISettingsService.cs            # Settings service interface
+│   │   ├── SettingsService.cs             # Settings service implementation
+│   │   ├── LogHelper.cs                   # Logging helper
+│   │   └── ServiceLocator.cs              # Service locator (static access)
+│   └── Converters/                        # Value converters
+│       └── Converters.cs                  # XAML binding converters
+├── SCAssistant.AvaloniaApp.Desktop/        # Desktop platform project
+├── SCAssistant.AvaloniaApp.Android/        # Android platform project
+│   ├── MainActivity.cs
+│   └── Properties/AndroidManifest.xml
+└── SCAssistant.AvaloniaApp.iOS/            # iOS platform project
+    ├── AppDelegate.cs
+    ├── Main.cs
+    └── Info.plist
 ```
 
 ## Dependencies
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| Uno.Sdk | - | Uno Platform SDK (single project build, version pinned by global.json) |
+| Avalonia | 12.1.0 | Avalonia UI framework |
+| Avalonia.Themes.Fluent | 12.1.0 | Fluent design theme |
+| Avalonia.Fonts.Inter | 12.1.0 | Inter font |
 | CommunityToolkit.Mvvm | 8.4.2 | MVVM toolkit |
-| Newtonsoft.Json | 13.0.3 | JSON serialization |
+| Microsoft.Extensions.DependencyInjection | 10.0.3 | DI container |
+| Newtonsoft.Json | 13.0.4 | JSON serialization |
 
 ## How to Run
 
 ### Requirements
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- **Windows desktop**: No additional browser runtime required (uses the system Edge WebView2)
+- **Windows desktop**: No additional browser runtime required
 - **Android**: Requires Android SDK and related build tools
 - **iOS**: Requires macOS with Xcode for building
 
 ### Desktop (Windows)
 
 ```bash
-dotnet run --project src/SCAssistant.UnoApp/SCAssistant.UnoApp -f net10.0-desktop
+dotnet run --project src/SCAssistant.AvaloniaApp/SCAssistant.AvaloniaApp.Desktop
 ```
 
-Or open `src/SCAssistant.UnoApp/SCAssistant.UnoApp.slnx` directly in Visual Studio / Rider and run.
+Or open `src/SCAssistant.AvaloniaApp/SCAssistant.AvaloniaApp.slnx` directly in Visual Studio / Rider and run.
 
 ### Android
 
 ```bash
-dotnet build src/SCAssistant.UnoApp/SCAssistant.UnoApp -f net10.0-android -c Release
+dotnet build src/SCAssistant.AvaloniaApp/SCAssistant.AvaloniaApp.Android -c Release
 ```
 
-The generated APK will be located at `src/SCAssistant.UnoApp/SCAssistant.UnoApp/bin/Release/net10.0-android/`.
+The generated APK will be located at `src/SCAssistant.AvaloniaApp/SCAssistant.AvaloniaApp.Android/bin/Release/net10.0-android/`.
 
 ### iOS
 
