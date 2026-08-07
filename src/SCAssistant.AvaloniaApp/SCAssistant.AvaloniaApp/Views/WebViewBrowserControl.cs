@@ -957,12 +957,12 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
                         handler = System.Linq.Expressions.Expression.Lambda(actionType, call, p1, p2).Compile();
                     }
                 }
-                _evaluateJavaScriptMethod.Invoke(_nativeWebView, new?[] { script, handler });
+                _evaluateJavaScriptMethod.Invoke(_nativeWebView, new object?[] { script, handler });
                 return await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
             }
             else
             {
-                var r = _evaluateJavaScriptMethod.Invoke(_nativeWebView, new?[] { script });
+                var r = _evaluateJavaScriptMethod.Invoke(_nativeWebView, new object?[] { script });
                 return r?.ToString() ?? string.Empty;
             }
         }
