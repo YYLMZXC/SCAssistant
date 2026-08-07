@@ -12,6 +12,7 @@ public partial class HomeViewModel : ViewModelBase
 {
     private readonly IBrowserProvider _browser;
 
+    /// <summary>搜索框文本。</summary>
     [ObservableProperty]
     private string _searchText = string.Empty;
 
@@ -20,6 +21,10 @@ public partial class HomeViewModel : ViewModelBase
         _browser = browser;
     }
 
+    /// <summary>
+    /// 执行搜索或 URL 导航。
+    /// 自动识别：含 "." 且不含空格视为 URL 直接导航，否则使用 Google 搜索。
+    /// </summary>
     [RelayCommand]
     private void Search(string? query)
     {
@@ -30,7 +35,7 @@ public partial class HomeViewModel : ViewModelBase
             return;
         }
 
-        // 如果是网址，直接导航
+        // 智能判断：含点号且无空格 → 视为 URL 直接导航
         if (q.Contains('.') && !q.Contains(' '))
         {
             var url = q.StartsWith("http") ? q : $"https://{q}";
@@ -39,13 +44,14 @@ public partial class HomeViewModel : ViewModelBase
         }
         else
         {
-            // 否则使用搜索引擎
+            // 使用 Google 搜索引擎
             var searchUrl = $"https://www.google.com/search?q={Uri.EscapeDataString(q)}";
             LogHelper.Info($"[HomeVM] 搜索: {q}");
             _browser.Navigate(searchUrl);
         }
     }
 
+    /// <summary>点击快捷链接直接导航。</summary>
     [RelayCommand]
     private void NavigateQuickLink(string? url)
     {

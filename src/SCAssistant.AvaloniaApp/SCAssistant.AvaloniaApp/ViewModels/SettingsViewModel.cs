@@ -20,38 +20,51 @@ public partial class SettingsViewModel : ViewModelBase
 
     private readonly ISettingsService _settingsService;
 
-    // ─── 标签页 URL ───
+    // ─── 标签页 URL（共 4 个可自定义的浏览器标签页） ───
+
+    /// <summary>标签页 0 URL（SC中文社区）。</summary>
     [ObservableProperty]
     private string _tabUrl0 = string.Empty;
 
+    /// <summary>标签页 1 URL（SC联机号）。</summary>
     [ObservableProperty]
     private string _tabUrl1 = string.Empty;
 
+    /// <summary>标签页 2 URL（SC导航网）。</summary>
     [ObservableProperty]
     private string _tabUrl2 = string.Empty;
 
+    /// <summary>标签页 3 URL（工具，通常为空白）。</summary>
     [ObservableProperty]
     private string _tabUrl3 = string.Empty;
 
     // ─── 通用设置 ───
+
+    /// <summary>应用主页 URL。</summary>
     [ObservableProperty]
     private string _homePageUrl = string.Empty;
 
+    /// <summary>文件下载保存目录。</summary>
     [ObservableProperty]
     private string _downloadDirectory = string.Empty;
 
+    /// <summary>最大并行下载数量。</summary>
     [ObservableProperty]
     private int _maxConcurrentDownloads = 3;
 
+    /// <summary>是否启用下载历史记录。</summary>
     [ObservableProperty]
     private bool _enableDownloadHistory = true;
 
+    /// <summary>是否启用广告拦截。</summary>
     [ObservableProperty]
     private bool _enableAdBlock;
 
+    /// <summary>主题索引：0=跟随系统，1=浅色，2=深色。</summary>
     [ObservableProperty]
     private int _themeIndex;
 
+    /// <summary>主题选项列表（供 UI 下拉选择）。</summary>
     [ObservableProperty]
     private ObservableCollection<string> _themeOptions = new()
     {
@@ -63,6 +76,7 @@ public partial class SettingsViewModel : ViewModelBase
         _settingsService = settingsService;
     }
 
+    /// <summary>从持久化存储异步加载设置并填充到各属性。</summary>
     public async Task LoadAsync()
     {
         LogHelper.Info("[SettingsVM] 加载设置...");
@@ -93,6 +107,7 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>将当前设置保存到持久化存储，并触发 SettingsSaved 事件通知 MainViewModel 刷新。</summary>
     [RelayCommand]
     private async Task Save()
     {

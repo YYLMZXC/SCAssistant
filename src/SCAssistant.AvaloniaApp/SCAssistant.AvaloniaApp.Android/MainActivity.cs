@@ -15,10 +15,14 @@ namespace SCAssistant.AvaloniaApp.Android;
     Icon = "@drawable/icon",
     MainLauncher = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
+/// <summary>
+/// Android 主 Activity — Avalonia 应用入口。
+/// 注册 Android 原生 WebView 浏览器控件工厂。
+/// </summary>
 public class MainActivity : AvaloniaMainActivity
 {
     /// <summary>
-    /// 当前 Activity 实例，供 WebViewBrowserControl 使用。
+    /// 当前 Activity 实例（静态引用），供 WebViewBrowserControl 获取 Activity 上下文。
     /// </summary>
     public static MainActivity? CurrentActivity { get; private set; }
 
@@ -29,6 +33,7 @@ public class MainActivity : AvaloniaMainActivity
         CurrentActivity = this;
 
         // 注册 Android 平台浏览器控件工厂
+        // 此工厂负责创建 Android.Webkit.WebView 控件并桥接所有事件到 BrowserProvider
         BrowserView.BrowserControlFactory = provider =>
         {
             var webView = new WebViewBrowserControl();

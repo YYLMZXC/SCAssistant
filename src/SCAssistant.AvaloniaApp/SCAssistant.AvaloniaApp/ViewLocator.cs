@@ -7,10 +7,13 @@ using SCAssistant.AvaloniaApp.ViewModels;
 namespace SCAssistant.AvaloniaApp;
 
 /// <summary>
-/// View 定位器 — 通过 ViewModel 类型匹配对应的 View。
+/// View 定位器 — 通过命名约定将 ViewModel 自动匹配到对应的 View。
+/// 规则：ViewModels.MainViewModel → Views.MainView,
+///       ViewModels.SettingsViewModel → Views.SettingsView 等。
 /// </summary>
 public class ViewLocator : IDataTemplate
 {
+    /// <summary>根据 ViewModel 类型反射创建对应的 View 实例并绑定 DataContext。</summary>
     public Control? Build(object? param)
     {
         if (param is null) return null;
@@ -18,7 +21,9 @@ public class ViewLocator : IDataTemplate
         var vmName = param.GetType().FullName;
         if (vmName is null) return null;
 
-        // ViewModel 名称 → View 名称 (MainViewModel → MainView, SettingsViewModel → SettingsView)
+        // 命名约定转换: ViewModels → Views, ViewModel → View
+        // 例如: SCAssistant.AvaloniaApp.ViewModels.MainViewModel
+        //   → SCAssistant.AvaloniaApp.Views.MainView
         var viewName = vmName
             .Replace("ViewModels", "Views")
             .Replace("ViewModel", "View");
@@ -26,6 +31,7 @@ public class ViewLocator : IDataTemplate
         var viewType = Type.GetType(viewName);
         if (viewType is null) return new TextBlock { Text = $"View Not Found: {viewName}" };
 
+        // 通过反射创建 View 实例并设置 DataContext
         var control = (Control?)Activator.CreateInstance(viewType);
         if (control != null)
         {
@@ -35,6 +41,7 @@ public class ViewLocator : IDataTemplate
         return control;
     }
 
+    /// <summary>匹配规则：所有继承自 ViewModelBase 的对象都适用此模板。</summary>
     public bool Match(object? data)
     {
         return data is ViewModelBase;

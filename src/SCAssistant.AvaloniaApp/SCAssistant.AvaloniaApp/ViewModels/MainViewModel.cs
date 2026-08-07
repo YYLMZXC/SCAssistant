@@ -14,33 +14,46 @@ public partial class MainViewModel : ViewModelBase
     private readonly IBrowserProvider _browser;
     private readonly ISettingsService _settings;
 
+    /// <summary>默认标签页 URL（当用户未自定义时使用）。</summary>
     private static readonly string[] DefaultTabUrls = { "https://www.scbbs.top/", "https://www.sckey.net/", "https://scwz.top/", "" };
+
+    /// <summary>底部 5 个标签页的中文名称。</summary>
     private static readonly string[] TabNames = { "SC中文社区", "SC联机号", "SC导航网", "工具", "设置" };
 
+    /// <summary>当前地址栏 URL。</summary>
     [ObservableProperty]
     private string _currentUrl = string.Empty;
 
+    /// <summary>当前选中的标签页索引（-1 表示未选中）。</summary>
     [ObservableProperty]
     private int _selectedTabIndex = -1;
 
+    /// <summary>浏览器是否可以后退。</summary>
     [ObservableProperty]
     private bool _canGoBack;
 
+    /// <summary>浏览器是否可以前进。</summary>
     [ObservableProperty]
     private bool _canGoForward;
 
+    /// <summary>浏览器是否正在加载页面。</summary>
     [ObservableProperty]
     private bool _isLoading;
 
+    /// <summary>平台 WebView 是否已初始化就绪。</summary>
     [ObservableProperty]
     private bool _isBrowserReady;
 
+    /// <summary>设置面板是否打开。</summary>
     [ObservableProperty]
     private bool _isSettingsOpen;
 
     /// <summary>底部标签页数据源。</summary>
     public ObservableCollection<TabItem> Tabs { get; } = new();
 
+    /// <summary>
+    /// 构造函数：注入浏览器服务和设置服务，订阅浏览器事件并初始化标签页。
+    /// </summary>
     public MainViewModel(IBrowserProvider browser, ISettingsService settings)
     {
         _browser = browser;
@@ -86,6 +99,10 @@ public partial class MainViewModel : ViewModelBase
         InitializeTabs();
     }
 
+    /// <summary>
+    /// 从设置加载标签页 URL，若未配置则使用默认值。
+    /// 加载完成后默认选中第一个标签页。
+    /// </summary>
     private async void InitializeTabs()
     {
         AppSettings appSettings;

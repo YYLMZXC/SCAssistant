@@ -14,11 +14,13 @@ namespace SCAssistant.AvaloniaApp.Views;
 public partial class BrowserView : UserControl
 {
     private IBrowserProvider? _browserProvider;
+
+    /// <summary>防止地址栏回环：地址同步时暂时抑制更新以阻止文本框循环刷新。</summary>
     private bool _suppressAddressSync;
 
     /// <summary>
-    /// 平台浏览器控件工厂 — 由各平台项目设置。
-    /// 传入 IBrowserProvider，返回实际的浏览器控件。
+    /// 平台浏览器控件工厂 — 由各平台入口点（Program.cs / MainActivity.cs / Main.cs）设置。
+    /// 传入 IBrowserProvider，返回平台特定的浏览器控件（WebView2 / Android WebView / WKWebView）。
     /// </summary>
     public static Func<IBrowserProvider, Control>? BrowserControlFactory { get; set; }
 
@@ -28,7 +30,8 @@ public partial class BrowserView : UserControl
     }
 
     /// <summary>
-    /// 初始化 WebView — 需要绑定到 IBrowserProvider。
+    /// 初始化 WebView — 绑定到 BrowserProvider 并创建平台原生浏览器控件。
+    /// 优先使用 BrowserControlFactory 工厂，回退到运行时反射加载。
     /// </summary>
     public void Initialize(IBrowserProvider browserProvider)
     {
@@ -88,23 +91,27 @@ public partial class BrowserView : UserControl
 
     #region 地址栏事件处理
 
+    /// <summary>地址栏后退按钮点击。</summary>
     private void BtnBack_Click(object? sender, RoutedEventArgs e)
     {
         LogHelper.Debug("[BrowserView] 地址栏后退");
         _browserProvider?.GoBack();
     }
 
+    /// <summary>地址栏前进按钮点击。</summary>
     private void BtnForward_Click(object? sender, RoutedEventArgs e)
     {
         LogHelper.Debug("[BrowserView] 地址栏前进");
         _browserProvider?.GoForward();
     }
 
+    /// <summary>地址栏 Go 按钮点击。</summary>
     private void BtnGo_Click(object? sender, RoutedEventArgs e)
     {
         NavigateFromAddressBar();
     }
 
+    /// <summary>地址栏回车键导航。</summary>
     private void AddressTextBox_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)

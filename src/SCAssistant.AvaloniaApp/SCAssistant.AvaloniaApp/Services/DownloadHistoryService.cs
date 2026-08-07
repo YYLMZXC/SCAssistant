@@ -12,6 +12,7 @@ namespace SCAssistant.AvaloniaApp.Services;
 /// </summary>
 public class DownloadHistoryService : IDownloadHistoryService
 {
+    /// <summary>下载历史 JSON 文件存储路径。</summary>
     private static readonly string HistoryFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "SCAssistant",
@@ -23,6 +24,9 @@ public class DownloadHistoryService : IDownloadHistoryService
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>
+    /// 从 JSON 文件加载所有下载记录。若文件不存在则返回空列表。
+    /// </summary>
     public Task<List<DownloadRecord>> GetRecordsAsync()
     {
         try
@@ -53,6 +57,7 @@ public class DownloadHistoryService : IDownloadHistoryService
         return Task.FromResult(new List<DownloadRecord>());
     }
 
+    /// <summary>添加一条新的下载记录并持久化。</summary>
     public async Task AddRecordAsync(DownloadRecord record)
     {
         var records = await GetRecordsAsync();
@@ -61,6 +66,7 @@ public class DownloadHistoryService : IDownloadHistoryService
         LogHelper.Info($"[DownloadHistory] 添加记录: {record.FileName}");
     }
 
+    /// <summary>根据 ID 查找并更新下载记录。</summary>
     public async Task UpdateRecordAsync(DownloadRecord record)
     {
         var records = await GetRecordsAsync();

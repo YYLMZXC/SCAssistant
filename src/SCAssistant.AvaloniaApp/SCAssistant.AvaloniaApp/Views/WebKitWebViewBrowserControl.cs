@@ -19,18 +19,35 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
     private string _currentUrl = string.Empty;
     private bool _isLoading;
 
-    // 原生 WebView 相关对象（通过反射创建）
-    private object? _nativeWebView;      // WebKit.WebView (Linux) / WKWebView (macOS)
-    private object? _nativeContainer;    // 容器控件
+    // ─── 原生 WebView 相关对象（通过反射创建，兼容 Linux WebKitGTK 和 macOS WKWebView） ───
+
+    /// <summary>原生 WebView 实例：Linux 下为 WebKit.WebView，macOS 下为 WKWebView。</summary>
+    private object? _nativeWebView;
+
+    /// <summary>原生容器控件（用于嵌入 Avalonia 可视化树）。</summary>
+    private object? _nativeContainer;
+
+    /// <summary>原生 WebView 类型（反射获取）。</summary>
     private Type? _nativeWebViewType;
+
+    /// <summary>原生容器类型（反射获取）。</summary>
     private Type? _nativeContainerType;
 
+    // ─── 反射缓存的方法和属性（避免每次调用都通过反射查找） ───
+
+    /// <summary>LoadUrl / LoadRequest 方法。</summary>
     private MethodInfo? _loadUrlMethod;
+
+    /// <summary>Reload / Refresh 方法。</summary>
     private MethodInfo? _reloadMethod;
+
     private MethodInfo? _goBackMethod;
     private MethodInfo? _goForwardMethod;
     private MethodInfo? _stopLoadingMethod;
+
+    /// <summary>EvaluateJavaScript 方法（macOS 异步 / Linux 同步）。</summary>
     private MethodInfo? _evaluateJavaScriptMethod;
+
     private PropertyInfo? _urlProperty;
     private PropertyInfo? _titleProperty;
     private PropertyInfo? _canGoBackProperty;
@@ -91,6 +108,7 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
         Dispose();
     }
 
+    /// <summary>根据操作系统初始化对应的 WebView 实现。</summary>
     private void InitializeWebView()
     {
         try
@@ -260,6 +278,7 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
         }
     }
 
+    /// <summary>通过反射绑定原生 WebView 的所有导航方法和属性，缓存 MethodInfo/PropertyInfo 以提升性能。</summary>
     private void BindWebViewMembers()
     {
         if (_nativeWebViewType == null) return;
@@ -353,6 +372,7 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
         }
     }
 
+    /// <summary>将原生 WebView 控件嵌入到 Avalonia 可视化树中。</summary>
     private void EmbedNativeWebView()
     {
         if (_nativeWebView == null) return;

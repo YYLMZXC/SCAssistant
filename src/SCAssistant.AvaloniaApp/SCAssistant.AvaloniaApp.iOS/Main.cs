@@ -4,13 +4,20 @@ using SCAssistant.AvaloniaApp.Views;
 
 namespace SCAssistant.AvaloniaApp.iOS;
 
+/// <summary>
+/// iOS 应用程序入口类。
+/// 注册 WKWebView 浏览器控件工厂并启动 UIApplication。
+/// </summary>
 public class Application
 {
+    /// <summary>当前 ViewController（供 WebViewBrowserControl 嵌入使用）。</summary>
     public static UIViewController? CurrentViewController { get; private set; }
 
+    /// <summary>应用程序主入口点。</summary>
     static void Main(string[] args)
     {
         // 注册 iOS 平台浏览器控件工厂
+        // 此工厂负责创建 WKWebView 控件并桥接所有事件到 BrowserProvider
         BrowserView.BrowserControlFactory = provider =>
         {
             var webView = new WebViewBrowserControl();

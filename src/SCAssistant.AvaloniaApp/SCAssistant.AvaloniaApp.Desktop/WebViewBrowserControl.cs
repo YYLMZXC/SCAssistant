@@ -16,13 +16,25 @@ namespace SCAssistant.AvaloniaApp.Desktop;
 /// </summary>
 public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 {
+    /// <summary>WebView2 控制器（管理窗口嵌入和布局）。</summary>
     private CoreWebView2Controller? _controller;
+
+    /// <summary>WebView2 核心引擎实例。</summary>
     private CoreWebView2? _coreWebView;
+
+    /// <summary>WebView2 运行时环境。</summary>
     private CoreWebView2Environment? _environment;
+
+    /// <summary>是否已完成 WebView2 初始化。</summary>
     private bool _isInitialized;
+
+    /// <summary>是否已释放资源。</summary>
     private bool _disposed;
 
+    /// <summary>当前导航 URL 缓存。</summary>
     private string _currentUrl = string.Empty;
+
+    /// <summary>当前是否正在加载页面。</summary>
     private bool _isLoading;
 
     public bool IsReady => _isInitialized;
@@ -38,22 +50,27 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     public event EventHandler<string>? DownloadRequested;
     public event EventHandler? NavigationHistoryChanged;
 
-    #region Win32 API
+    #region Win32 API (WebView2 窗口嵌入)
 
+    /// <summary>将子窗口句柄设置到父窗口，实现 WebView2 嵌入 Avalonia 窗口。</summary>
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
+    /// <summary>移动/调整窗口位置和大小。</summary>
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 
+    /// <summary>检查窗口句柄是否有效。</summary>
     [DllImport("user32.dll")]
     private static extern bool IsWindow(IntPtr hWnd);
 
+    /// <summary>获取当前前台窗口句柄（回退方案）。</summary>
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
 
     #endregion
 
+    /// <summary>控件附加到可视化树时，启动 WebView2 异步初始化。</summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -71,12 +88,14 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         }
     }
 
+    /// <summary>控件从可视化树移除时释放 WebView2 资源。</summary>
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
         Dispose();
     }
 
+    /// <summary>异步初始化 WebView2 环境、控制器并订阅导航事件。</summary>
     private async Task InitializeAsync()
     {
         try
@@ -122,6 +141,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         }
     }
 
+    /// <summary>获取 Avalonia 顶级窗口的原生窗口句柄，用于 WebView2 嵌入。</summary>
     private IntPtr GetParentHandle()
     {
         if (VisualRoot is TopLevel topLevel)
@@ -132,14 +152,17 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
                 return handle.Handle;
             }
         }
+        // 回退：使用前台窗口句柄
         return GetForegroundWindow();
     }
 
+    /// <summary>Avalonia 控件尺寸变化时同步更新 WebView2 布局。</summary>
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
         UpdateBounds();
     }
 
+    /// <summary>计算控件相对于顶级窗口的偏移并更新 WebView2 边界。</summary>
     private void UpdateBounds()
     {
         if (_controller == null) return;
@@ -243,6 +266,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
     #region Public Methods (IBrowserProvider)
 
+    /// <summary>导航到指定 URL（自动补全 https:// 协议）。</summary>
     public void Navigate(string url)
     {
         _currentUrl = url;
@@ -319,6 +343,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
     #endregion
 
+    /// <summary>释放 WebView2 资源：取消事件订阅、关闭控制器、清理引用。</summary>
     public void Dispose()
     {
         if (_disposed) return;
@@ -326,6 +351,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
         try
         {
+            // 取消所有事件订阅
             if (_coreWebView != null)
             {
                 _coreWebView.NavigationStarting -= OnNavigationStarting;
@@ -336,6 +362,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
                 _coreWebView.HistoryChanged -= OnHistoryChanged;
             }
 
+            // 关闭并释放 WebView2 控制器
             if (_controller != null)
             {
                 _controller.Close();

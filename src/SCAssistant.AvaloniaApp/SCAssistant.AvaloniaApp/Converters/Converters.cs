@@ -119,15 +119,18 @@ public class StringNotEmptyConverter : IValueConverter
         => string.Empty;
 }
 
-/// <summary>标签页索引 → 选中/未选中 文本颜色。</summary>
+/// <summary>
+/// 标签页索引 → 文本颜色画刷。
+/// 用法：ConverterParameter 为目标索引，当前选中索引等于目标时显示蓝色，否则灰色。
+/// </summary>
 public class TabIndexToBrushConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is int selected && parameter is string s && int.TryParse(s, out int index))
             return selected == index
-                ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0078D4"))
-                : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666"));
+                ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0078D4"))   // 选中蓝色
+                : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666"));  // 未选中灰色
         return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666"));
     }
 
@@ -135,7 +138,10 @@ public class TabIndexToBrushConverter : IValueConverter
         => Avalonia.AvaloniaProperty.UnsetValue;
 }
 
-/// <summary>整数相等比较 → 布尔（用于标签页选中样式）。</summary>
+/// <summary>
+/// 整数相等比较 → 布尔。
+/// 用法：ConverterParameter 为目标值，当前值等于目标值时返回 true。
+/// </summary>
 public class IntEqualsConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -149,7 +155,10 @@ public class IntEqualsConverter : IValueConverter
         => value;
 }
 
-/// <summary>进度（0-100）→ 显示文本。</summary>
+/// <summary>
+/// 下载进度（0-100 double）→ 显示文本。
+/// 进度 >= 100 显示 "完成"，否则显示百分比。
+/// </summary>
 public class ProgressToTextConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -166,7 +175,10 @@ public class ProgressToTextConverter : IValueConverter
         => 0.0;
 }
 
-/// <summary>整数是否在指定范围内（参数格式: "min-max"）。</summary>
+/// <summary>
+/// 整数范围判断 → 布尔。
+/// 用法：ConverterParameter 格式为 "min-max"，当前值在范围内返回 true。
+/// </summary>
 public class IntInRangeConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

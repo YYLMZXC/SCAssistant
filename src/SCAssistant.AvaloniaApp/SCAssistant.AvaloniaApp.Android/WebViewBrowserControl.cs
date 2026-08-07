@@ -20,12 +20,25 @@ namespace SCAssistant.AvaloniaApp.Android;
 /// </summary>
 public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 {
+    /// <summary>Android 原生 WebView 实例。</summary>
     private WebView? _webView;
+
+    /// <summary>当前宿主 Activity。</summary>
     private Activity? _activity;
+
+    /// <summary>是否已初始化完成。</summary>
     private bool _isInitialized;
+
+    /// <summary>是否已释放资源。</summary>
     private bool _disposed;
+
+    /// <summary>当前导航 URL 缓存。</summary>
     private string _currentUrl = string.Empty;
+
+    /// <summary>用于包含 WebView 的 FrameLayout 容器。</summary>
     private FrameLayout? _container;
+
+    /// <summary>容器布局参数（用于动态调整大小）。</summary>
     private FrameLayout.LayoutParams? _layoutParams;
 
     public bool IsReady => _isInitialized;
@@ -317,8 +330,12 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
     #endregion
 
-    #region WebViewClient
+    #region WebViewClient（处理页面导航事件）
 
+    /// <summary>
+    /// 自定义 WebViewClient：处理 URL 加载、页面开始/完成事件。
+    /// 拦截自定义 scheme（app:// / scassistant://）阻止 WebView 加载。
+    /// </summary>
     private class BrowserWebViewClient : WebViewClient
     {
         private readonly WebViewBrowserControl _control;
@@ -370,6 +387,9 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         }
     }
 
+    /// <summary>
+    /// 自定义 WebChromeClient：处理页面标题变更、加载进度和 JS 控制台消息。
+    /// </summary>
     private class BrowserWebChromeClient : WebChromeClient
     {
         private readonly WebViewBrowserControl _control;

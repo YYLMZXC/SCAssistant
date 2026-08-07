@@ -15,13 +15,28 @@ namespace SCAssistant.AvaloniaApp.iOS;
 /// </summary>
 public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 {
+    /// <summary>iOS 原生 WKWebView 实例。</summary>
     private WKWebView? _webView;
+
+    /// <summary>当前宿主 ViewController。</summary>
     private UIViewController? _viewController;
+
+    /// <summary>是否已完成初始化。</summary>
     private bool _isInitialized;
+
+    /// <summary>是否已释放资源。</summary>
     private bool _disposed;
+
+    /// <summary>当前导航 URL 缓存。</summary>
     private string _currentUrl = string.Empty;
+
+    /// <summary>KVO 监听器：页面标题变化。</summary>
     private IDisposable? _titleObserver;
+
+    /// <summary>KVO 监听器：URL 地址变化。</summary>
     private IDisposable? _urlObserver;
+
+    /// <summary>KVO 监听器：加载状态变化。</summary>
     private IDisposable? _loadingObserver;
 
     public bool IsReady => _isInitialized;
@@ -316,8 +331,12 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
     #endregion
 
-    #region Navigation Delegate
+    #region Navigation Delegate（处理 WKWebView 导航事件）
 
+    /// <summary>
+    /// 自定义 WKNavigationDelegate：处理导航开始、完成和失败事件，
+    /// 并通知外层 LoadingStateChanged 和 NavigationHistoryChanged 事件。
+    /// </summary>
     private class WebViewNavigationDelegate : WKNavigationDelegate
     {
         private readonly WebViewBrowserControl _control;

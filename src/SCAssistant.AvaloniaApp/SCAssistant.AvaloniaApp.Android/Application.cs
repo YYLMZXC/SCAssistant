@@ -5,6 +5,10 @@ using Avalonia.Android;
 
 namespace SCAssistant.AvaloniaApp.Android
 {
+    /// <summary>
+    /// Android Application 类 — Avalonia 应用入口。
+    /// 配置 Inter 字体和 Android 平台初始化。
+    /// </summary>
     [Application]
     public class Application : AvaloniaAndroidApplication<App>
     {
