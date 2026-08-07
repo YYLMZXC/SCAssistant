@@ -26,35 +26,40 @@ public class DownloadHistoryService : IDownloadHistoryService
 
     /// <summary>
     /// 从 JSON 文件加载所有下载记录。若文件不存在则返回空列表。
+    /// 注意：文件 I/O 全部丢到 Task.Run 在线程池执行，避免阻塞 UI 消息循环。
+    /// 此前为“伪异步”——同步读文件后返回 Task.FromResult，导致 await 并不让出 UI 线程。
     /// </summary>
-    public Task<List<DownloadRecord>> GetRecordsAsync()
+    public async Task<List<DownloadRecord>> GetRecordsAsync()
     {
         try
         {
-            var dir = Path.GetDirectoryName(HistoryFilePath);
-            if (dir != null) Directory.CreateDirectory(dir);
+            return await Task.Run(() =>
+            {
+                var dir = Path.GetDirectoryName(HistoryFilePath);
+                if (dir != null) Directory.CreateDirectory(dir);
 
-            if (File.Exists(HistoryFilePath))
-            {
-                var json = File.ReadAllText(HistoryFilePath);
-                var records = JsonSerializer.Deserialize<List<DownloadRecord>>(json, _jsonOptions);
-                if (records != null)
+                if (File.Exists(HistoryFilePath))
                 {
-                    LogHelper.Debug($"[DownloadHistory] 加载历史: {records.Count} 条记录");
-                    return Task.FromResult(records);
+                    var json = File.ReadAllText(HistoryFilePath);
+                    var records = JsonSerializer.Deserialize<List<DownloadRecord>>(json, _jsonOptions);
+                    if (records != null)
+                    {
+                        LogHelper.Debug($"[DownloadHistory] 加载历史: {records.Count} 条记录");
+                        return records;
+                    }
                 }
-            }
-            else
-            {
-                LogHelper.Debug($"[DownloadHistory] 历史文件不存在: {HistoryFilePath}");
-            }
+                else
+                {
+                    LogHelper.Debug($"[DownloadHistory] 历史文件不存在: {HistoryFilePath}");
+                }
+                return new List<DownloadRecord>();
+            });
         }
         catch (Exception ex)
         {
             LogHelper.Error("[DownloadHistory] 加载下载历史失败", ex);
+            return new List<DownloadRecord>();
         }
-
-        return Task.FromResult(new List<DownloadRecord>());
     }
 
     /// <summary>添加一条新的下载记录并持久化。</summary>
@@ -82,12 +87,16 @@ public class DownloadHistoryService : IDownloadHistoryService
         }
     }
 
-    public Task ClearAllAsync()
+    /// <summary>清空所有下载历史（文件 I/O 丢到线程池，不阻塞 UI）。</summary>
+    public async Task ClearAllAsync()
     {
         try
         {
-            if (File.Exists(HistoryFilePath))
-                File.Delete(HistoryFilePath);
+            await Task.Run(() =>
+            {
+                if (File.Exists(HistoryFilePath))
+                    File.Delete(HistoryFilePath);
+            });
         }
         catch (Exception ex)
         {
@@ -95,24 +104,25 @@ public class DownloadHistoryService : IDownloadHistoryService
         }
 
         LogHelper.Info("[DownloadHistory] 记录已清空");
-        return Task.CompletedTask;
     }
 
-    private Task SaveRecordsAsync(List<DownloadRecord> records)
+    /// <summary>持久化全部下载记录（文件 I/O 丢到线程池，不阻塞 UI）。</summary>
+    private async Task SaveRecordsAsync(List<DownloadRecord> records)
     {
         try
         {
-            var dir = Path.GetDirectoryName(HistoryFilePath);
-            if (dir != null) Directory.CreateDirectory(dir);
+            await Task.Run(() =>
+            {
+                var dir = Path.GetDirectoryName(HistoryFilePath);
+                if (dir != null) Directory.CreateDirectory(dir);
 
-            var json = JsonSerializer.Serialize(records, _jsonOptions);
-            File.WriteAllText(HistoryFilePath, json);
+                var json = JsonSerializer.Serialize(records, _jsonOptions);
+                File.WriteAllText(HistoryFilePath, json);
+            });
         }
         catch (Exception ex)
         {
             LogHelper.Error("保存下载历史失败", ex);
         }
-
-        return Task.CompletedTask;
     }
 }

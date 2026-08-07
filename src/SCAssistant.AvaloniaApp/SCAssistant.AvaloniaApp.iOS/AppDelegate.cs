@@ -1,7 +1,6 @@
-using Foundation;
-using UIKit;
 using Avalonia;
 using Avalonia.iOS;
+using Foundation;
 
 namespace SCAssistant.AvaloniaApp.iOS;
 
@@ -20,21 +19,11 @@ public partial class AppDelegate : AvaloniaAppDelegate<App>
             .WithInterFont();
     }
 
-    /// <summary>
-    /// 应用启动完成后，确保窗口延伸到状态栏和底部指示条区域，
-    /// 以便 Avalonia 的 InsetsManager 能正确读取安全区域边距。
-    /// </summary>
-    public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
-    {
-        var result = base.FinishedLaunching(application, launchOptions);
-
-        // 确保窗口内容延伸到安全区域之外，由布局层通过 Margin 避开
-        if (Window != null)
-        {
-            Window.Frame = UIScreen.MainScreen.Bounds;
-            Window.BackgroundColor = UIColor.White;
-        }
-
-        return result;
-    }
+    // 注意（Avalonia 12 迁移）：
+    // Avalonia 12 的 AvaloniaAppDelegate<TApp>.FinishedLaunching 不再是 virtual/override，
+    // 且 iOS 启动改为基于 scenes 的生命周期——启动后 AvaloniaAppDelegate.Window 保持为 null，
+    // 此前在此处设置 Window.Frame / Window.BackgroundColor 已不再生效。
+    // 基类 FinishedLaunching 会自动调用上面的 CustomizeAppBuilder 完成初始化。
+    // 安全区域（刘海屏/灵动岛/底部指示条）由 MainView 通过 TopLevel.InsetsManager
+    // 读取 SafeAreaPadding 并应用到 MainLayout.SafeAreaMargin，无需在此处处理。
 }
