@@ -90,12 +90,9 @@ public class MainActivity : AvaloniaMainActivity
             }
 
             // 确保系统栏图标在浅色背景上可读（暗色图标）
-            var controller = WindowInsetsControllerCompat.Create(Window, Window.DecorView);
-            if (controller != null)
-            {
-                controller.AppearanceLightStatusBars = true;
-                controller.AppearanceLightNavigationBars = true;
-            }
+            var controller = new WindowInsetsControllerCompat(Window, Window.DecorView);
+            controller.AppearanceLightStatusBars = true;
+            controller.AppearanceLightNavigationBars = true;
         }
     }
 
