@@ -3,7 +3,8 @@
              xmlns:vm="clr-namespace:SCAssistant.AvaloniaApp.ViewModels"
              xmlns:views="clr-namespace:SCAssistant.AvaloniaApp.Views"
              x:Class="SCAssistant.AvaloniaApp.Views.MainLayout"
-             x:DataType="vm:MainViewModel">
+             x:DataType="vm:MainViewModel"
+             x:Name="Root">
 
     <Design.DataContext>
         <vm:MainViewModel />
@@ -61,7 +62,9 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto" Background="{StaticResource PageBg}">
+    <Grid RowDefinitions="Auto,*,Auto"
+          Background="{StaticResource PageBg}"
+          Margin="{Binding SafeAreaMargin, ElementName=Root}">
 
         <!-- ===== 顶部地址栏工具栏（所有标签页始终可见） ===== -->
         <Border Grid.Row="0"

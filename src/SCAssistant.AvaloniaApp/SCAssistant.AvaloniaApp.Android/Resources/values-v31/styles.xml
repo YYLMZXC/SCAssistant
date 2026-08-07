@@ -17,5 +17,7 @@
   <style name="MyTheme.Main"
          parent ="MyTheme.NoActionBar">
     <item name="android:windowIsTranslucent">true</item>
+    <!-- 允许内容延伸到刘海屏/挖孔区域，由安全区域边距保证可交互区域不被遮挡 -->
+    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
   </style>
 </resources>

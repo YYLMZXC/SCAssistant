@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using SCAssistant.AvaloniaApp.Services;
 using SCAssistant.AvaloniaApp.ViewModels;
@@ -12,6 +13,23 @@ namespace SCAssistant.AvaloniaApp.Views;
 public partial class MainLayout : UserControl
 {
     private readonly IBrowserProvider _browser;
+
+    /// <summary>
+    /// 安全区域边距（用于移动端刘海屏/灵动岛/底部指示条适配）。
+    /// 桌面端此值为 (0,0,0,0)。
+    /// </summary>
+    public static readonly StyledProperty<Thickness> SafeAreaMarginProperty =
+        AvaloniaProperty.Register<MainLayout, Thickness>(nameof(SafeAreaMargin));
+
+    /// <summary>
+    /// 获取或设置安全区域边距。
+    /// 由 MainView（移动端）在布局加载完成后从平台 InsetsManager 读取并设置。
+    /// </summary>
+    public Thickness SafeAreaMargin
+    {
+        get => GetValue(SafeAreaMarginProperty);
+        set => SetValue(SafeAreaMarginProperty, value);
+    }
 
     public MainLayout(IBrowserProvider browser, SettingsViewModel settingsVm, AddressBarViewModel addressBarVm)
     {
