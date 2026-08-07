@@ -24,10 +24,13 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private IDisposable? _urlObserver;
     private IDisposable? _loadingObserver;
 
+    public bool IsReady => _isInitialized;
+
     public bool CanGoBack => _webView?.CanGoBack ?? false;
     public bool CanGoForward => _webView?.CanGoForward ?? false;
     public bool IsLoading => _webView != null && _webView.IsLoading;
 
+    public event EventHandler? ReadyChanged;
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
@@ -130,6 +133,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             _isInitialized = true;
 
             LogHelper.Info("[iOS WebView] 初始化完成");
+            ReadyChanged?.Invoke(this, EventArgs.Empty);
 
             if (!string.IsNullOrEmpty(_currentUrl))
             {

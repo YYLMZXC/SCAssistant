@@ -37,6 +37,8 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
     private PropertyInfo? _canGoForwardProperty;
     private PropertyInfo? _isLoadingProperty;
 
+    public bool IsReady => _isInitialized;
+
     public bool CanGoBack
     {
         get
@@ -67,6 +69,7 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
         }
     }
 
+    public event EventHandler? ReadyChanged;
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
@@ -244,6 +247,7 @@ public class WebKitWebViewBrowserControl : Control, IBrowserProvider, IDisposabl
 
             _isInitialized = true;
             LogHelper.Info("[WebKit] WebView 初始化完成");
+            ReadyChanged?.Invoke(this, EventArgs.Empty);
 
             if (!string.IsNullOrEmpty(_currentUrl))
             {

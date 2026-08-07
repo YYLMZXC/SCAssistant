@@ -33,6 +33,9 @@ public partial class MainViewModel : ViewModelBase
     private bool _isLoading;
 
     [ObservableProperty]
+    private bool _isBrowserReady;
+
+    [ObservableProperty]
     private bool _isSettingsOpen;
 
     /// <summary>底部标签页数据源。</summary>
@@ -65,6 +68,15 @@ public partial class MainViewModel : ViewModelBase
         _browser.DownloadRequested += (_, url) =>
         {
             LogHelper.Info($"[MainVM] 下载请求: {url}");
+        };
+        _browser.ReadyChanged += (_, _) =>
+        {
+            IsBrowserReady = _browser.IsReady;
+            LogHelper.Info($"[MainVM] 浏览器就绪状态: {IsBrowserReady}");
+
+            // 浏览器就绪后同步一次导航按钮状态
+            CanGoBack = _browser.CanGoBack;
+            CanGoForward = _browser.CanGoForward;
         };
 
         // 订阅设置保存事件

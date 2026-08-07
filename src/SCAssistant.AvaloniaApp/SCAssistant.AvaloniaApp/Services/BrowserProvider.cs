@@ -1,25 +1,40 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SCAssistant.AvaloniaApp.Services;
 
 /// <summary>
 /// 浏览器提供者 — 提供跨平台 WebView 抽象。
-/// 桌面端由 WebViewBrowserControl 实现底层渲染，移动端由原生 WebView 实现。
+/// 支持导航队列：在平台 WebView 就绪前的 Navigate 请求会被缓存，就绪后自动执行。
 /// </summary>
 public class BrowserProvider : IBrowserProvider
 {
     private IBrowserProvider? _platformWebView;
+    private readonly Queue<string> _pendingNavigations = new();
     private string _currentUrl = string.Empty;
     private string _currentTitle = "SC 助手";
     private bool _isLoading;
     private bool _canGoBack;
     private bool _canGoForward;
+    private bool _isReady;
+
+    public bool IsReady
+    {
+        get => _isReady;
+        private set
+        {
+            if (_isReady == value) return;
+            _isReady = value;
+            ReadyChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     public bool CanGoBack => _platformWebView?.CanGoBack ?? _canGoBack;
     public bool CanGoForward => _platformWebView?.CanGoForward ?? _canGoForward;
     public bool IsLoading => _platformWebView?.IsLoading ?? _isLoading;
 
+    public event EventHandler? ReadyChanged;
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
@@ -28,6 +43,7 @@ public class BrowserProvider : IBrowserProvider
 
     /// <summary>
     /// 设置平台 WebView 实现（由 BrowserView 初始化时调用）。
+    /// 仅注册平台，不立即标记就绪 — 等待平台 WebView 初始化完成后再 MarkPlatformReady。
     /// </summary>
     public void SetPlatformWebView(IBrowserProvider provider)
     {
@@ -39,7 +55,28 @@ public class BrowserProvider : IBrowserProvider
         _platformWebView = provider;
         AttachPlatformEvents();
 
-        LogHelper.Info("[BrowserProvider] 平台 WebView 已设置");
+        // 如果平台已经就绪（例如同步实现），直接标记
+        if (provider.IsReady)
+        {
+            IsReady = true;
+            FlushPendingNavigations();
+        }
+        else
+        {
+            LogHelper.Info("[BrowserProvider] 平台 WebView 已设置，等待初始化完成...");
+        }
+    }
+
+    /// <summary>
+    /// 平台 WebView 初始化完成后调用此方法，触发排队导航的执行。
+    /// </summary>
+    public void MarkPlatformReady()
+    {
+        if (IsReady) return;
+
+        LogHelper.Info("[BrowserProvider] 平台 WebView 已就绪");
+        IsReady = true;
+        FlushPendingNavigations();
     }
 
     public void Initialize()
@@ -49,34 +86,43 @@ public class BrowserProvider : IBrowserProvider
 
     public void Navigate(string url)
     {
-        LogHelper.Info($"[BrowserProvider] 导航: {url}");
-        _currentUrl = url;
+        if (string.IsNullOrWhiteSpace(url)) return;
 
-        if (_platformWebView != null)
+        LogHelper.Info($"[BrowserProvider] 导航请求: {url} (就绪={IsReady})");
+
+        _currentUrl = url;
+        AddressChanged?.Invoke(this, url);
+
+        if (_platformWebView != null && IsReady)
         {
             _platformWebView.Navigate(url);
         }
         else
         {
-            // 无平台 WebView 时模拟导航
+            // 平台 WebView 未就绪 — 缓存导航请求，就绪后执行
+            lock (_pendingNavigations)
+            {
+                // 用新的 URL 替换旧的，只保留最后一次请求（避免队列堆积过期请求）
+                _pendingNavigations.Clear();
+                _pendingNavigations.Enqueue(url);
+            }
+            LogHelper.Info($"[BrowserProvider] 导航已排队，等待 WebView 就绪: {url}");
+
+            // UI 层面显示加载状态
             SetLoading(true);
-            AddressChanged?.Invoke(this, url);
-            _currentTitle = url;
-            TitleChanged?.Invoke(this, url);
-            SetLoading(false);
-            NavigationHistoryChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public void Reload()
     {
         LogHelper.Info("[BrowserProvider] 刷新");
-        if (_platformWebView != null)
+        if (_platformWebView != null && IsReady)
         {
             _platformWebView.Reload();
         }
         else if (!string.IsNullOrEmpty(_currentUrl))
         {
+            // 未就绪时刷新就是重新导航
             Navigate(_currentUrl);
         }
     }
@@ -84,7 +130,7 @@ public class BrowserProvider : IBrowserProvider
     public void GoBack()
     {
         LogHelper.Debug("[BrowserProvider] 后退");
-        if (_platformWebView != null)
+        if (_platformWebView != null && IsReady)
         {
             _platformWebView.GoBack();
         }
@@ -93,7 +139,7 @@ public class BrowserProvider : IBrowserProvider
     public void GoForward()
     {
         LogHelper.Debug("[BrowserProvider] 前进");
-        if (_platformWebView != null)
+        if (_platformWebView != null && IsReady)
         {
             _platformWebView.GoForward();
         }
@@ -105,7 +151,7 @@ public class BrowserProvider : IBrowserProvider
 
     public Task<string> ExecuteScriptAsync(string script)
     {
-        if (_platformWebView != null)
+        if (_platformWebView != null && IsReady)
             return _platformWebView.ExecuteScriptAsync(script);
         return Task.FromResult(string.Empty);
     }
@@ -161,6 +207,34 @@ public class BrowserProvider : IBrowserProvider
     }
 
     #endregion
+
+    /// <summary>
+    /// 执行排队的导航请求。
+    /// </summary>
+    private void FlushPendingNavigations()
+    {
+        List<string> pending;
+        lock (_pendingNavigations)
+        {
+            pending = new List<string>(_pendingNavigations);
+            _pendingNavigations.Clear();
+        }
+
+        if (pending.Count == 0)
+        {
+            LogHelper.Info("[BrowserProvider] 无排队导航请求");
+            return;
+        }
+
+        LogHelper.Info($"[BrowserProvider] 执行 {pending.Count} 个排队导航请求");
+        SetLoading(true);
+
+        foreach (var url in pending)
+        {
+            LogHelper.Info($"[BrowserProvider] 执行排队导航: {url}");
+            _platformWebView?.Navigate(url);
+        }
+    }
 
     private void SetLoading(bool isLoading)
     {

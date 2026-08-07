@@ -294,6 +294,7 @@ public partial class BrowserView : UserControl
 
     /// <summary>
     /// 将平台浏览器控件的事件桥接到 BrowserProvider。
+    /// 监听平台就绪事件后通知 BrowserProvider 执行排队的导航请求。
     /// </summary>
     private void WireBrowserProvider(Control control)
     {
@@ -302,6 +303,17 @@ public partial class BrowserView : UserControl
         if (control is IBrowserProvider webView)
         {
             browserProvider.SetPlatformWebView(webView);
+
+            // 如果平台已就绪，直接标记（SetPlatformWebView 已处理此场景）
+            // 如果平台未就绪，监听 ReadyChanged 后再标记
+            if (!webView.IsReady)
+            {
+                webView.ReadyChanged += (_, _) =>
+                {
+                    browserProvider.MarkPlatformReady();
+                };
+            }
+
             webView.AddressChanged += (_, url) => browserProvider.HandlePlatformAddressChanged(url);
             webView.TitleChanged += (_, title) => browserProvider.HandlePlatformTitleChanged(title);
             webView.LoadingStateChanged += (_, loading) => browserProvider.HandlePlatformLoadingStateChanged(loading);

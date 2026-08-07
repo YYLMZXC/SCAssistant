@@ -35,6 +35,16 @@ public class MainActivity : AvaloniaMainActivity
             if (provider is BrowserProvider browserProvider)
             {
                 browserProvider.SetPlatformWebView(webView);
+
+                // 等待平台 WebView 初始化完成后再标记就绪
+                if (!webView.IsReady)
+                {
+                    webView.ReadyChanged += (_, _) =>
+                    {
+                        browserProvider.MarkPlatformReady();
+                    };
+                }
+
                 webView.AddressChanged += (_, url) => browserProvider.HandlePlatformAddressChanged(url);
                 webView.TitleChanged += (_, title) => browserProvider.HandlePlatformTitleChanged(title);
                 webView.LoadingStateChanged += (_, loading) => browserProvider.HandlePlatformLoadingStateChanged(loading);

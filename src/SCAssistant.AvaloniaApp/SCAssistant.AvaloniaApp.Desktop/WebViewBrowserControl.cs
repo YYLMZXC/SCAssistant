@@ -25,10 +25,13 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private string _currentUrl = string.Empty;
     private bool _isLoading;
 
+    public bool IsReady => _isInitialized;
+
     public bool CanGoBack => _coreWebView?.CanGoBack ?? false;
     public bool CanGoForward => _coreWebView?.CanGoForward ?? false;
     public bool IsLoading => _isLoading;
 
+    public event EventHandler? ReadyChanged;
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
@@ -103,10 +106,8 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             _isInitialized = true;
             LogHelper.Info("[WebView2] WebView2 初始化完成");
 
-            if (!string.IsNullOrEmpty(_currentUrl))
-            {
-                Navigate(_currentUrl);
-            }
+            // 触发就绪事件 — 通知上层可以执行排队的导航
+            ReadyChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -209,6 +210,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
 
         if (!_isInitialized || _coreWebView == null)
         {
+            LogHelper.Debug($"[WebView2] 跳过导航（未初始化）: {url}");
             return;
         }
 

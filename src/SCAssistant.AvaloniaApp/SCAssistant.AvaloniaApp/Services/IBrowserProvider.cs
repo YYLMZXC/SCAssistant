@@ -8,6 +8,12 @@ namespace SCAssistant.AvaloniaApp.Services;
 /// </summary>
 public interface IBrowserProvider
 {
+    /// <summary>浏览器是否已就绪（平台 WebView 已初始化完成）。</summary>
+    bool IsReady { get; }
+
+    /// <summary>浏览器就绪事件（平台 WebView 初始化完成时触发）。</summary>
+    event EventHandler? ReadyChanged;
+
     /// <summary>地址变更（导航到新 URL）。</summary>
     event EventHandler<string> AddressChanged;
 

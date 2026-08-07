@@ -30,6 +30,15 @@ sealed class Program
                 // 设置平台 WebView，使 BrowserProvider 的方法调用能到达 WebView2
                 browserProvider.SetPlatformWebView(webView);
 
+                // 等待平台 WebView 初始化完成后再标记就绪
+                if (!webView.IsReady)
+                {
+                    webView.ReadyChanged += (_, _) =>
+                    {
+                        browserProvider.MarkPlatformReady();
+                    };
+                }
+
                 // 将 WebViewBrowserControl 的事件桥接到 BrowserProvider
                 webView.AddressChanged += (_, url) => browserProvider.HandlePlatformAddressChanged(url);
                 webView.TitleChanged += (_, title) => browserProvider.HandlePlatformTitleChanged(title);

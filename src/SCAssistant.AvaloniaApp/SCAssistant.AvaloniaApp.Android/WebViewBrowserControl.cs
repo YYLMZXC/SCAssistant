@@ -28,10 +28,13 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private FrameLayout? _container;
     private FrameLayout.LayoutParams? _layoutParams;
 
+    public bool IsReady => _isInitialized;
+
     public bool CanGoBack => _webView?.CanGoBack() ?? false;
     public bool CanGoForward => _webView?.CanGoForward() ?? false;
     public bool IsLoading => _webView != null && _webView.Progress < 100;
 
+    public event EventHandler? ReadyChanged;
     public event EventHandler<string>? AddressChanged;
     public event EventHandler<string>? TitleChanged;
     public event EventHandler<bool>? LoadingStateChanged;
@@ -126,6 +129,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             _isInitialized = true;
 
             LogHelper.Info("[Android WebView] 初始化完成");
+            ReadyChanged?.Invoke(this, EventArgs.Empty);
 
             // 如果有 URL，立即导航
             if (!string.IsNullOrEmpty(_currentUrl))
