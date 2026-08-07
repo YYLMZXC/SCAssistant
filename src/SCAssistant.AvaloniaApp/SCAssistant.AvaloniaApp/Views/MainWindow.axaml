@@ -81,7 +81,12 @@
                          FontSize="14"
                          Padding="10,0"
                          VerticalContentAlignment="Center"
-                         Name="AddressBarTextBox" />
+                         Name="AddressBarTextBox">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" 
+                                            Command="{Binding NavigateToUrlCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
                 <Button Grid.Column="3" Classes="NavBtn"
                         Command="{Binding NavigateToUrlCommand}"
                         Foreground="#80D4FF"

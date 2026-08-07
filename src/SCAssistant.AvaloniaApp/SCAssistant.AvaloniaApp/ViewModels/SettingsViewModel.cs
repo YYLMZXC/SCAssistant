@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,6 +13,11 @@ namespace SCAssistant.AvaloniaApp.ViewModels;
 /// </summary>
 public partial class SettingsViewModel : ViewModelBase
 {
+    /// <summary>
+    /// 设置保存完成事件 — MainViewModel 订阅此事件以刷新标签页。
+    /// </summary>
+    public static event EventHandler? SettingsSaved;
+
     private readonly ISettingsService _settingsService;
 
     // ─── 标签页 URL ───
@@ -104,5 +110,8 @@ public partial class SettingsViewModel : ViewModelBase
         LogHelper.Info($"[SettingsVM] 保存设置: 标签URLs=[{TabUrl0}, {TabUrl1}, {TabUrl2}, {TabUrl3}], 首页={HomePageUrl}");
         await _settingsService.SaveSettingsAsync(settings);
         LogHelper.Info("[SettingsVM] 设置保存完成");
+
+        // 通知订阅者（MainViewModel）设置已保存
+        SettingsSaved?.Invoke(null, EventArgs.Empty);
     }
 }

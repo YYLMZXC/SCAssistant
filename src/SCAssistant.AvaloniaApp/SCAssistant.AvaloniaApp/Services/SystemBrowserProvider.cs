@@ -18,9 +18,6 @@ public static class SystemBrowserProvider
 
         try
         {
-            // 转义 URL 中的特殊字符
-            url = System.Net.WebUtility.UrlEncode(url);
-
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Process.Start(new ProcessStartInfo

@@ -67,6 +67,9 @@ public partial class MainViewModel : ViewModelBase
             LogHelper.Info($"[MainVM] 下载请求: {url}");
         };
 
+        // 订阅设置保存事件
+        SettingsViewModel.SettingsSaved += (_, _) => RefreshTabUrlsAsync();
+
         LogHelper.Info("[MainVM] 初始化 — 加载标签页配置...");
         InitializeTabs();
     }
@@ -138,33 +141,52 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>设置保存后刷新标签页 URL。</summary>
-    public void RefreshTabUrls()
+    public async void RefreshTabUrlsAsync()
     {
         LogHelper.Info("[MainVM] 设置已保存，刷新标签页 URL");
-        for (var i = 0; i < Tabs.Count && i < 4; i++)
+        try
         {
-            if (Tabs[i].Url != _savedTabUrls[i])
+            var settings = await _settings.GetSettingsAsync();
+            var urls = (settings.TabUrls != null && settings.TabUrls.Length >= 4)
+                ? settings.TabUrls
+                : DefaultTabUrls;
+
+            for (var i = 0; i < Tabs.Count && i < 4; i++)
             {
-                LogHelper.Debug($"[MainVM] 标签[{i}] '{Tabs[i].Name}': {Tabs[i].Url} → {_savedTabUrls[i]}");
-                Tabs[i].Url = _savedTabUrls[i];
+                var newUrl = i < urls.Length ? urls[i] : string.Empty;
+                if (Tabs[i].Url != newUrl)
+                {
+                    LogHelper.Debug($"[MainVM] 标签[{i}] '{Tabs[i].Name}': {Tabs[i].Url} → {newUrl}");
+                    Tabs[i].Url = newUrl;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error("[MainVM] 刷新标签页 URL 失败", ex);
         }
     }
 
-    private string[] _savedTabUrls = DefaultTabUrls;
-
     /// <summary>地址栏回车 / Go 按钮。</summary>
     [RelayCommand]
-    private void NavigateToUrl()
+    private void NavigateToUrl(string? url = null)
     {
-        var url = CurrentUrl?.Trim();
-        if (string.IsNullOrWhiteSpace(url))
+        var target = url?.Trim() ?? CurrentUrl?.Trim();
+        if (string.IsNullOrWhiteSpace(target))
         {
             LogHelper.Warn("[MainVM] 导航取消: URL 为空");
             return;
         }
-        LogHelper.Info($"[MainVM] 地址栏导航: {url}");
-        _browser.Navigate(url);
+
+        // 自动补全协议
+        if (!target.StartsWith("http://") && !target.StartsWith("https://") && !target.StartsWith("file://"))
+        {
+            target = "https://" + target;
+            CurrentUrl = target;
+        }
+
+        LogHelper.Info($"[MainVM] 地址栏导航: {target}");
+        _browser.Navigate(target);
     }
 
     [RelayCommand]

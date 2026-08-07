@@ -1,34 +1,49 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Avalonia;
+using SCAssistant.AvaloniaApp.Services;
+using SCAssistant.AvaloniaApp.Views;
 
 namespace SCAssistant.AvaloniaApp.Desktop;
 
 sealed class Program
 {
-    // Initialization code. Don't use any Avalonia, third-party APIs or any
-    // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
-    // yet and stuff might break.
     [STAThread]
     public static void Main(string[] args)
     {
 #if DEBUG
-        // Debug 模式下显示控制台窗口，方便查看日志
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             AllocConsole();
             Console.Title = "SCAssistant - 调试日志";
-            // 设置 UTF-8 编码，修复中文乱码
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.InputEncoding = System.Text.Encoding.UTF8;
         }
 #endif
 
+        // 注册 Windows 桌面端 WebView2 工厂
+        BrowserView.BrowserControlFactory = provider =>
+        {
+            var webView = new WebViewBrowserControl();
+            if (provider is BrowserProvider browserProvider)
+            {
+                // 设置平台 WebView，使 BrowserProvider 的方法调用能到达 WebView2
+                browserProvider.SetPlatformWebView(webView);
+
+                // 将 WebViewBrowserControl 的事件桥接到 BrowserProvider
+                webView.AddressChanged += (_, url) => browserProvider.HandlePlatformAddressChanged(url);
+                webView.TitleChanged += (_, title) => browserProvider.HandlePlatformTitleChanged(title);
+                webView.LoadingStateChanged += (_, loading) => browserProvider.HandlePlatformLoadingStateChanged(loading);
+                webView.DownloadRequested += (_, url) => browserProvider.HandlePlatformDownloadRequested(url);
+                webView.NavigationHistoryChanged += (_, _) => browserProvider.HandlePlatformNavigationHistoryChanged();
+            }
+            return webView;
+        };
+
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
 
-    // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()

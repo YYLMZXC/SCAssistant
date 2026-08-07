@@ -77,7 +77,12 @@
                          CornerRadius="4"
                          FontSize="13"
                          Padding="8,0"
-                         VerticalContentAlignment="Center" />
+                         VerticalContentAlignment="Center">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" 
+                                            Command="{Binding NavigateToUrlCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
                 <Button Grid.Column="3" Classes="NavBtn"
                         Command="{Binding NavigateToUrlCommand}"
                         Foreground="#80D4FF"

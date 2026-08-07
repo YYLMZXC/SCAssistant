@@ -5,18 +5,19 @@ namespace SCAssistant.AvaloniaApp.Services;
 
 /// <summary>
 /// 浏览器提供者 — 提供跨平台 WebView 抽象。
+/// 桌面端由 WebViewBrowserControl 实现底层渲染，移动端由原生 WebView 实现。
 /// </summary>
 public class BrowserProvider : IBrowserProvider
 {
-    // WebView 代理 — 由平台层注入
     private IBrowserProvider? _platformWebView;
-
     private string _currentUrl = string.Empty;
     private string _currentTitle = "SC 助手";
     private bool _isLoading;
+    private bool _canGoBack;
+    private bool _canGoForward;
 
-    public bool CanGoBack => _platformWebView?.CanGoBack ?? false;
-    public bool CanGoForward => _platformWebView?.CanGoForward ?? false;
+    public bool CanGoBack => _platformWebView?.CanGoBack ?? _canGoBack;
+    public bool CanGoForward => _platformWebView?.CanGoForward ?? _canGoForward;
     public bool IsLoading => _platformWebView?.IsLoading ?? _isLoading;
 
     public event EventHandler<string>? AddressChanged;
@@ -26,7 +27,7 @@ public class BrowserProvider : IBrowserProvider
     public event EventHandler? NavigationHistoryChanged;
 
     /// <summary>
-    /// 设置平台 WebView 实现（仅桌面端需要）。
+    /// 设置平台 WebView 实现（由 BrowserView 初始化时调用）。
     /// </summary>
     public void SetPlatformWebView(IBrowserProvider provider)
     {
@@ -60,10 +61,8 @@ public class BrowserProvider : IBrowserProvider
             // 无平台 WebView 时模拟导航
             SetLoading(true);
             AddressChanged?.Invoke(this, url);
-            TitleChanged?.Invoke(this, url);
             _currentTitle = url;
-
-            // 模拟加载完成
+            TitleChanged?.Invoke(this, url);
             SetLoading(false);
             NavigationHistoryChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -72,8 +71,11 @@ public class BrowserProvider : IBrowserProvider
     public void Reload()
     {
         LogHelper.Info("[BrowserProvider] 刷新");
-        _platformWebView?.Reload();
-        if (_platformWebView == null && !string.IsNullOrEmpty(_currentUrl))
+        if (_platformWebView != null)
+        {
+            _platformWebView.Reload();
+        }
+        else if (!string.IsNullOrEmpty(_currentUrl))
         {
             Navigate(_currentUrl);
         }
@@ -81,14 +83,20 @@ public class BrowserProvider : IBrowserProvider
 
     public void GoBack()
     {
-        LogHelper.Info("[BrowserProvider] 后退");
-        _platformWebView?.GoBack();
+        LogHelper.Debug("[BrowserProvider] 后退");
+        if (_platformWebView != null)
+        {
+            _platformWebView.GoBack();
+        }
     }
 
     public void GoForward()
     {
-        LogHelper.Info("[BrowserProvider] 前进");
-        _platformWebView?.GoForward();
+        LogHelper.Debug("[BrowserProvider] 前进");
+        if (_platformWebView != null)
+        {
+            _platformWebView.GoForward();
+        }
     }
 
     public string GetCurrentUrl() => _platformWebView?.GetCurrentUrl() ?? _currentUrl;
@@ -101,6 +109,58 @@ public class BrowserProvider : IBrowserProvider
             return _platformWebView.ExecuteScriptAsync(script);
         return Task.FromResult(string.Empty);
     }
+
+    #region Platform Event Handlers (called by platform-specific code)
+
+    /// <summary>
+    /// 处理平台地址变更事件。
+    /// </summary>
+    public void HandlePlatformAddressChanged(string url)
+    {
+        _currentUrl = url;
+        _canGoBack = _platformWebView?.CanGoBack ?? false;
+        _canGoForward = _platformWebView?.CanGoForward ?? false;
+        AddressChanged?.Invoke(this, url);
+        NavigationHistoryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// 处理平台标题变更事件。
+    /// </summary>
+    public void HandlePlatformTitleChanged(string title)
+    {
+        _currentTitle = title;
+        TitleChanged?.Invoke(this, title);
+    }
+
+    /// <summary>
+    /// 处理平台加载状态变更事件。
+    /// </summary>
+    public void HandlePlatformLoadingStateChanged(bool loading)
+    {
+        _isLoading = loading;
+        LoadingStateChanged?.Invoke(this, loading);
+    }
+
+    /// <summary>
+    /// 处理平台下载请求事件。
+    /// </summary>
+    public void HandlePlatformDownloadRequested(string url)
+    {
+        DownloadRequested?.Invoke(this, url);
+    }
+
+    /// <summary>
+    /// 处理平台导航历史变更事件。
+    /// </summary>
+    public void HandlePlatformNavigationHistoryChanged()
+    {
+        _canGoBack = _platformWebView?.CanGoBack ?? false;
+        _canGoForward = _platformWebView?.CanGoForward ?? false;
+        NavigationHistoryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
 
     private void SetLoading(bool isLoading)
     {
