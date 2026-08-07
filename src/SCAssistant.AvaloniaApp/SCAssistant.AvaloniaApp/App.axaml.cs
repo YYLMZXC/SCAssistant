@@ -29,14 +29,15 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            LogHelper.Info("[App] 平台: 桌面端");
             // 桌面端 — 浏览器 MainWindow
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
             mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
             desktop.MainWindow = mainWindow;
-
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
+            LogHelper.Info("[App] 平台: 移动端");
             // 移动端 — 浏览器 MainView
             var mainView = _serviceProvider.GetRequiredService<MainView>();
             mainView.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
@@ -44,7 +45,6 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
-
         LogHelper.Info("[App] 框架初始化完成");
     }
 
@@ -62,6 +62,8 @@ public partial class App : Application
         LogHelper.Initialize(logService);
         services.AddSingleton<ILogService>(logService);
 
+        LogHelper.Info("[App] 服务注册完成 (Settings/Download/History/Browser/Log)");
+
         // ViewModel 注册
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<DownloadListViewModel>();
@@ -73,6 +75,8 @@ public partial class App : Application
         services.AddTransient<MainView>();
         services.AddTransient<SettingsView>();
         services.AddTransient<HomeView>();
+
+        LogHelper.Info("[App] ViewModel/View 注册完成");
 
         return services.BuildServiceProvider();
     }

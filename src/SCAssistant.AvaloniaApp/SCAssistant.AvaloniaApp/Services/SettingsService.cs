@@ -26,7 +26,10 @@ public class SettingsService : ISettingsService
     public Task<AppSettings> GetSettingsAsync()
     {
         if (_cached != null)
+        {
+            LogHelper.Debug($"[SettingsService] 从缓存加载设置 (TabUrls={_cached.TabUrls?.Length ?? 0}个)");
             return Task.FromResult(_cached);
+        }
 
         try
         {
@@ -35,21 +38,24 @@ public class SettingsService : ISettingsService
 
             if (File.Exists(SettingsFilePath))
             {
+                LogHelper.Debug($"[SettingsService] 读取设置文件: {SettingsFilePath}");
                 var json = File.ReadAllText(SettingsFilePath);
                 _cached = JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions) ?? new AppSettings();
+                LogHelper.Info($"[SettingsService] 从文件加载设置成功 (TabUrls={_cached.TabUrls?.Length ?? 0}个)");
             }
             else
             {
+                LogHelper.Warn($"[SettingsService] 设置文件不存在，创建默认配置: {SettingsFilePath}");
                 _cached = new AppSettings();
                 SaveSettingsAsync(_cached).GetAwaiter().GetResult();
             }
         }
-        catch
+        catch (Exception ex)
         {
+            LogHelper.Error("[SettingsService] 加载设置失败，使用默认配置", ex);
             _cached = new AppSettings();
         }
 
-        LogHelper.Info("[SettingsService] 设置已加载");
         return Task.FromResult(_cached);
     }
 
@@ -63,11 +69,11 @@ public class SettingsService : ISettingsService
 
             var json = JsonSerializer.Serialize(settings, _jsonOptions);
             File.WriteAllText(SettingsFilePath, json);
-            LogHelper.Info("[SettingsService] 设置已保存");
+            LogHelper.Info($"[SettingsService] 设置已保存 → {SettingsFilePath}");
         }
         catch (Exception ex)
         {
-            LogHelper.Error("保存设置失败", ex);
+            LogHelper.Error($"[SettingsService] 保存设置失败: {SettingsFilePath}", ex);
         }
 
         return Task.CompletedTask;
@@ -79,11 +85,15 @@ public class SettingsService : ISettingsService
         try
         {
             if (File.Exists(SettingsFilePath))
+            {
                 File.Delete(SettingsFilePath);
+                LogHelper.Warn($"[SettingsService] 设置文件已删除: {SettingsFilePath}");
+            }
+            LogHelper.Info("[SettingsService] 设置已重置为默认");
         }
         catch (Exception ex)
         {
-            LogHelper.Error("重置设置失败", ex);
+            LogHelper.Error("[SettingsService] 重置设置失败", ex);
         }
 
         return Task.CompletedTask;

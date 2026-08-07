@@ -35,12 +35,19 @@ public class DownloadHistoryService : IDownloadHistoryService
                 var json = File.ReadAllText(HistoryFilePath);
                 var records = JsonSerializer.Deserialize<List<DownloadRecord>>(json, _jsonOptions);
                 if (records != null)
+                {
+                    LogHelper.Debug($"[DownloadHistory] 加载历史: {records.Count} 条记录");
                     return Task.FromResult(records);
+                }
+            }
+            else
+            {
+                LogHelper.Debug($"[DownloadHistory] 历史文件不存在: {HistoryFilePath}");
             }
         }
         catch (Exception ex)
         {
-            LogHelper.Error("加载下载历史失败", ex);
+            LogHelper.Error("[DownloadHistory] 加载下载历史失败", ex);
         }
 
         return Task.FromResult(new List<DownloadRecord>());

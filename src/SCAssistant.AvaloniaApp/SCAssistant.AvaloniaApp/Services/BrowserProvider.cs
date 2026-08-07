@@ -130,9 +130,32 @@ public class BrowserProvider : IBrowserProvider
         _platformWebView.NavigationHistoryChanged -= OnPlatformNavigationHistoryChanged;
     }
 
-    private void OnPlatformAddressChanged(object? sender, string url) => AddressChanged?.Invoke(this, url);
-    private void OnPlatformTitleChanged(object? sender, string title) => TitleChanged?.Invoke(this, title);
-    private void OnPlatformLoadingStateChanged(object? sender, bool loading) => LoadingStateChanged?.Invoke(this, loading);
-    private void OnPlatformDownloadRequested(object? sender, string url) => DownloadRequested?.Invoke(this, url);
-    private void OnPlatformNavigationHistoryChanged(object? sender, EventArgs e) => NavigationHistoryChanged?.Invoke(this, e);
+    private void OnPlatformAddressChanged(object? sender, string url)
+    {
+        LogHelper.Debug($"[BrowserProvider] 地址变更: {url}");
+        AddressChanged?.Invoke(this, url);
+    }
+
+    private void OnPlatformTitleChanged(object? sender, string title)
+    {
+        LogHelper.Debug($"[BrowserProvider] 标题变更: {title}");
+        TitleChanged?.Invoke(this, title);
+    }
+
+    private void OnPlatformLoadingStateChanged(object? sender, bool loading)
+    {
+        LogHelper.Debug($"[BrowserProvider] 加载状态: {(loading ? "加载中" : "完成")}");
+        LoadingStateChanged?.Invoke(this, loading);
+    }
+
+    private void OnPlatformDownloadRequested(object? sender, string url)
+    {
+        LogHelper.Info($"[BrowserProvider] 下载请求: {url}");
+        DownloadRequested?.Invoke(this, url);
+    }
+
+    private void OnPlatformNavigationHistoryChanged(object? sender, EventArgs e)
+    {
+        NavigationHistoryChanged?.Invoke(this, e);
+    }
 }

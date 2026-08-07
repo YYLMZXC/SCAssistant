@@ -1,3 +1,4 @@
+using SCAssistant.AvaloniaApp.Services;
 using SCAssistant.AvaloniaApp.ViewModels;
 using Avalonia.Controls;
 
@@ -9,5 +10,6 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
         SettingsPanel.DataContext = settingsVm;
+        LogHelper.Info("[MainView] 移动端视图构造完成");
     }
 }

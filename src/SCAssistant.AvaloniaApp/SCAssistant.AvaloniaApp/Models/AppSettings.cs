@@ -10,7 +10,7 @@ namespace SCAssistant.AvaloniaApp.Models;
 /// </summary>
 public class AppSettings : INotifyPropertyChanged
 {
-    private string _homePageUrl = "https://www.google.com";
+    private string _homePageUrl = "https://test.suancaixianyu.cn/";
     private string _defaultSearchEngine = "https://www.google.com/search?q=";
     private string _downloadDirectory = string.Empty;
     private int _maxConcurrentDownloads = 3;
