@@ -78,15 +78,46 @@ public partial class AddressBarViewModel : ViewModelBase
     /// <summary>浏览器 URL 变更 — 仅在用户未编辑时更新地址栏。</summary>
     private void OnAddressChanged(object? sender, string url)
     {
-        if (!_isEditing)
-        {
-            UrlText = url;
-            LogHelper.Debug($"[AddrBarVM] 同步浏览器 URL: {url}");
-        }
-        else
+        if (_isEditing)
         {
             LogHelper.Debug($"[AddrBarVM] 正在编辑，跳过 URL 同步: {url} (当前输入={UrlText})");
+            return;
         }
+
+        // 防御：浏览器可能上报空 URL（如 about:blank / 加载中间态），
+        // 不让空值覆盖已有的有效 URL，确保地址栏始终显示当前页面地址。
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            LogHelper.Debug("[AddrBarVM] 收到空 URL，保留当前显示");
+            return;
+        }
+
+        UrlText = url;
+        LogHelper.Debug($"[AddrBarVM] 同步浏览器 URL: {url}");
+    }
+
+    /// <summary>
+    /// 从浏览器强制同步当前 URL 与导航状态。
+    /// 由 AddressBarView 的 Loaded 事件调用，作为安全兜底：
+    /// 即使事件订阅时序或平台上报时序导致地址栏未及时更新，加载完成后也会拉取一次最新 URL。
+    /// </summary>
+    public void SyncFromBrowser()
+    {
+        if (_browser == null)
+        {
+            LogHelper.Warn("[AddrBarVM] SyncFromBrowser: 浏览器未初始化");
+            return;
+        }
+
+        var current = _browser.GetCurrentUrl();
+        if (!string.IsNullOrWhiteSpace(current))
+        {
+            UrlText = current;
+            LogHelper.Info($"[AddrBarVM] Loaded 强制同步 URL: {current}");
+        }
+        CanGoBack = _browser.CanGoBack;
+        CanGoForward = _browser.CanGoForward;
+        LogHelper.Info($"[AddrBarVM] Loaded 状态同步完成 — 后退={CanGoBack}, 前进={CanGoForward}, URL='{UrlText}'");
     }
 
     /// <summary>浏览器导航历史变更 — 同步前进/后退按钮状态。</summary>

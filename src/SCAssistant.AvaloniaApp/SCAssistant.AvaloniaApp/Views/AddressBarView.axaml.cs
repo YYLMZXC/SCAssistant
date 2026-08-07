@@ -111,6 +111,20 @@ public partial class AddressBarView : UserControl
         LogHelper.Info($"[AddrBarView] Loaded — IsVisible={IsVisible}, Bounds={Bounds}, " +
             $"DataContext={DataContext?.GetType().Name ?? "null"}");
 
+        // 安全兜底：从浏览器强制同步一次 URL，确保地址栏始终显示当前页面地址。
+        // 解决事件订阅时序 / 平台上报时序导致地址栏为空的问题。
+        if (DataContext is AddressBarViewModel vm)
+        {
+            try
+            {
+                vm.SyncFromBrowser();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error("[AddrBarView] Loaded 同步 URL 失败", ex);
+            }
+        }
+
         // 诊断内部控件状态：检查每个子控件是否可见、是否有正确的大小
         var grid = Content as Grid;
         if (grid == null)
@@ -119,15 +133,18 @@ public partial class AddressBarView : UserControl
         }
         else
         {
+            // URL 框架现在是 Border（第3个子控件，索引2），其内部才是 TextBox
             var btnBack = grid.Children.Count > 0 ? grid.Children[0] : null;
             var btnFwd  = grid.Children.Count > 1 ? grid.Children[1] : null;
-            var txtBox  = grid.Children.Count > 2 ? grid.Children[2] : null;
+            var urlFrame = grid.Children.Count > 2 ? grid.Children[2] as Border : null;
             var btnGo   = grid.Children.Count > 3 ? grid.Children[3] : null;
+            var txtBox  = urlFrame?.Child as TextBox;
 
             LogHelper.Info($"[AddrBarView] 子控件数={grid.Children.Count}, Grid.IsVisible={grid.IsVisible}, Grid.Bounds={grid.Bounds}");
             LogHelper.Info($"[AddrBarView] 后退Btn: IsVisible={btnBack?.IsVisible}, Bounds={btnBack?.Bounds}, IsEnabled={((btnBack as Button)?.IsEnabled)}");
             LogHelper.Info($"[AddrBarView] 前进Btn: IsVisible={btnFwd?.IsVisible}, Bounds={btnFwd?.Bounds}, IsEnabled={((btnFwd as Button)?.IsEnabled)}");
-            LogHelper.Info($"[AddrBarView] 地址框: IsVisible={txtBox?.IsVisible}, Bounds={txtBox?.Bounds}, Text={((txtBox as TextBox)?.Text)}");
+            LogHelper.Info($"[AddrBarView] URL框: IsVisible={urlFrame?.IsVisible}, Bounds={urlFrame?.Bounds}");
+            LogHelper.Info($"[AddrBarView] 地址框: IsVisible={txtBox?.IsVisible}, Bounds={txtBox?.Bounds}, Text={txtBox?.Text}");
             LogHelper.Info($"[AddrBarView] GoBtn:   IsVisible={btnGo?.IsVisible}, Bounds={btnGo?.Bounds}");
         }
     }

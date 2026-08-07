@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SCAssistant.AvaloniaApp.ViewModels"
              x:Class="SCAssistant.AvaloniaApp.Views.AddressBarView"
-             x:DataType="vm:AddressBarViewModel">
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
 
     <Design.DataContext>
         <vm:AddressBarViewModel />
@@ -59,7 +60,8 @@
 
     <Grid ColumnDefinitions="Auto,Auto,*,Auto"
           ColumnSpacing="6"
-          Height="38">
+          Height="40"
+          HorizontalAlignment="Stretch">
         <!-- 后退按钮 -->
         <Button Grid.Column="0"
                 Classes="NavBtn"
@@ -74,22 +76,31 @@
                 IsEnabled="{Binding CanGoForward}"
                 Content="▶" />
 
-        <!-- 地址栏输入框 -->
-        <TextBox Grid.Column="2"
-                 x:Name="AddressTextBox"
-                 Text="{Binding UrlText, Mode=TwoWay}"
-                 PlaceholderText="输入网址或搜索..."
-                 Background="#FFFFFF"
-                 Foreground="#222222"
-                 CaretBrush="#0078D4"
-                 BorderBrush="#CCCCCC"
-                 BorderThickness="1"
-                 FontSize="14"
-                 Padding="12,0"
-                 MinHeight="32"
-                 Height="32"
-                 VerticalAlignment="Center"
-                 VerticalContentAlignment="Center" />
+        <!-- 地址栏 URL 框架（始终可见的边框容器，确保 URL 始终显示） -->
+        <Border Grid.Column="2"
+                x:Name="UrlFrame"
+                Background="#FFFFFF"
+                BorderBrush="#0078D4"
+                BorderThickness="1.5"
+                CornerRadius="18"
+                MinWidth="240"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch">
+            <TextBox x:Name="AddressTextBox"
+                     Text="{Binding UrlText, Mode=TwoWay}"
+                     PlaceholderText="输入网址或搜索..."
+                     Background="Transparent"
+                     Foreground="#222222"
+                     CaretBrush="#0078D4"
+                     BorderThickness="0"
+                     CornerRadius="18"
+                     FontSize="14"
+                     Padding="14,0"
+                     MinHeight="32"
+                     VerticalAlignment="Center"
+                     VerticalContentAlignment="Center"
+                     HorizontalAlignment="Stretch" />
+        </Border>
 
         <!-- 跳转按钮 -->
         <Button Grid.Column="3"

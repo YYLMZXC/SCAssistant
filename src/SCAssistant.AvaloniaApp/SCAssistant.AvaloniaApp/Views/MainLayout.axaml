@@ -73,7 +73,9 @@
                   ColumnSpacing="6"
                   Height="38">
                 <!-- 地址栏独立组件（自己管理 URL 编辑状态，防止其他代码影响显示） -->
-                <views:AddressBarView Grid.Column="0" x:Name="AddressBar" />
+                <views:AddressBarView Grid.Column="0" x:Name="AddressBar"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch" />
                 <!-- 设置按钮 -->
                 <Button Grid.Column="1" Classes="SettingsBtn"
                         Command="{Binding ToggleSettingsCommand}"
