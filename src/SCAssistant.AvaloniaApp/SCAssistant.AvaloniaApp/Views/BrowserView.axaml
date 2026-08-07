@@ -21,7 +21,7 @@
         </Style>
         <Style Selector="Button.NavBtn:disabled">
             <Setter Property="Foreground" Value="#BBBBBB" />
-            <Setter Property="Cursor" Value="Default" />
+            <Setter Property="Cursor" Value="Arrow" />
         </Style>
     </UserControl.Styles>
 

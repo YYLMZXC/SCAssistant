@@ -62,6 +62,13 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         {
             _ = InitializeAsync();
         }
+
+        // 订阅窗口位置/大小变化事件，确保 WebView2 位置随布局变化更新
+        if (TopLevel.GetTopLevel(this) is Window window)
+        {
+            window.SizeChanged += (_, _) => UpdateBounds();
+            window.PositionChanged += (_, _) => UpdateBounds();
+        }
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -140,8 +147,40 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
         var bounds = Bounds;
         if (bounds.Width > 0 && bounds.Height > 0)
         {
-            _controller.Bounds = new System.Drawing.Rectangle(0, 0, (int)bounds.Width, (int)bounds.Height);
+            // 通过遍历可视化树计算控件相对于顶级窗口的偏移位置
+            // 这样 WebView2 会正确定位在地址栏下方，而不是覆盖地址栏
+            var offset = CalculateOffsetFromTopLevel();
+
+            _controller.Bounds = new System.Drawing.Rectangle(
+                (int)offset.X,
+                (int)offset.Y,
+                (int)bounds.Width,
+                (int)bounds.Height);
+
+            LogHelper.Debug($"[WebView2] UpdateBounds: offset=({offset.X:F0},{offset.Y:F0}), size=({bounds.Width:F0}x{bounds.Height:F0})");
         }
+    }
+
+    /// <summary>
+    /// 计算控件相对于顶级窗口的偏移位置（通过遍历可视化树）。
+    /// </summary>
+    private Point CalculateOffsetFromTopLevel()
+    {
+        double x = 0, y = 0;
+        Control? current = this;
+
+        while (current != null)
+        {
+            var b = current.Bounds;
+            x += b.X;
+            y += b.Y;
+
+            // 检查是否到达顶级窗口
+            if (current is Window) break;
+            current = current.Parent as Control;
+        }
+
+        return new Point(x, y);
     }
 
     #region WebView2 Event Handlers
