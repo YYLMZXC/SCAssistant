@@ -59,8 +59,38 @@ public partial class MainLayout : UserControl
             $"AddressBar.DataContext={(AddressBar.DataContext != null ? AddressBar.DataContext.GetType().Name : "null")}, " +
             $"自己的 DataContext={(DataContext != null ? DataContext.GetType().Name : "null")}");
 
+        ApplySafeAreaPadding();
+
         LogHelper.Info("[MainLayout] 布局加载 — 初始化浏览器区域");
         BrowserArea.Initialize(_browser);
         LogHelper.Info("[MainLayout] 浏览器区域初始化完成");
+    }
+
+    /// <summary>
+    /// SafeArea 变化时，将安全区域边距应用到顶栏/底栏的 Padding（而非整个 Grid 的 Margin）。
+    /// 这样顶栏/底栏背景延伸到屏幕边缘，填充刘海/home indicator 区域，仅其内容向内避开，
+    /// 避免 Grid 整体缩进在顶部/底部留出大片空白。
+    /// </summary>
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == SafeAreaMarginProperty)
+        {
+            ApplySafeAreaPadding();
+        }
+    }
+
+    /// <summary>
+    /// 将 SafeAreaMargin 叠加到顶栏（Top）与底栏（Bottom）的 Padding。
+    /// 顶栏基础 Padding=(6,4)，底栏基础 Padding=(4,4)；
+    /// 桌面端 SafeAreaMargin=(0,0,0,0)，Padding 保持基础值不变。
+    /// </summary>
+    private void ApplySafeAreaPadding()
+    {
+        if (TopBar == null || BottomBar == null) return;
+        var s = SafeAreaMargin;
+        TopBar.Padding = new Thickness(6 + s.Left, 4 + s.Top, 6 + s.Right, 4);
+        BottomBar.Padding = new Thickness(4 + s.Left, 4, 4 + s.Right, 4 + s.Bottom);
+        LogHelper.Info($"[MainLayout] 应用 SafeArea 到顶栏/底栏 Padding — SafeArea={s}");
     }
 }
