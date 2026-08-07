@@ -141,7 +141,8 @@
                          CornerRadius="8"
                          FontSize="14"
                          Padding="12,0"
-                         VerticalAlignment="Stretch"
+                         Height="32"
+                         VerticalAlignment="Center"
                          VerticalContentAlignment="Center"
                          KeyDown="AddressTextBox_KeyDown" />
                 <!-- 跳转按钮 -->
