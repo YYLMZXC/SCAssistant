@@ -55,9 +55,22 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>
     /// 从设置加载标签页 URL，若未配置则使用默认值。
     /// 加载完成后默认选中第一个标签页。
+    /// 关键：默认标签页创建与选中在 await 之前同步执行，
+    /// 确保 DataContext 绑定时 UrlText 已经就绪，避免地址栏短暂空白。
     /// </summary>
     private async void InitializeTabs()
     {
+        // ── 同步阶段：立即创建默认标签页并导航，不等 I/O ──
+        for (var i = 0; i < 4; i++)
+        {
+            var url = i < DefaultTabUrls.Length ? DefaultTabUrls[i] : string.Empty;
+            Tabs.Add(new TabItem { Name = TabNames[i], Url = url });
+        }
+
+        // 默认选中第一个标签页 → 触发同步导航 → AddressChanged 立即通知地址栏
+        SelectedTabIndex = 0;
+
+        // ── 异步阶段：加载用户自定义设置并更新标签页 ──
         AppSettings appSettings;
         try
         {
@@ -66,21 +79,23 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             LogHelper.Error("[MainVM] 加载设置失败，使用默认配置", ex);
-            appSettings = new AppSettings();
+            LogHelper.Info($"[MainVM] 标签页初始化完成，共 {Tabs.Count} 个标签 (默认)");
+            return;
         }
 
         var urls = (appSettings.TabUrls != null && appSettings.TabUrls.Length >= 4)
             ? appSettings.TabUrls
             : DefaultTabUrls;
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < Tabs.Count && i < urls.Length; i++)
         {
-            var url = i < urls.Length ? urls[i] : string.Empty;
-            Tabs.Add(new TabItem { Name = TabNames[i], Url = url });
+            if (Tabs[i].Url != urls[i])
+            {
+                LogHelper.Debug($"[MainVM] 标签[{i}] '{Tabs[i].Name}': {Tabs[i].Url} → {urls[i]}");
+                Tabs[i].Url = urls[i];
+            }
         }
 
-        // 默认选中第一个标签页
-        SelectedTabIndex = 0;
         LogHelper.Info($"[MainVM] 标签页初始化完成，共 {Tabs.Count} 个标签");
     }
 

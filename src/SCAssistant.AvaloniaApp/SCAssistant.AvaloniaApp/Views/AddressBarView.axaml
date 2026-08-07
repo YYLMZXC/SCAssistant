@@ -58,9 +58,10 @@
         </Style>
     </UserControl.Styles>
 
+    <!-- 高度 38 与 MainLayout Row 0 的 Grid Height="38" 一致，避免溢出裁剪 -->
     <Grid ColumnDefinitions="Auto,Auto,*,Auto"
           ColumnSpacing="6"
-          Height="40"
+          Height="38"
           HorizontalAlignment="Stretch">
         <!-- 后退按钮 -->
         <Button Grid.Column="0"

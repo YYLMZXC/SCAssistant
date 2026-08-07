@@ -3,6 +3,11 @@
              xmlns:local="using:SCAssistant.AvaloniaApp"
              xmlns:converters="using:SCAssistant.AvaloniaApp.Converters"
              x:Class="SCAssistant.AvaloniaApp.App">
+    <Application.Styles>
+        <!-- Fluent 主题：提供完整的 TextBox / Button / Border 等控件模板，
+             没有主题时 TextBox 默认模板缺少文本渲染元素，导致文字不显示、无法输入 -->
+        <FluentTheme />
+    </Application.Styles>
     <Application.DataTemplates>
         <local:ViewLocator />
     </Application.DataTemplates>
