@@ -1,16 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <!-- 多目标类库：为每个平台 TFM 编译一次，自动启用 WINDOWS/ANDROID/IOS 条件编译符号。
+             平台头项目（Desktop/Android/iOS）仍存在，仅保留最薄入口点和清单/资源。 -->
+        <TargetFrameworks>net10.0;net10.0-windows;net10.0-android;net10.0-ios</TargetFrameworks>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+        <!-- 平台最低支持版本 -->
+        <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-android'">23</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-ios'">13.0</SupportedOSPlatformVersion>
     </PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
+    <!-- 所有平台共用的包 -->
     <ItemGroup>
         <PackageReference Include="Avalonia"/>
         <PackageReference Include="Avalonia.Themes.Fluent"/>
@@ -22,4 +28,23 @@
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     </ItemGroup>
+
+    <!-- Windows 桌面端特有包（编译时引用，运行时由头项目负责） -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+        <PackageReference Include="Avalonia.Desktop"/>
+        <PackageReference Include="Microsoft.Web.WebView2"/>
+    </ItemGroup>
+
+    <!-- Android 特有包（编译时引用） -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+        <PackageReference Include="Avalonia.Android"/>
+        <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen"/>
+    </ItemGroup>
+
+    <!-- iOS 特有包（编译时引用） -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-ios'">
+        <PackageReference Include="Avalonia.iOS"/>
+    </ItemGroup>
+
+    <!-- Linux/macOS (net10.0) 不需要额外平台包，WebKit 通过反射调用 -->
 </Project>

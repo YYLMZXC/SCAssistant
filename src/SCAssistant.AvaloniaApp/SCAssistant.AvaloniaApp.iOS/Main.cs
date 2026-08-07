@@ -1,90 +1,42 @@
 using UIKit;
-using SCAssistant.AvaloniaApp.Services;
-using SCAssistant.AvaloniaApp.Views;
+using Avalonia;
+using Avalonia.iOS;
+using Foundation;
 
 namespace SCAssistant.AvaloniaApp.iOS;
 
 /// <summary>
-/// iOS 应用程序入口类。
-/// 注册 WKWebView 浏览器控件工厂并启动 UIApplication。
+/// iOS 应用程序入口（薄壳文件）。
+/// WebView 控件实现与工厂注册已迁移到共享项目，
+/// 此处仅保留 UIApplication 启动与 CurrentViewController 静态引用（供 WKWebView 嵌入使用）。
 /// </summary>
 public class Application
 {
-    /// <summary>当前 ViewController（供 WebViewBrowserControl 嵌入使用）。</summary>
+    /// <summary>当前 ViewController（供共享项目 WebViewBrowserControl 通过反射查找）。</summary>
     public static UIViewController? CurrentViewController { get; private set; }
 
-    /// <summary>应用程序主入口点。</summary>
     static void Main(string[] args)
     {
-        // 注册 iOS 平台浏览器控件工厂
-        // 此工厂负责创建 WKWebView 控件并桥接所有事件到 BrowserProvider
-        BrowserView.BrowserControlFactory = provider =>
-        {
-            var webView = new WebViewBrowserControl();
-            if (provider is BrowserProvider browserProvider)
-            {
-                browserProvider.SetPlatformWebView(webView);
-
-                // 等待平台 WebView 初始化完成后再标记就绪
-                if (!webView.IsReady)
-                {
-                    webView.ReadyChanged += (_, _) =>
-                    {
-                        browserProvider.MarkPlatformReady();
-                    };
-                }
-
-                webView.AddressChanged += (_, url) => browserProvider.HandlePlatformAddressChanged(url);
-                webView.TitleChanged += (_, title) => browserProvider.HandlePlatformTitleChanged(title);
-                webView.LoadingStateChanged += (_, loading) => browserProvider.HandlePlatformLoadingStateChanged(loading);
-                webView.DownloadRequested += (_, url) => browserProvider.HandlePlatformDownloadRequested(url);
-                webView.NavigationHistoryChanged += (_, _) => browserProvider.HandlePlatformNavigationHistoryChanged();
-            }
-            return webView;
-        };
-
+        // 工厂注册已由共享项目 App.axaml.cs 统一处理
         UIApplication.Main(args, null, typeof(AppDelegate));
     }
 
-    /// <summary>
-    /// 获取当前顶层 ViewController。
-    /// </summary>
     public static UIViewController? GetTopViewController()
     {
         try
         {
             var window = UIApplication.SharedApplication.KeyWindow;
-            if (window != null)
-            {
-                var rootVC = window.RootViewController;
-                if (rootVC != null)
-                {
-                    return FindTopViewController(rootVC);
-                }
-            }
-        }
-        catch { }
-
+            if (window != null && window.RootViewController != null)
+                return FindTopViewController(window.RootViewController);
+        } catch { }
         return null;
     }
 
     private static UIViewController FindTopViewController(UIViewController vc)
     {
-        if (vc.PresentedViewController != null)
-        {
-            return FindTopViewController(vc.PresentedViewController);
-        }
-
-        if (vc is UINavigationController navVC && navVC.VisibleViewController != null)
-        {
-            return FindTopViewController(navVC.VisibleViewController);
-        }
-
-        if (vc is UITabBarController tabVC && tabVC.SelectedViewController != null)
-        {
-            return FindTopViewController(tabVC.SelectedViewController);
-        }
-
+        if (vc.PresentedViewController != null) return FindTopViewController(vc.PresentedViewController);
+        if (vc is UINavigationController nav && nav.VisibleViewController != null) return FindTopViewController(nav.VisibleViewController);
+        if (vc is UITabBarController tab && tab.SelectedViewController != null) return FindTopViewController(tab.SelectedViewController);
         return vc;
     }
 }
