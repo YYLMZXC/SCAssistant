@@ -1,25 +1,11 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-using SCAssistant.AvaloniaApp.ViewModels;
 
 namespace SCAssistant.AvaloniaApp.Views;
 
-public partial class HomeView : ContentPage
+public partial class HomeView : UserControl
 {
     public HomeView()
     {
         InitializeComponent();
-    }
-
-    private void SettingButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (this.Navigation != null)
-        {
-            Navigation.PushAsync(new SettingsView()
-            {
-                DataContext = new SettingsViewModel()
-            });
-        }
     }
 }

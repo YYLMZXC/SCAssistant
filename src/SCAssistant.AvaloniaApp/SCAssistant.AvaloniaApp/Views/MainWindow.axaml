@@ -1,12 +1,308 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SCAssistant.AvaloniaApp.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:views="using:SCAssistant.AvaloniaApp.Views"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:conv="using:SCAssistant.AvaloniaApp.Converters"
         x:Class="SCAssistant.AvaloniaApp.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="SCAssistant.AvaloniaApp">
-        <views:MainView />
+        Title="{Binding PageTitle}"
+        Width="1280" Height="800"
+        MinWidth="800" MinHeight="600">
+
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <Window.Resources>
+        <conv:InverseBoolConverter x:Key="InverseBool" />
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
+        <conv:StatusToTextConverter x:Key="StatusToText" />
+        <conv:StatusToColorConverter x:Key="StatusToColor" />
+        <conv:FileSizeConverter x:Key="FileSizeConv" />
+        <conv:StringNotEmptyConverter x:Key="StringNotEmpty" />
+    </Window.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Navigation Bar -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto"
+              Background="#2D2D30"
+              Height="44">
+
+            <Button Grid.Column="0" Command="{Binding GoBackCommand}"
+                    IsEnabled="{Binding CanGoBack}" 
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="后退" Width="36" Height="36" FontSize="16">
+                ◀
+            </Button>
+
+            <Button Grid.Column="1" Command="{Binding GoForwardCommand}"
+                    IsEnabled="{Binding CanGoForward}"
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="前进" Width="36" Height="36" FontSize="16">
+                ▶
+            </Button>
+
+            <Button Grid.Column="2" Command="{Binding RefreshCommand}"
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="刷新" Width="36" Height="36" FontSize="16">
+                ↻
+            </Button>
+
+            <Button Grid.Column="3" Command="{Binding GoHomeCommand}"
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="主页" Width="36" Height="36" FontSize="16">
+                🏠
+            </Button>
+
+            <!-- Address Bar -->
+            <Border Grid.Column="4" Background="#3E3E42" 
+                    CornerRadius="18" Padding="8,0" Margin="8,0"
+                    Height="32" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding AddressBarUrl, Mode=TwoWay}"
+                             Background="Transparent" Foreground="White"
+                             BorderThickness="0" FontSize="14"
+                             VerticalContentAlignment="Center"
+                             PlaceholderText="输入网址或搜索内容...">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding NavigateCommand}"
+                                       CommandParameter="{Binding AddressBarUrl}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                    <Button Grid.Column="1" 
+                            Command="{Binding NavigateToUrlCommand}"
+                            CommandParameter="{Binding AddressBarUrl}"
+                            Background="Transparent" Foreground="White"
+                            Width="30" Height="30" FontSize="14">
+                        →
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Tool Buttons -->
+            <Button Grid.Column="5" Command="{Binding ToggleDownloadPanelCommand}"
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="下载列表" Width="36" Height="36" FontSize="16">
+                ⬇
+            </Button>
+
+            <Button Grid.Column="6" Command="{Binding ToggleSettingsCommand}"
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="设置" Width="36" Height="36" FontSize="16">
+                ⚙
+            </Button>
+
+            <Button Grid.Column="7" 
+                    Command="{Binding OpenInSystemBrowserCommand}"
+                    CommandParameter="{Binding CurrentUrl}"
+                    Background="Transparent" Foreground="White"
+                    ToolTip.Tip="在系统浏览器中打开" Width="36" Height="36" FontSize="16">
+                🔗
+            </Button>
+        </Grid>
+
+        <!-- Loading Indicator Bar -->
+        <Border Grid.Row="1" Height="3" 
+                Background="#2196F3"
+                IsVisible="{Binding IsLoading}">
+            <Border.Styles>
+                <Style Selector="Border">
+                    <Setter Property="Background" Value="#2196F3" />
+                </Style>
+            </Border.Styles>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Row="2">
+            <!-- WebView Container -->
+            <ContentControl x:Name="WebViewHost" />
+
+            <!-- Settings Overlay -->
+            <Border IsVisible="{Binding IsSettingsOpen}"
+                    Background="#E0000000"
+                    ZIndex="100">
+                <Grid RowDefinitions="Auto,*"
+                      Width="500" MaxHeight="600"
+                      HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Grid.Row="0" Background="#2D2D30" 
+                            CornerRadius="8,8,0,0" Padding="16,12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="⚙ 设置" FontSize="18" FontWeight="Bold" 
+                                       Foreground="White" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" 
+                                    Command="{Binding ToggleSettingsCommand}"
+                                    Background="Transparent" Foreground="#AAAAAA"
+                                    FontSize="20" Width="30" Height="30">
+                                ✕
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" Background="#1E1E1E">
+                        <StackPanel Margin="20" Spacing="16">
+                            <!-- Homepage -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="主页URL" Foreground="#CCCCCC" FontSize="13" />
+                                <TextBox Text="{Binding Settings.HomePageUrl}" 
+                                         Background="#3E3E42" Foreground="White"
+                                         BorderThickness="1" BorderBrush="#555"
+                                         CornerRadius="4" Padding="8,6" />
+                            </StackPanel>
+
+                            <!-- Search Engine -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="默认搜索引擎" Foreground="#CCCCCC" FontSize="13" />
+                                <TextBox Text="{Binding Settings.DefaultSearchEngine}" 
+                                         Background="#3E3E42" Foreground="White"
+                                         BorderThickness="1" BorderBrush="#555"
+                                         CornerRadius="4" Padding="8,6" />
+                            </StackPanel>
+
+                            <!-- Download Directory -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="下载目录" Foreground="#CCCCCC" FontSize="13" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Text="{Binding Settings.DownloadDirectory}" 
+                                             Background="#3E3E42" Foreground="White"
+                                             IsReadOnly="True"
+                                             BorderThickness="1" BorderBrush="#555"
+                                             CornerRadius="4" Padding="8,6" />
+                                    <Button Grid.Column="1" Content="浏览..." 
+                                            Margin="8,0,0,0" Padding="12,6"
+                                            Background="#0078D4" Foreground="White"
+                                            CornerRadius="4" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Max Concurrent Downloads -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="最大同时下载数" Foreground="#CCCCCC" FontSize="13" />
+                                <NumericUpDown Value="{Binding Settings.MaxConcurrentDownloads}" 
+                                               Minimum="1" Maximum="10"
+                                               Background="#3E3E42" Foreground="White"
+                                               Width="120" />
+                            </StackPanel>
+
+                            <!-- Toggles -->
+                            <StackPanel Spacing="12">
+                                <CheckBox Content="启用下载历史记录" 
+                                          IsChecked="{Binding Settings.EnableDownloadHistory}"
+                                          Foreground="#CCCCCC" />
+                                <CheckBox Content="启用广告过滤"
+                                          IsChecked="{Binding Settings.EnableAdBlock}"
+                                          Foreground="#CCCCCC" />
+                            </StackPanel>
+
+                            <!-- Theme Selection -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="主题" Foreground="#CCCCCC" FontSize="13" />
+                                <ComboBox ItemsSource="{Binding ThemeOptions}"
+                                          SelectedIndex="{Binding Settings.ThemeIndex}"
+                                          Background="#3E3E42" Foreground="White"
+                                          Width="200" />
+                            </StackPanel>
+
+                            <!-- Save Button -->
+                            <Button Content="保存设置" 
+                                    Command="{Binding SaveSettingsCommand}"
+                                    Background="#0078D4" Foreground="White"
+                                    HorizontalAlignment="Stretch" Padding="0,10"
+                                    CornerRadius="4" FontSize="15"
+                                    Margin="0,12,0,0" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Download Panel Overlay -->
+            <Panel IsVisible="{Binding IsDownloadPanelOpen}"
+                   ZIndex="100">
+                <Rectangle Fill="#80000000" 
+                          Name="BackgroundOverlay"
+                          PointerPressed="BackgroundOverlay_Tap" />
+                <Border Background="#2D2D30"
+                        Width="400"
+                        HorizontalAlignment="Right"
+                        CornerRadius="8,0,0,8">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0" Background="#1E1E1E" 
+                                Padding="16,12" CornerRadius="8,0,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="⬇ 下载列表" FontSize="16" 
+                                           FontWeight="Bold" Foreground="White" />
+                                <Button Grid.Column="1" 
+                                        Command="{Binding ToggleDownloadPanelCommand}"
+                                        Background="Transparent" Foreground="#AAAAAA"
+                                        FontSize="20" Width="30" Height="30">
+                                    ✕
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Download List -->
+                        <ScrollViewer Grid.Row="1" Background="#1E1E1E">
+                            <ItemsControl ItemsSource="{Binding DownloadRecords}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#2D2D30" 
+                                                Margin="8,4" Padding="12,10"
+                                                CornerRadius="6">
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                                           Text="{Binding FileName}"
+                                                           Foreground="White" FontSize="14"
+                                                           TextTrimming="CharacterEllipsis" />
+
+                                                <TextBlock Grid.Row="1" Grid.Column="0"
+                                                           Text="{Binding Status, Converter={StaticResource StatusToText}}"
+                                                           Foreground="{Binding Status, Converter={StaticResource StatusToColor}}"
+                                                           FontSize="12" Margin="0,4,0,0" />
+
+                                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                                           Text="{Binding Progress, StringFormat={}{0}%}"
+                                                           Foreground="#AAAAAA" FontSize="12" Margin="0,4,0,0" />
+
+                                                <ProgressBar Grid.Row="2" Grid.ColumnSpan="2"
+                                                             Value="{Binding Progress}" Maximum="100"
+                                                             Height="4" Margin="0,6,0,0" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Add Download -->
+                        <Border Grid.Row="2" Background="#1E1E1E" 
+                                Padding="12,10" CornerRadius="0,0,0,8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Text="{Binding DownloadUrl}"
+                                         Background="#3E3E42" Foreground="White"
+                                         PlaceholderText="输入下载URL..."
+                                         BorderThickness="1" BorderBrush="#555"
+                                         CornerRadius="4" Padding="8,6"
+                                         VerticalContentAlignment="Center">
+                                    <TextBox.KeyBindings>
+                                        <KeyBinding Gesture="Enter" 
+                                                   Command="{Binding StartDownloadCommand}" />
+                                    </TextBox.KeyBindings>
+                                </TextBox>
+                                <Button Grid.Column="1" 
+                                        Command="{Binding StartDownloadCommand}"
+                                        Content="下载" Margin="8,0,0,0"
+                                        Padding="16,6"
+                                        Background="#0078D4" Foreground="White"
+                                        CornerRadius="4" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Panel>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" Background="#007ACC" 
+                Height="4" IsVisible="{Binding IsLoading}" />
+    </Grid>
 </Window>

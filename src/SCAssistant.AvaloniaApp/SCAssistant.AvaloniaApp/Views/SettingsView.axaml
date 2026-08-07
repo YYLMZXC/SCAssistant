@@ -1,18 +1,97 @@
-<ContentPage xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SCAssistant.AvaloniaApp.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             Header="Settings"
-             x:DataType="vm:SettingsViewModel"
              x:Class="SCAssistant.AvaloniaApp.Views.SettingsView">
+
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:HomeViewModel />
+        <vm:SettingsViewModel />
     </Design.DataContext>
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
-</ContentPage>
+
+    <Grid Background="#1E1E1E">
+        <Border Background="#2D2D30" 
+                Width="500" MaxHeight="600"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                CornerRadius="8">
+
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header -->
+                <Border Grid.Row="0" 
+                        CornerRadius="8,8,0,0" Padding="16,12">
+                    <TextBlock Text="⚙ 设置" FontSize="18" FontWeight="Bold" 
+                               Foreground="White" />
+                </Border>
+
+                <!-- Settings Content -->
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Margin="20" Spacing="16">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="主页URL" Foreground="#CCCCCC" FontSize="13" />
+                            <TextBox Text="{Binding HomePageUrl}" 
+                                     Background="#3E3E42" Foreground="White"
+                                     BorderThickness="1" BorderBrush="#555"
+                                     CornerRadius="4" Padding="8,6" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="搜索引擎URL" Foreground="#CCCCCC" FontSize="13" />
+                            <TextBox Text="{Binding DefaultSearchEngine}" 
+                                     Background="#3E3E42" Foreground="White"
+                                     BorderThickness="1" BorderBrush="#555"
+                                     CornerRadius="4" Padding="8,6" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="下载目录" Foreground="#CCCCCC" FontSize="13" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Text="{Binding DownloadDirectory}" 
+                                         Background="#3E3E42" Foreground="White"
+                                         IsReadOnly="True"
+                                         BorderThickness="1" BorderBrush="#555"
+                                         CornerRadius="4" Padding="8,6" />
+                                <Button Grid.Column="1" Content="浏览" 
+                                        Command="{Binding SelectDownloadDirectoryCommand}"
+                                        Margin="8,0,0,0" Padding="12,6"
+                                        Background="#0078D4" Foreground="White"
+                                        CornerRadius="4" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="最大同时下载数" Foreground="#CCCCCC" FontSize="13" />
+                            <NumericUpDown Value="{Binding MaxConcurrentDownloads}" 
+                                           Minimum="1" Maximum="10"
+                                           Background="#3E3E42" Foreground="White"
+                                           Width="120" />
+                        </StackPanel>
+
+                        <CheckBox Content="启用下载历史" 
+                                  IsChecked="{Binding EnableDownloadHistory}"
+                                  Foreground="#CCCCCC" />
+                        <CheckBox Content="启用广告过滤"
+                                  IsChecked="{Binding EnableAdBlock}"
+                                  Foreground="#CCCCCC" />
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="主题" Foreground="#CCCCCC" FontSize="13" />
+                            <ComboBox ItemsSource="{Binding ThemeOptions}"
+                                      SelectedIndex="{Binding SelectedThemeIndex}"
+                                      Background="#3E3E42" Foreground="White"
+                                      Width="200" />
+                        </StackPanel>
+
+                        <Grid ColumnDefinitions="*,*" Margin="0,12,0,0" ColumnSpacing="12">
+                            <Button Content="取消" 
+                                    Command="{Binding CancelCommand}"
+                                    Background="#555" Foreground="White"
+                                    CornerRadius="4" Padding="0,10" />
+                            <Button Grid.Column="1" Content="保存" 
+                                    Command="{Binding SaveCommand}"
+                                    Background="#0078D4" Foreground="White"
+                                    CornerRadius="4" Padding="0,10" />
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

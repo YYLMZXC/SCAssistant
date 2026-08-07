@@ -1,25 +1,23 @@
-using Avalonia;
 using Avalonia.Controls;
 using SCAssistant.AvaloniaApp.ViewModels;
-using System;
 
 namespace SCAssistant.AvaloniaApp.Views;
 
-public partial class MainView : NavigationPage
+public partial class MainView : UserControl
 {
     public MainView()
     {
         InitializeComponent();
-    }
 
-    protected override async void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
+        if (Design.IsDesignMode)
+            return;
 
-        if (CurrentPage == null)
-            await PushAsync(new HomeView()
+        Loaded += async (_, _) =>
+        {
+            if (DataContext is MainViewModel vm)
             {
-                DataContext = new HomeViewModel()
-            });
+                await vm.InitializeAsync();
+            }
+        };
     }
 }
