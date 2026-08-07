@@ -57,6 +57,10 @@ public partial class App : Application
         services.AddSingleton<IDownloadHistoryService, DownloadHistoryService>();
         services.AddSingleton<IDownloadService, DownloadService>();
         services.AddSingleton<IBrowserProvider, BrowserProvider>();
+        // 日志服务 — 先创建实例以初始化全局静态入口
+        var logService = new LogService();
+        LogHelper.Initialize(logService);
+        services.AddSingleton<ILogService>(logService);
 
         // ViewModel 注册
         services.AddTransient<SettingsViewModel>();
