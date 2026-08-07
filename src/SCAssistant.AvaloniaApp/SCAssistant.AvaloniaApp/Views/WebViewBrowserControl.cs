@@ -782,7 +782,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     // ═══════════════════════════════════════════════════════════
     // 共用辅助：计算控件相对顶级窗口/视图的偏移
     // ═══════════════════════════════════════════════════════════
-    protected Point CalculateOffsetFromTopLevel()
+    protected Avalonia.Point CalculateOffsetFromTopLevel()
     {
         double x = 0, y = 0;
         Control? current = this;
@@ -793,7 +793,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             if (current is TopLevel) break;
             current = current.Parent as Control;
         }
-        return new Point(x, y);
+        return new Avalonia.Point(x, y);
     }
 
     // ═══════════════════════════════════════════════════════════

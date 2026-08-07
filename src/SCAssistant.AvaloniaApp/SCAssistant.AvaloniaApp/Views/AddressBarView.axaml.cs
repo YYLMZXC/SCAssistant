@@ -141,8 +141,8 @@ public partial class AddressBarView : UserControl
             var txtBox  = urlFrame?.Child as TextBox;
 
             LogHelper.Info($"[AddrBarView] 子控件数={grid.Children.Count}, Grid.IsVisible={grid.IsVisible}, Grid.Bounds={grid.Bounds}");
-            LogHelper.Info($"[AddrBarView] 后退Btn: IsVisible={btnBack?.IsVisible}, Bounds={btnBack?.Bounds}, IsEnabled={((btnBack as Button)?.IsEnabled)}");
-            LogHelper.Info($"[AddrBarView] 前进Btn: IsVisible={btnFwd?.IsVisible}, Bounds={btnFwd?.Bounds}, IsEnabled={((btnFwd as Button)?.IsEnabled)}");
+            LogHelper.Info($"[AddrBarView] 后退Btn: IsVisible={btnBack?.IsVisible}, Bounds={btnBack?.Bounds}, IsEnabled={((btnBack as Avalonia.Controls.Button)?.IsEnabled)}");
+            LogHelper.Info($"[AddrBarView] 前进Btn: IsVisible={btnFwd?.IsVisible}, Bounds={btnFwd?.Bounds}, IsEnabled={((btnFwd as Avalonia.Controls.Button)?.IsEnabled)}");
             LogHelper.Info($"[AddrBarView] URL框: IsVisible={urlFrame?.IsVisible}, Bounds={urlFrame?.Bounds}");
             LogHelper.Info($"[AddrBarView] 地址框: IsVisible={txtBox?.IsVisible}, Bounds={txtBox?.Bounds}, Text={txtBox?.Text}");
             LogHelper.Info($"[AddrBarView] GoBtn:   IsVisible={btnGo?.IsVisible}, Bounds={btnGo?.Bounds}");

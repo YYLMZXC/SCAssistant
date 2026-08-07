@@ -15,7 +15,7 @@ namespace SCAssistant.AvaloniaApp;
 /// Avalonia 应用程序入口 — 负责 DI 容器初始化、平台生命周期适配和启动流程。
 /// BrowserControlFactory 在此处统一注册（条件编译），各平台入口点无需再重复注册。
 /// </summary>
-public partial class App : Application
+public partial class App : Avalonia.Application
 {
     private IServiceProvider? _serviceProvider;
 
