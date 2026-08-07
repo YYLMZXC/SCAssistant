@@ -13,90 +13,34 @@
     </Design.DataContext>
 
     <Window.Resources>
-        <SolidColorBrush x:Key="BarBg" Color="#1E1E20" />
-        <SolidColorBrush x:Key="PageBg" Color="#141416" />
+        <SolidColorBrush x:Key="BarBg" Color="#F5F5F5" />
+        <SolidColorBrush x:Key="PageBg" Color="#FFFFFF" />
         <conv:TabIndexToBrushConverter x:Key="TabIndexToBrush" />
         <conv:InverseBoolToVisibilityConverter x:Key="InvertBoolVis" />
     </Window.Resources>
 
     <Window.Styles>
-        <Style Selector="Button.NavBtn">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#AAABAF" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.NavBtn:pointerover">
-            <Setter Property="Foreground" Value="#E0E0E0" />
-        </Style>
-        <Style Selector="Button.NavBtn:disabled">
-            <Setter Property="Foreground" Value="#555555" />
-        </Style>
-
         <Style Selector="Button.TabBtn">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="0,10,0,6" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="0,6,0,4" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
 
         <Style Selector="Button.CloseSetBtn">
-            <Setter Property="Background" Value="#2A2A2E" />
-            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="Background" Value="#E8E8E8" />
+            <Setter Property="Foreground" Value="#333333" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="16,8" />
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto" Background="{StaticResource PageBg}">
-
-        <!-- ===== 顶部地址栏 ===== -->
-        <Border Grid.Row="0"
-                Background="{StaticResource BarBg}"
-                Padding="10,10"
-                BorderBrush="#2A2A2E"
-                BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto" Height="38">
-                <Button Grid.Column="0" Classes="NavBtn"
-                        Command="{Binding GoBackCommand}"
-                        IsEnabled="{Binding CanGoBack}"
-                        Content="◀" />
-                <Button Grid.Column="1" Classes="NavBtn"
-                        Command="{Binding GoForwardCommand}"
-                        IsEnabled="{Binding CanGoForward}"
-                        Content="▶" />
-                <TextBox Grid.Column="2"
-                         Text="{Binding CurrentUrl, Mode=TwoWay}"
-                         PlaceholderText="输入网址..."
-                         Background="#252528"
-                         Foreground="#E0E0E0"
-                         CaretBrush="#80D4FF"
-                         BorderBrush="#3A3A3E"
-                         BorderThickness="1"
-                         CornerRadius="4"
-                         FontSize="14"
-                         Padding="10,0"
-                         VerticalContentAlignment="Center"
-                         Name="AddressBarTextBox">
-                            <TextBox.KeyBindings>
-                                <KeyBinding Gesture="Enter" 
-                                            Command="{Binding NavigateToUrlCommand}" />
-                            </TextBox.KeyBindings>
-                        </TextBox>
-                <Button Grid.Column="3" Classes="NavBtn"
-                        Command="{Binding NavigateToUrlCommand}"
-                        Foreground="#80D4FF"
-                        FontWeight="Bold" FontSize="16"
-                        Content="→" />
-            </Grid>
-        </Border>
+    <Grid RowDefinitions="*,Auto" Background="{StaticResource PageBg}">
 
         <!-- ===== 内容区：浏览器 + 设置面板 ===== -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="0">
             <!-- 浏览器 -->
             <views:BrowserView x:Name="BrowserArea"
                                IsVisible="{Binding IsSettingsOpen, Converter={StaticResource InvertBoolVis}}" />
@@ -107,15 +51,15 @@
                   Background="{StaticResource PageBg}">
                 <Border Grid.Row="0"
                         Background="{StaticResource BarBg}"
-                        Padding="16,12"
-                        BorderBrush="#2A2A2E"
+                        Padding="14,10"
+                        BorderBrush="#E0E0E0"
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto" MaxWidth="800"
                           HorizontalAlignment="Center">
                         <TextBlock Grid.Column="0"
                                    Text="设置"
-                                   Foreground="#E0E0E0"
-                                   FontSize="18"
+                                   Foreground="#333333"
+                                   FontSize="16"
                                    FontWeight="Bold"
                                    VerticalAlignment="Center" />
                         <Button Grid.Column="1"
@@ -135,12 +79,12 @@
         </Grid>
 
         <!-- ===== 底部标签栏 ===== -->
-        <Border Grid.Row="2"
+        <Border Grid.Row="1"
                 Background="{StaticResource BarBg}"
-                Padding="0,4,0,6"
-                BorderBrush="#2A2A2E"
+                Padding="0,2,0,3"
+                BorderBrush="#E0E0E0"
                 BorderThickness="0,1,0,0">
-            <Grid ColumnDefinitions="*,*,*,*,*" Height="44"
+            <Grid ColumnDefinitions="*,*,*,*,*" Height="36"
                   MaxWidth="700" HorizontalAlignment="Center">
 
                 <Button Grid.Column="0" Classes="TabBtn"

@@ -4,15 +4,15 @@
              xmlns:conv="clr-namespace:SCAssistant.AvaloniaApp.Converters"
              x:Class="SCAssistant.AvaloniaApp.Views.SettingsView"
              x:DataType="vm:SettingsViewModel"
-             Background="#141416">
+             Background="#FFFFFF">
 
     <UserControl.Resources>
-        <SolidColorBrush x:Key="CardBg" Color="#1E1E22" />
-        <SolidColorBrush x:Key="InputBg" Color="#252528" />
-        <SolidColorBrush x:Key="TextPrimary" Color="#D0D0D0" />
-        <SolidColorBrush x:Key="TextMuted" Color="#888" />
+        <SolidColorBrush x:Key="CardBg" Color="#F8F8F8" />
+        <SolidColorBrush x:Key="InputBg" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="TextPrimary" Color="#333333" />
+        <SolidColorBrush x:Key="TextMuted" Color="#888888" />
         <SolidColorBrush x:Key="Accent" Color="#0078D4" />
-        <SolidColorBrush x:Key="BorderColor" Color="#3A3A3E" />
+        <SolidColorBrush x:Key="BorderColor" Color="#E0E0E0" />
     </UserControl.Resources>
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
@@ -44,7 +44,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,8" />
                     </StackPanel>
@@ -60,7 +60,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,8" />
                     </StackPanel>
@@ -76,7 +76,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,8" />
                     </StackPanel>
@@ -92,7 +92,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,8" />
                     </StackPanel>
@@ -121,7 +121,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,8" />
                     </StackPanel>
@@ -137,7 +137,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,8" />
                     </StackPanel>
@@ -152,7 +152,7 @@
                                   Foreground="{StaticResource TextPrimary}"
                                   BorderBrush="{StaticResource BorderColor}"
                                   BorderThickness="1"
-                                  CornerRadius="4"
+                                  CornerRadius="6"
                                   Padding="10,4"
                                   FontSize="13" />
                     </StackPanel>
@@ -168,7 +168,7 @@
                                  CaretBrush="{StaticResource Accent}"
                                  BorderBrush="{StaticResource BorderColor}"
                                  BorderThickness="1"
-                                 CornerRadius="4"
+                                 CornerRadius="6"
                                  FontSize="13"
                                  Padding="10,6" />
                     </StackPanel>
@@ -189,7 +189,7 @@
                     Background="{StaticResource Accent}"
                     Foreground="White"
                     FontSize="15"
-                    CornerRadius="6"
+                    CornerRadius="8"
                     Padding="0,12"
                     HorizontalAlignment="Stretch"
                     Content="保存设置" />

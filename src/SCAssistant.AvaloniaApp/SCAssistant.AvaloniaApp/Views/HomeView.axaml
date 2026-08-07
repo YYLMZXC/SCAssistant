@@ -8,7 +8,7 @@
     </Design.DataContext>
 
     <Grid RowDefinitions="*,Auto"
-          Background="#1E1E1E">
+          Background="#FFFFFF">
 
         <!-- Welcome Content -->
         <StackPanel Grid.Row="0" 
@@ -22,16 +22,16 @@
 
             <TextBlock Text="SCAssistant"
                        FontSize="32" FontWeight="Bold"
-                       Foreground="White"
+                       Foreground="#333333"
                        HorizontalAlignment="Center" />
 
             <TextBlock Text="Survivalcraft 工具助手"
                        FontSize="16"
-                       Foreground="#AAAAAA"
+                       Foreground="#666666"
                        HorizontalAlignment="Center" />
 
             <!-- Search Bar -->
-            <Border Background="#3E3E42"
+            <Border Background="#F0F0F0"
                     CornerRadius="24" Padding="16,10"
                     Width="500" MaxWidth="500">
                 <Grid ColumnDefinitions="Auto,*">
@@ -39,7 +39,7 @@
                                VerticalAlignment="Center" Margin="0,0,12,0" />
                     <TextBox Grid.Column="1"
                              Text="{Binding SearchText}"
-                             Background="Transparent" Foreground="White"
+                             Background="Transparent" Foreground="#333333"
                              BorderThickness="0" FontSize="16"
                              PlaceholderText="输入网址或搜索..."
                              VerticalContentAlignment="Center">
@@ -58,19 +58,19 @@
                 <Button Content="SC 中文社区" 
                         Command="{Binding NavigateQuickLinkCommand}"
                         CommandParameter="https://www.scbbs.top/"
-                        Background="#2D2D30" Foreground="White"
+                        Background="#F0F0F0" Foreground="#333333"
                         CornerRadius="8" Padding="20,10" Margin="6" />
 
                 <Button Content="SC 联机号" 
                         Command="{Binding NavigateQuickLinkCommand}"
                         CommandParameter="https://www.sckey.net/"
-                        Background="#2D2D30" Foreground="White"
+                        Background="#F0F0F0" Foreground="#333333"
                         CornerRadius="8" Padding="20,10" Margin="6" />
 
                 <Button Content="SC 导航网" 
                         Command="{Binding NavigateQuickLinkCommand}"
                         CommandParameter="https://scwz.top/"
-                        Background="#2D2D30" Foreground="White"
+                        Background="#F0F0F0" Foreground="#333333"
                         CornerRadius="8" Padding="20,10" Margin="6" />
             </WrapPanel>
         </StackPanel>
@@ -78,7 +78,7 @@
         <!-- Footer -->
         <TextBlock Grid.Row="1" 
                    Text="SCAssistant v1.0 - Survivalcraft Tool"
-                   Foreground="#555555" FontSize="12"
+                   Foreground="#999999" FontSize="12"
                    HorizontalAlignment="Center" Margin="0,0,0,20" />
     </Grid>
 </UserControl>

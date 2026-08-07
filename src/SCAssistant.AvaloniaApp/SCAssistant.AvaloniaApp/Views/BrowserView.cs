@@ -1,17 +1,20 @@
 using System;
 using System.Reflection;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using SCAssistant.AvaloniaApp.Services;
 
 namespace SCAssistant.AvaloniaApp.Views;
 
 /// <summary>
 /// 跨平台浏览器视图 — 负责创建和管理平台原生 WebView 控件。
-/// 通过工厂模式支持桌面端 WebView2、移动端原生 WebView 以及 Linux/macOS WebKit。
+/// 内置简易地址栏（后退/前进/地址输入/跳转），通过工厂模式支持桌面端 WebView2、移动端原生 WebView 以及 Linux/macOS WebKit。
 /// </summary>
 public partial class BrowserView : UserControl
 {
     private IBrowserProvider? _browserProvider;
+    private bool _suppressAddressSync;
 
     /// <summary>
     /// 平台浏览器控件工厂 — 由各平台项目设置。
@@ -30,6 +33,10 @@ public partial class BrowserView : UserControl
     public void Initialize(IBrowserProvider browserProvider)
     {
         _browserProvider = browserProvider;
+
+        // 订阅地址栏更新事件
+        _browserProvider.AddressChanged += OnAddressChanged;
+        _browserProvider.NavigationHistoryChanged += OnNavigationHistoryChanged;
 
         try
         {
@@ -78,6 +85,86 @@ public partial class BrowserView : UserControl
             ShowPlaceholder($"浏览器加载失败: {ex.Message}");
         }
     }
+
+    #region 地址栏事件处理
+
+    private void BtnBack_Click(object? sender, RoutedEventArgs e)
+    {
+        LogHelper.Debug("[BrowserView] 地址栏后退");
+        _browserProvider?.GoBack();
+    }
+
+    private void BtnForward_Click(object? sender, RoutedEventArgs e)
+    {
+        LogHelper.Debug("[BrowserView] 地址栏前进");
+        _browserProvider?.GoForward();
+    }
+
+    private void BtnGo_Click(object? sender, RoutedEventArgs e)
+    {
+        NavigateFromAddressBar();
+    }
+
+    private void AddressTextBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            NavigateFromAddressBar();
+            e.Handled = true;
+        }
+    }
+
+    private void NavigateFromAddressBar()
+    {
+        if (_browserProvider == null) return;
+
+        var target = AddressTextBox.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            LogHelper.Warn("[BrowserView] 地址栏导航取消: URL 为空");
+            return;
+        }
+
+        // 自动补全协议
+        if (!target.StartsWith("http://") && !target.StartsWith("https://") && !target.StartsWith("file://"))
+        {
+            target = "https://" + target;
+            _suppressAddressSync = true;
+            AddressTextBox.Text = target;
+            _suppressAddressSync = false;
+        }
+
+        LogHelper.Info($"[BrowserView] 地址栏导航: {target}");
+        _browserProvider.Navigate(target);
+    }
+
+    private void OnAddressChanged(object? sender, string url)
+    {
+        if (_suppressAddressSync) return;
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (AddressTextBox.Text != url)
+            {
+                _suppressAddressSync = true;
+                AddressTextBox.Text = url;
+                _suppressAddressSync = false;
+            }
+        });
+    }
+
+    private void OnNavigationHistoryChanged(object? sender, EventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            BtnBack.IsEnabled = _browserProvider?.CanGoBack ?? false;
+            BtnForward.IsEnabled = _browserProvider?.CanGoForward ?? false;
+        });
+    }
+
+    #endregion
+
+    #region 平台浏览器控件创建
 
     /// <summary>
     /// Windows 桌面 — 通过反射查找 Desktop 项目中的 WebView2 控件。
@@ -223,6 +310,10 @@ public partial class BrowserView : UserControl
         }
     }
 
+    #endregion
+
+    #region 回退与占位
+
     /// <summary>
     /// 系统浏览器回退 — 点击链接在系统浏览器中打开。
     /// </summary>
@@ -247,7 +338,7 @@ public partial class BrowserView : UserControl
             Text = "浏览器",
             FontSize = 20,
             FontWeight = Avalonia.Media.FontWeight.Bold,
-            Foreground = Avalonia.Media.Brushes.White,
+            Foreground = Avalonia.Media.Brushes.DarkGray,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
         });
 
@@ -255,7 +346,7 @@ public partial class BrowserView : UserControl
         {
             Text = "将使用系统默认浏览器打开网页",
             FontSize = 13,
-            Foreground = Avalonia.Media.Brushes.Gray,
+            Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666")),
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
         });
 
@@ -299,7 +390,7 @@ public partial class BrowserView : UserControl
         {
             Text = $"{platform} 区域",
             FontSize = 16,
-            Foreground = Avalonia.Media.Brushes.White,
+            Foreground = Avalonia.Media.Brushes.DarkGray,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
         });
 
@@ -319,10 +410,12 @@ public partial class BrowserView : UserControl
                     Text = message,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    Foreground = Avalonia.Media.Brushes.Gray,
+                    Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#999999")),
                     FontSize = 16
                 }
             }
         };
     }
+
+    #endregion
 }

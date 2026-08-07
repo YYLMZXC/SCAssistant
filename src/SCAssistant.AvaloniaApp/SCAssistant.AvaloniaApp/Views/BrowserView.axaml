@@ -1,8 +1,70 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="SCAssistant.AvaloniaApp.Views.BrowserView">
-    <Grid Background="#1E1E1E" x:Name="RootGrid">
-        <!-- Browser content rendered here by platform -->
-        <ContentControl x:Name="WebViewContainer" />
+
+    <UserControl.Styles>
+        <Style Selector="Button.NavBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#666666" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.NavBtn:pointerover">
+            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="Background" Value="#F0F0F0" />
+        </Style>
+        <Style Selector="Button.NavBtn:disabled">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid Background="#FFFFFF" x:Name="RootGrid" RowDefinitions="Auto,*">
+
+        <!-- ===== 顶部地址栏 ===== -->
+        <Border Grid.Row="0"
+                Background="#F8F8F8"
+                Padding="6,4"
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto" Height="40">
+                <Button Grid.Column="0" Classes="NavBtn"
+                        x:Name="BtnBack"
+                        Click="BtnBack_Click"
+                        Content="◀"
+                        IsEnabled="False" />
+                <Button Grid.Column="1" Classes="NavBtn"
+                        x:Name="BtnForward"
+                        Click="BtnForward_Click"
+                        Content="▶"
+                        IsEnabled="False" />
+                <TextBox Grid.Column="2"
+                         x:Name="AddressTextBox"
+                         Text=""
+                         PlaceholderText="输入网址或搜索..."
+                         Background="#FFFFFF"
+                         Foreground="#333333"
+                         CaretBrush="#0078D4"
+                         BorderBrush="#D0D0D0"
+                         BorderThickness="1"
+                         CornerRadius="6"
+                         FontSize="13"
+                         Padding="10,6"
+                         VerticalContentAlignment="Center"
+                         KeyDown="AddressTextBox_KeyDown" />
+                <Button Grid.Column="3" Classes="NavBtn"
+                        x:Name="BtnGo"
+                        Click="BtnGo_Click"
+                        Foreground="#0078D4"
+                        FontWeight="Bold"
+                        FontSize="16"
+                        Content="→" />
+            </Grid>
+        </Border>
+
+        <!-- ===== 浏览器内容 ===== -->
+        <ContentControl Grid.Row="1" x:Name="WebViewContainer" />
     </Grid>
 </UserControl>

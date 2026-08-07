@@ -127,8 +127,8 @@ public class TabIndexToBrushConverter : IValueConverter
         if (value is int selected && parameter is string s && int.TryParse(s, out int index))
             return selected == index
                 ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0078D4"))
-                : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#888888"));
-        return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#888888"));
+                : new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666"));
+        return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#666666"));
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
