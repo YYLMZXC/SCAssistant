@@ -1,0 +1,10 @@
+﻿<Solution>
+  <Project Path="SCAssistant.AvaloniaApp.Android/SCAssistant.AvaloniaApp.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="SCAssistant.AvaloniaApp.Desktop/SCAssistant.AvaloniaApp.Desktop.csproj" />
+  <Project Path="SCAssistant.AvaloniaApp.iOS/SCAssistant.AvaloniaApp.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="SCAssistant.AvaloniaApp/SCAssistant.AvaloniaApp.csproj" />
+</Solution>
