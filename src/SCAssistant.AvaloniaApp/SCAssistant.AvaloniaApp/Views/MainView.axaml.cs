@@ -8,16 +8,10 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
+    }
 
-        if (Design.IsDesignMode)
-            return;
-
-        Loaded += async (_, _) =>
-        {
-            if (DataContext is MainViewModel vm)
-            {
-                await vm.InitializeAsync();
-            }
-        };
+    public MainView(MainViewModel viewModel) : this()
+    {
+        DataContext = viewModel;
     }
 }

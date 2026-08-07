@@ -1,108 +1,132 @@
-using Newtonsoft.Json;
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace SCAssistant.AvaloniaApp.Models;
 
-/// <summary>
-/// 下载记录模型
-/// </summary>
-public class DownloadRecord
+public class DownloadRecord : INotifyPropertyChanged
 {
-    /// <summary>
-    /// 下载URL
-    /// </summary>
-    [JsonProperty("url")]
-    public string Url { get; set; } = string.Empty;
+    private string _id = string.Empty;
+    private string _fileName = string.Empty;
+    private string _url = string.Empty;
+    private string _localPath = string.Empty;
+    private long _fileSize;
+    private DateTime _downloadTime;
+    private DateTime? _completedTime;
+    private DownloadState _state;
+    private string? _errorMessage;
+    private double _progress;
 
-    /// <summary>
-    /// 文件保存路径
-    /// </summary>
-    [JsonProperty("filePath")]
-    public string FilePath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// 文件大小（字节）
-    /// </summary>
-    [JsonProperty("fileSize")]
-    public long FileSize { get; set; }
-
-    /// <summary>
-    /// 下载状态：Pending, Downloading, Completed, Failed, Cancelled
-    /// </summary>
-    [JsonProperty("status")]
-    public string Status { get; set; } = "Pending";
-
-    /// <summary>
-    /// 下载进度（0-100）
-    /// </summary>
-    [JsonProperty("progress")]
-    public int Progress { get; set; }
-
-    /// <summary>
-    /// 下载速度（字节/秒）
-    /// </summary>
-    [JsonProperty("speed")]
-    public long Speed { get; set; }
-
-    /// <summary>
-    /// 创建时间
-    /// </summary>
-    [JsonProperty("createdAt")]
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
-
-    /// <summary>
-    /// 完成时间
-    /// </summary>
-    [JsonProperty("completedAt")]
-    public DateTime? CompletedAt { get; set; }
-
-    /// <summary>
-    /// 错误信息
-    /// </summary>
-    [JsonProperty("errorMessage")]
-    public string? ErrorMessage { get; set; }
-
-    /// <summary>
-    /// 文件名（从URL或文件路径提取）
-    /// </summary>
-    [JsonIgnore]
-    public string FileName => Path.GetFileName(string.IsNullOrEmpty(FilePath) ? Url : FilePath);
-
-    /// <summary>
-    /// 文件大小显示文本
-    /// </summary>
-    [JsonIgnore]
-    public string FileSizeText => FormatFileSize(FileSize);
-
-    /// <summary>
-    /// 下载速度显示文本
-    /// </summary>
-    [JsonIgnore]
-    public string SpeedText => FormatFileSize(Speed) + "/s";
-
-    /// <summary>
-    /// 状态显示文本
-    /// </summary>
-    [JsonIgnore]
-    public string StatusText => Status switch
+    [JsonPropertyName("id")]
+    public string Id
     {
-        "Pending" => "等待中",
-        "Downloading" => "下载中",
-        "Completed" => "已完成",
-        "Failed" => "失败",
-        "Cancelled" => "已取消",
-        _ => Status
+        get => _id;
+        set { _id = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("fileName")]
+    public string FileName
+    {
+        get => _fileName;
+        set { _fileName = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("url")]
+    public string Url
+    {
+        get => _url;
+        set { _url = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("localPath")]
+    public string LocalPath
+    {
+        get => _localPath;
+        set { _localPath = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("fileSize")]
+    public long FileSize
+    {
+        get => _fileSize;
+        set { _fileSize = value; OnPropertyChanged(); OnPropertyChanged(nameof(FileSizeDisplay)); }
+    }
+
+    [JsonIgnore]
+    public string FileSizeDisplay =>
+        _fileSize <= 0 ? "" :
+        _fileSize < 1024 ? $"{_fileSize} B" :
+        _fileSize < 1024 * 1024 ? $"{_fileSize / 1024.0:F1} KB" :
+        _fileSize < 1024 * 1024 * 1024 ? $"{_fileSize / (1024.0 * 1024):F1} MB" :
+        $"{_fileSize / (1024.0 * 1024 * 1024):F2} GB";
+
+    [JsonPropertyName("downloadTime")]
+    public DateTime DownloadTime
+    {
+        get => _downloadTime;
+        set { _downloadTime = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("completedTime")]
+    public DateTime? CompletedTime
+    {
+        get => _completedTime;
+        set { _completedTime = value; OnPropertyChanged(); }
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonPropertyName("state")]
+    public DownloadState State
+    {
+        get => _state;
+        set { _state = value; OnPropertyChanged(); OnPropertyChanged(nameof(StateText)); }
+    }
+
+    [JsonPropertyName("errorMessage")]
+    public string? ErrorMessage
+    {
+        get => _errorMessage;
+        set { _errorMessage = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("progress")]
+    public double Progress
+    {
+        get => _progress;
+        set { _progress = value; OnPropertyChanged(); OnPropertyChanged(nameof(ProgressText)); }
+    }
+
+    [JsonIgnore]
+    public string ProgressText => State == DownloadState.Completed ? "100%" :
+        State == DownloadState.Downloading ? $"{Progress:F0}%" : "";
+
+    [JsonIgnore]
+    public string StateText => State switch
+    {
+        DownloadState.Pending => "等待中",
+        DownloadState.Downloading => "下载中",
+        DownloadState.Completed => "已完成",
+        DownloadState.Failed => "失败",
+        DownloadState.Cancelled => "已取消",
+        _ => ""
     };
 
-    private static string FormatFileSize(long bytes)
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
-        string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
-        int order = 0;
-        double size = bytes;
-        while (size >= 1024 && order < suffixes.Length - 1)
-        {
-            order++;
-            size /= 1024;
-        }
-        return $"{size:0.##} {suffixes[order]}";
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+
+    public override string ToString() => $"[{State}] {FileName}";
+}
+
+public enum DownloadState
+{
+    Pending,
+    Downloading,
+    Completed,
+    Failed,
+    Cancelled
 }

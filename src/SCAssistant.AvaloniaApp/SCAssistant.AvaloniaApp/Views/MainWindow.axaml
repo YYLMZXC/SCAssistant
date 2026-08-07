@@ -32,26 +32,27 @@
                     IsEnabled="{Binding CanGoBack}" 
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="后退" Width="36" Height="36" FontSize="16">
-                ◀
+                <!-- ◀ -->
+                <TextBlock Text="&#9664;" />
             </Button>
 
             <Button Grid.Column="1" Command="{Binding GoForwardCommand}"
                     IsEnabled="{Binding CanGoForward}"
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="前进" Width="36" Height="36" FontSize="16">
-                ▶
+                <TextBlock Text="&#9654;" />
             </Button>
 
             <Button Grid.Column="2" Command="{Binding RefreshCommand}"
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="刷新" Width="36" Height="36" FontSize="16">
-                ↻
+                <TextBlock Text="&#8635;" />
             </Button>
 
             <Button Grid.Column="3" Command="{Binding GoHomeCommand}"
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="主页" Width="36" Height="36" FontSize="16">
-                🏠
+                <TextBlock Text="&#127968;" />
             </Button>
 
             <!-- Address Bar -->
@@ -63,9 +64,11 @@
                              Background="Transparent" Foreground="White"
                              BorderThickness="0" FontSize="14"
                              VerticalContentAlignment="Center"
-                             PlaceholderText="输入网址或搜索内容...">
+                             PlaceholderText="输入网址或搜索内容..."
+                             Name="AddressBarTextBox">
                         <TextBox.KeyBindings>
-                            <KeyBinding Gesture="Enter" Command="{Binding NavigateCommand}"
+                            <KeyBinding Gesture="Enter" 
+                                       Command="{Binding NavigateToUrlCommand}"
                                        CommandParameter="{Binding AddressBarUrl}" />
                         </TextBox.KeyBindings>
                     </TextBox>
@@ -74,7 +77,7 @@
                             CommandParameter="{Binding AddressBarUrl}"
                             Background="Transparent" Foreground="White"
                             Width="30" Height="30" FontSize="14">
-                        →
+                        &#10132;
                     </Button>
                 </Grid>
             </Border>
@@ -83,13 +86,13 @@
             <Button Grid.Column="5" Command="{Binding ToggleDownloadPanelCommand}"
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="下载列表" Width="36" Height="36" FontSize="16">
-                ⬇
+                &#11015;
             </Button>
 
             <Button Grid.Column="6" Command="{Binding ToggleSettingsCommand}"
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="设置" Width="36" Height="36" FontSize="16">
-                ⚙
+                &#9881;
             </Button>
 
             <Button Grid.Column="7" 
@@ -97,20 +100,14 @@
                     CommandParameter="{Binding CurrentUrl}"
                     Background="Transparent" Foreground="White"
                     ToolTip.Tip="在系统浏览器中打开" Width="36" Height="36" FontSize="16">
-                🔗
+                &#128279;
             </Button>
         </Grid>
 
-        <!-- Loading Indicator Bar -->
+        <!-- Loading Indicator -->
         <Border Grid.Row="1" Height="3" 
                 Background="#2196F3"
-                IsVisible="{Binding IsLoading}">
-            <Border.Styles>
-                <Style Selector="Border">
-                    <Setter Property="Background" Value="#2196F3" />
-                </Style>
-            </Border.Styles>
-        </Border>
+                IsVisible="{Binding IsLoading}" />
 
         <!-- Main Content Area -->
         <Grid Grid.Row="2">
@@ -127,13 +124,13 @@
                     <Border Grid.Row="0" Background="#2D2D30" 
                             CornerRadius="8,8,0,0" Padding="16,12">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="⚙ 设置" FontSize="18" FontWeight="Bold" 
+                            <TextBlock Text="设置" FontSize="18" FontWeight="Bold" 
                                        Foreground="White" VerticalAlignment="Center" />
                             <Button Grid.Column="1" 
                                     Command="{Binding ToggleSettingsCommand}"
                                     Background="Transparent" Foreground="#AAAAAA"
                                     FontSize="20" Width="30" Height="30">
-                                ✕
+                                &#10005;
                             </Button>
                         </Grid>
                     </Border>
@@ -197,7 +194,7 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="主题" Foreground="#CCCCCC" FontSize="13" />
                                 <ComboBox ItemsSource="{Binding ThemeOptions}"
-                                          SelectedIndex="{Binding Settings.ThemeIndex}"
+                                          SelectedIndex="{Binding ThemeIndex}"
                                           Background="#3E3E42" Foreground="White"
                                           Width="200" />
                             </StackPanel>
@@ -229,13 +226,13 @@
                         <Border Grid.Row="0" Background="#1E1E1E" 
                                 Padding="16,12" CornerRadius="8,0,0,0">
                             <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Text="⬇ 下载列表" FontSize="16" 
+                                <TextBlock Text="下载列表" FontSize="16" 
                                            FontWeight="Bold" Foreground="White" />
                                 <Button Grid.Column="1" 
                                         Command="{Binding ToggleDownloadPanelCommand}"
                                         Background="Transparent" Foreground="#AAAAAA"
                                         FontSize="20" Width="30" Height="30">
-                                    ✕
+                                    &#10005;
                                 </Button>
                             </Grid>
                         </Border>
@@ -255,12 +252,12 @@
                                                            TextTrimming="CharacterEllipsis" />
 
                                                 <TextBlock Grid.Row="1" Grid.Column="0"
-                                                           Text="{Binding Status, Converter={StaticResource StatusToText}}"
-                                                           Foreground="{Binding Status, Converter={StaticResource StatusToColor}}"
+                                                           Text="{Binding State, Converter={StaticResource StatusToText}}"
+                                                           Foreground="{Binding State, Converter={StaticResource StatusToColor}}"
                                                            FontSize="12" Margin="0,4,0,0" />
 
                                                 <TextBlock Grid.Row="1" Grid.Column="1"
-                                                           Text="{Binding Progress, StringFormat={}{0}%}"
+                                                           Text="{Binding ProgressText}"
                                                            Foreground="#AAAAAA" FontSize="12" Margin="0,4,0,0" />
 
                                                 <ProgressBar Grid.Row="2" Grid.ColumnSpan="2"
@@ -277,7 +274,7 @@
                         <Border Grid.Row="2" Background="#1E1E1E" 
                                 Padding="12,10" CornerRadius="0,0,0,8">
                             <Grid ColumnDefinitions="*,Auto">
-                                <TextBox Text="{Binding DownloadUrl}"
+                                <TextBox Text="{Binding DownloadUrl, Mode=TwoWay}"
                                          Background="#3E3E42" Foreground="White"
                                          PlaceholderText="输入下载URL..."
                                          BorderThickness="1" BorderBrush="#555"

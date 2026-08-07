@@ -1,135 +1,105 @@
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 using SCAssistant.AvaloniaApp.Models;
 
 namespace SCAssistant.AvaloniaApp.Services;
 
 /// <summary>
-/// 下载历史服务实现 - 使用JSON文件存储
+/// 下载历史持久化服务 — 将下载记录保存为本地 JSON 文件。
 /// </summary>
 public class DownloadHistoryService : IDownloadHistoryService
 {
-    private readonly string _storagePath;
-    private List<DownloadRecord> _records = new();
-    private readonly SemaphoreSlim _lock = new(1, 1);
+    private static readonly string HistoryFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SCAssistant",
+        "download_history.json");
 
-    public DownloadHistoryService()
+    private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        _storagePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SCAssistant",
-            "download_history.json");
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
+    };
 
-        LoadRecords();
-    }
-
-    public async Task<List<DownloadRecord>> GetRecordsAsync()
+    public Task<List<DownloadRecord>> GetRecordsAsync()
     {
-        await _lock.WaitAsync();
         try
         {
-            return new List<DownloadRecord>(_records);
+            var dir = Path.GetDirectoryName(HistoryFilePath);
+            if (dir != null) Directory.CreateDirectory(dir);
+
+            if (File.Exists(HistoryFilePath))
+            {
+                var json = File.ReadAllText(HistoryFilePath);
+                var records = JsonSerializer.Deserialize<List<DownloadRecord>>(json, _jsonOptions);
+                if (records != null)
+                    return Task.FromResult(records);
+            }
         }
-        finally
+        catch (Exception ex)
         {
-            _lock.Release();
+            LogHelper.Error("加载下载历史失败", ex);
         }
+
+        return Task.FromResult(new List<DownloadRecord>());
     }
 
     public async Task AddRecordAsync(DownloadRecord record)
     {
-        await _lock.WaitAsync();
-        try
-        {
-            _records.Add(record);
-            await SaveRecordsAsync();
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        var records = await GetRecordsAsync();
+        records.Add(record);
+        await SaveRecordsAsync(records);
+        LogHelper.Info($"[DownloadHistory] 添加记录: {record.FileName}");
     }
 
     public async Task UpdateRecordAsync(DownloadRecord record)
     {
-        await _lock.WaitAsync();
-        try
+        var records = await GetRecordsAsync();
+        for (int i = 0; i < records.Count; i++)
         {
-            var index = _records.FindIndex(r => r.Url == record.Url);
-            if (index >= 0)
+            if (records[i].Id == record.Id)
             {
-                record.CreatedAt = _records[index].CreatedAt;
-                _records[index] = record;
-            }
-            else
-            {
-                _records.Add(record);
-            }
-            await SaveRecordsAsync();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    public async Task DeleteRecordAsync(string url)
-    {
-        await _lock.WaitAsync();
-        try
-        {
-            _records.RemoveAll(r => r.Url == url);
-            await SaveRecordsAsync();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    public async Task ClearAllAsync()
-    {
-        await _lock.WaitAsync();
-        try
-        {
-            _records.Clear();
-            await SaveRecordsAsync();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    private void LoadRecords()
-    {
-        try
-        {
-            var dir = Path.GetDirectoryName(_storagePath);
-            if (!string.IsNullOrEmpty(dir))
-                Directory.CreateDirectory(dir);
-
-            if (File.Exists(_storagePath))
-            {
-                var json = File.ReadAllText(_storagePath);
-                _records = JsonConvert.DeserializeObject<List<DownloadRecord>>(json) ?? new List<DownloadRecord>();
+                records[i] = record;
+                await SaveRecordsAsync(records);
+                LogHelper.Info($"[DownloadHistory] 更新记录: {record.FileName}");
+                return;
             }
         }
-        catch
-        {
-            _records = new List<DownloadRecord>();
-        }
     }
 
-    private async Task SaveRecordsAsync()
+    public Task ClearAllAsync()
     {
         try
         {
-            var json = JsonConvert.SerializeObject(_records, Formatting.Indented);
-            await File.WriteAllTextAsync(_storagePath, json);
+            if (File.Exists(HistoryFilePath))
+                File.Delete(HistoryFilePath);
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore save errors
+            LogHelper.Error("清空下载历史失败", ex);
         }
+
+        LogHelper.Info("[DownloadHistory] 记录已清空");
+        return Task.CompletedTask;
+    }
+
+    private Task SaveRecordsAsync(List<DownloadRecord> records)
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(HistoryFilePath);
+            if (dir != null) Directory.CreateDirectory(dir);
+
+            var json = JsonSerializer.Serialize(records, _jsonOptions);
+            File.WriteAllText(HistoryFilePath, json);
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error("保存下载历史失败", ex);
+        }
+
+        return Task.CompletedTask;
     }
 }

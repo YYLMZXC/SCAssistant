@@ -1,13 +1,22 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:SCAssistant.AvaloniaApp"
-             x:Class="SCAssistant.AvaloniaApp.App"
-             RequestedThemeVariant="Dark">
-    <Application.Styles>
-        <FluentTheme />
-    </Application.Styles>
-
+             xmlns:converters="using:SCAssistant.AvaloniaApp.Converters"
+             x:Class="SCAssistant.AvaloniaApp.App">
     <Application.DataTemplates>
         <local:ViewLocator />
     </Application.DataTemplates>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+            <converters:StatusToTextConverter x:Key="StatusToTextConverter" />
+            <converters:StatusToColorConverter x:Key="StatusToColorConverter" />
+            <converters:FileSizeConverter x:Key="FileSizeConverter" />
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+            <converters:ProgressToTextConverter x:Key="ProgressToTextConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

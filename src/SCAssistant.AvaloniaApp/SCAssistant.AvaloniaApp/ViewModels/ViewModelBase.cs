@@ -3,13 +3,11 @@
 namespace SCAssistant.AvaloniaApp.ViewModels;
 
 /// <summary>
-/// ViewModel基类 - 使用 CommunityToolkit.Mvvm
+/// ViewModel 基类 — 继承自 ObservableObject。
 /// </summary>
 public partial class ViewModelBase : ObservableObject
 {
+    /// <summary>View 标题。</summary>
     [ObservableProperty]
-    private bool _isBusy;
-
-    [ObservableProperty]
-    private string _title = string.Empty;
+    private string _title = "SCAssistant";
 }

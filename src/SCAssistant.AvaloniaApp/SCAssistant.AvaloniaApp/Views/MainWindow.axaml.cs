@@ -7,61 +7,30 @@ namespace SCAssistant.AvaloniaApp.Views;
 
 public partial class MainWindow : Window
 {
-    private TextBox? _addressBar;
-
     public MainWindow()
     {
         InitializeComponent();
     }
 
-    public MainWindow(MainViewModel viewModel) : this()
+    /// <summary>
+    /// 地址栏回车键处理 — 导航到输入的 URL。
+    /// </summary>
+    private void AddressBar_KeyDown(object? sender, KeyEventArgs e)
     {
-        DataContext = viewModel;
-    }
-
-    protected override void OnLoaded(RoutedEventArgs e)
-    {
-        base.OnLoaded(e);
-
-        _addressBar = this.FindControl<TextBox>("AddressBar");
-
-        // Initialize WebView host with a basic content
-        // In production, integrate Avalonia.WebView or platform-specific WebView
-        InitializeWebViewHost();
-
-        if (DataContext is MainViewModel vm)
+        if (e.Key == Key.Enter && DataContext is MainViewModel vm && !string.IsNullOrWhiteSpace(vm.AddressBarUrl))
         {
-            _ = vm.InitializeAsync();
+            vm.NavigateToUrlCommand.Execute(vm.AddressBarUrl);
         }
     }
 
-    private void InitializeWebViewHost()
-    {
-        if (WebViewHost == null) return;
-
-        // Create a placeholder for WebView - in production, replace with actual WebView integration
-        var webViewPlaceholder = new Border
-        {
-            Background = Avalonia.Media.Brush.Parse("#1E1E1E"),
-            Child = new TextBlock
-            {
-                Text = "WebView will be loaded here.\nUse platform-specific WebView integration.",
-                Foreground = Avalonia.Media.Brush.Parse("#666666"),
-                FontSize = 16,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                TextAlignment = Avalonia.Media.TextAlignment.Center
-            }
-        };
-
-        WebViewHost.Content = webViewPlaceholder;
-    }
-
+    /// <summary>
+    /// 点击设置面板遮罩层关闭设置。
+    /// </summary>
     private void BackgroundOverlay_Tap(object? sender, PointerPressedEventArgs e)
     {
         if (DataContext is MainViewModel vm)
         {
-            vm.IsDownloadPanelOpen = false;
+            vm.ToggleSettingsCommand.Execute(null);
         }
     }
 }

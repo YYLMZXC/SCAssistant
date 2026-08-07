@@ -1,107 +1,91 @@
-using Newtonsoft.Json;
+using System;
+using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 using SCAssistant.AvaloniaApp.Models;
 
 namespace SCAssistant.AvaloniaApp.Services;
 
 /// <summary>
-/// 设置服务实现 - 使用JSON文件持久化
+/// 设置持久化服务 — 将 AppSettings 读写为本地 JSON 文件。
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly string _settingsPath;
-    private AppSettings _settings = new();
-    private readonly SemaphoreSlim _lock = new(1, 1);
+    private static readonly string SettingsFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SCAssistant",
+        "settings.json");
 
-    public SettingsService()
+    private AppSettings? _cached;
+    private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        _settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SCAssistant",
-            "settings.json");
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
+    };
 
-        LoadSettings();
-    }
-
-    public async Task<AppSettings> GetSettingsAsync()
+    public Task<AppSettings> GetSettingsAsync()
     {
-        await _lock.WaitAsync();
+        if (_cached != null)
+            return Task.FromResult(_cached);
+
         try
         {
-            return new AppSettings
+            var dir = Path.GetDirectoryName(SettingsFilePath);
+            if (dir != null) Directory.CreateDirectory(dir);
+
+            if (File.Exists(SettingsFilePath))
             {
-                DownloadDirectory = _settings.DownloadDirectory,
-                MaxConcurrentDownloads = _settings.MaxConcurrentDownloads,
-                EnableDownloadHistory = _settings.EnableDownloadHistory,
-                DefaultSearchEngine = _settings.DefaultSearchEngine,
-                EnableAdBlock = _settings.EnableAdBlock,
-                HomePageUrl = _settings.HomePageUrl,
-                Theme = _settings.Theme
-            };
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    public async Task SaveSettingsAsync(AppSettings settings)
-    {
-        await _lock.WaitAsync();
-        try
-        {
-            _settings = settings;
-            await SaveToFileAsync();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    public async Task ResetToDefaultsAsync()
-    {
-        await _lock.WaitAsync();
-        try
-        {
-            _settings = new AppSettings();
-            await SaveToFileAsync();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    private void LoadSettings()
-    {
-        try
-        {
-            var dir = Path.GetDirectoryName(_settingsPath);
-            if (!string.IsNullOrEmpty(dir))
-                Directory.CreateDirectory(dir);
-
-            if (File.Exists(_settingsPath))
+                var json = File.ReadAllText(SettingsFilePath);
+                _cached = JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions) ?? new AppSettings();
+            }
+            else
             {
-                var json = File.ReadAllText(_settingsPath);
-                _settings = JsonConvert.DeserializeObject<AppSettings>(json) ?? new AppSettings();
+                _cached = new AppSettings();
+                SaveSettingsAsync(_cached).GetAwaiter().GetResult();
             }
         }
         catch
         {
-            _settings = new AppSettings();
+            _cached = new AppSettings();
         }
+
+        LogHelper.Info("[SettingsService] 设置已加载");
+        return Task.FromResult(_cached);
     }
 
-    private async Task SaveToFileAsync()
+    public Task SaveSettingsAsync(AppSettings settings)
     {
+        _cached = settings;
         try
         {
-            var json = JsonConvert.SerializeObject(_settings, Formatting.Indented);
-            await File.WriteAllTextAsync(_settingsPath, json);
+            var dir = Path.GetDirectoryName(SettingsFilePath);
+            if (dir != null) Directory.CreateDirectory(dir);
+
+            var json = JsonSerializer.Serialize(settings, _jsonOptions);
+            File.WriteAllText(SettingsFilePath, json);
+            LogHelper.Info("[SettingsService] 设置已保存");
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore save errors
+            LogHelper.Error("保存设置失败", ex);
         }
+
+        return Task.CompletedTask;
+    }
+
+    public Task ResetAsync()
+    {
+        _cached = new AppSettings();
+        try
+        {
+            if (File.Exists(SettingsFilePath))
+                File.Delete(SettingsFilePath);
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error("重置设置失败", ex);
+        }
+
+        return Task.CompletedTask;
     }
 }

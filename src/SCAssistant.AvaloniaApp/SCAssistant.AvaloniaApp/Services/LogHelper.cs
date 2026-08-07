@@ -37,12 +37,21 @@ public static class LogHelper
         Log("WARNING", message, category);
     }
 
+    /// <summary>同 Warning。</summary>
+    public static void Warn(string message) => Warning(message);
+
     /// <summary>
     /// 记录错误日志
     /// </summary>
     public static void Error(string message, string category = "General")
     {
         Log("ERROR", message, category);
+    }
+
+    /// <summary>记录错误日志（含异常）。</summary>
+    public static void Error(string message, Exception ex)
+    {
+        Log("ERROR", $"{message}\n{ex.Message}\n{ex.StackTrace}", "General");
     }
 
     /// <summary>

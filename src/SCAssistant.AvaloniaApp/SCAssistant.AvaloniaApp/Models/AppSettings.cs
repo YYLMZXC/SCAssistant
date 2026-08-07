@@ -1,42 +1,102 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
+
 namespace SCAssistant.AvaloniaApp.Models;
 
 /// <summary>
-/// 应用设置模型
+/// 应用设置数据模型，支持属性变更通知。
 /// </summary>
-public class AppSettings
+public class AppSettings : INotifyPropertyChanged
 {
-    /// <summary>
-    /// 默认下载目录
-    /// </summary>
-    public string DownloadDirectory { get; set; } = string.Empty;
+    private string _homePageUrl = "https://www.google.com";
+    private string _defaultSearchEngine = "https://www.google.com/search?q=";
+    private string _downloadDirectory = string.Empty;
+    private int _maxConcurrentDownloads = 3;
+    private bool _enableDownloadHistory = true;
+    private bool _enableAdBlock;
+    private int _themeIndex;
+    private string _theme = "System";
+    private double _fontScale = 1.0;
 
-    /// <summary>
-    /// 最大同时下载数
-    /// </summary>
-    public int MaxConcurrentDownloads { get; set; } = 3;
+    [JsonPropertyName("homePageUrl")]
+    public string HomePageUrl
+    {
+        get => _homePageUrl;
+        set { _homePageUrl = value; OnPropertyChanged(); }
+    }
 
-    /// <summary>
-    /// 是否启用下载历史记录
-    /// </summary>
-    public bool EnableDownloadHistory { get; set; } = true;
+    [JsonPropertyName("defaultSearchEngine")]
+    public string DefaultSearchEngine
+    {
+        get => _defaultSearchEngine;
+        set { _defaultSearchEngine = value; OnPropertyChanged(); }
+    }
 
-    /// <summary>
-    /// 默认搜索引擎
-    /// </summary>
-    public string DefaultSearchEngine { get; set; } = "https://www.google.com/search?q=";
+    [JsonPropertyName("downloadDirectory")]
+    public string DownloadDirectory
+    {
+        get => _downloadDirectory;
+        set { _downloadDirectory = value; OnPropertyChanged(); }
+    }
 
-    /// <summary>
-    /// 是否启用广告过滤
-    /// </summary>
-    public bool EnableAdBlock { get; set; } = false;
+    [JsonPropertyName("maxConcurrentDownloads")]
+    public int MaxConcurrentDownloads
+    {
+        get => _maxConcurrentDownloads;
+        set { _maxConcurrentDownloads = value; OnPropertyChanged(); }
+    }
 
-    /// <summary>
-    /// 主页URL
-    /// </summary>
-    public string HomePageUrl { get; set; } = "https://www.google.com";
+    [JsonPropertyName("enableDownloadHistory")]
+    public bool EnableDownloadHistory
+    {
+        get => _enableDownloadHistory;
+        set { _enableDownloadHistory = value; OnPropertyChanged(); }
+    }
 
-    /// <summary>
-    /// 主题模式：Light, Dark, System
-    /// </summary>
-    public string Theme { get; set; } = "System";
+    [JsonPropertyName("enableAdBlock")]
+    public bool EnableAdBlock
+    {
+        get => _enableAdBlock;
+        set { _enableAdBlock = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("themeIndex")]
+    public int ThemeIndex
+    {
+        get => _themeIndex;
+        set
+        {
+            _themeIndex = value;
+            OnPropertyChanged();
+            // 自动同步 Theme 字符串
+            Theme = value switch
+            {
+                1 => "Light",
+                2 => "Dark",
+                _ => "System"
+            };
+        }
+    }
+
+    [JsonPropertyName("theme")]
+    public string Theme
+    {
+        get => _theme;
+        set { _theme = value; OnPropertyChanged(); }
+    }
+
+    [JsonPropertyName("fontScale")]
+    public double FontScale
+    {
+        get => _fontScale;
+        set { _fontScale = value; OnPropertyChanged(); }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }

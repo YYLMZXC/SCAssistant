@@ -11,47 +11,72 @@
     <UserControl.Resources>
         <conv:InverseBoolConverter x:Key="InverseBool" />
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
         <conv:StatusToTextConverter x:Key="StatusToText" />
         <conv:StatusToColorConverter x:Key="StatusToColor" />
+        <conv:FileSizeConverter x:Key="FileSizeConv" />
+        <conv:StringNotEmptyConverter x:Key="StringNotEmpty" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <!-- Navigation Bar -->
+        <!-- Navigation Bar (compact) -->
         <Grid Grid.Row="0" 
-              ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto"
+              ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto"
               Background="#2D2D30"
               Height="44">
 
             <Button Grid.Column="0" Command="{Binding GoBackCommand}"
                     IsEnabled="{Binding CanGoBack}" 
                     Background="Transparent" Foreground="White"
-                    Width="36" Height="36" FontSize="16">◀</Button>
+                    Width="36" Height="36" FontSize="16">
+                <TextBlock Text="&#9664;" />
+            </Button>
 
             <Button Grid.Column="1" Command="{Binding GoForwardCommand}"
                     IsEnabled="{Binding CanGoForward}"
                     Background="Transparent" Foreground="White"
-                    Width="36" Height="36" FontSize="16">▶</Button>
+                    Width="36" Height="36" FontSize="16">
+                <TextBlock Text="&#9654;" />
+            </Button>
 
-            <Button Grid.Column="2" Command="{Binding RefreshCommand}"
-                    Background="Transparent" Foreground="White"
-                    Width="36" Height="36" FontSize="16">↻</Button>
-
-            <Border Grid.Column="3" Background="#3E3E42" 
-                    CornerRadius="16" Padding="8,0" Margin="4,0"
+            <!-- Address Bar -->
+            <Border Grid.Column="2" Background="#3E3E42" 
+                    CornerRadius="16" Padding="6,0" Margin="4,0"
                     Height="32" VerticalAlignment="Center">
-                <TextBox Text="{Binding AddressBarUrl}" 
-                         Background="Transparent" Foreground="White"
-                         BorderThickness="0" FontSize="13"
-                         VerticalContentAlignment="Center" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding AddressBarUrl, Mode=TwoWay}"
+                             Background="Transparent" Foreground="White"
+                             BorderThickness="0" FontSize="13"
+                             VerticalContentAlignment="Center"
+                             PlaceholderText="URL..."
+                             Name="MobileAddressBar" />
+                    <Button Grid.Column="1" 
+                            Command="{Binding NavigateToUrlCommand}"
+                            CommandParameter="{Binding AddressBarUrl}"
+                            Background="Transparent" Foreground="White"
+                            Width="28" Height="28" FontSize="12">
+                        &#10132;
+                    </Button>
+                </Grid>
             </Border>
+
+            <Button Grid.Column="3" Command="{Binding RefreshCommand}"
+                    Background="Transparent" Foreground="White"
+                    Width="36" Height="36" FontSize="16">
+                <TextBlock Text="&#8635;" />
+            </Button>
 
             <Button Grid.Column="4" Command="{Binding ToggleDownloadPanelCommand}"
                     Background="Transparent" Foreground="White"
-                    Width="36" Height="36" FontSize="16">⬇</Button>
+                    Width="36" Height="36" FontSize="16">
+                &#11015;
+            </Button>
 
             <Button Grid.Column="5" Command="{Binding ToggleSettingsCommand}"
                     Background="Transparent" Foreground="White"
-                    Width="36" Height="36" FontSize="16">⚙</Button>
+                    Width="36" Height="36" FontSize="16">
+                &#9881;
+            </Button>
         </Grid>
 
         <!-- Loading Bar -->
@@ -59,16 +84,69 @@
                 Background="#2196F3"
                 IsVisible="{Binding IsLoading}" />
 
-        <!-- Content -->
-        <Border Grid.Row="2" Background="#1E1E1E">
-            <TextBlock Text="{Binding PageTitle}"
-                       Foreground="White" FontSize="18"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Margin="20" />
+        <!-- WebView Container -->
+        <ContentControl Grid.Row="2" x:Name="WebViewHost" Background="#1E1E1E" />
+
+        <!-- Download Panel (full-width for mobile) -->
+        <Border Grid.Row="2" IsVisible="{Binding IsDownloadPanelOpen}"
+                Background="#E0000000" ZIndex="100">
+            <Border Background="#2D2D30"
+                    VerticalAlignment="Bottom"
+                    MaxHeight="400" CornerRadius="12,12,0,0">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Background="#1E1E1E" Padding="16,12" CornerRadius="12,12,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="下载列表" FontSize="16" FontWeight="Bold" Foreground="White" />
+                            <Button Grid.Column="1" Command="{Binding ToggleDownloadPanelCommand}"
+                                    Background="Transparent" Foreground="#AAAAAA"
+                                    FontSize="20" Width="30" Height="30">&#10005;</Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" Background="#1E1E1E">
+                        <ItemsControl ItemsSource="{Binding DownloadRecords}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#2D2D30" Margin="8,4" Padding="12,10" CornerRadius="6">
+                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                                       Text="{Binding FileName}"
+                                                       Foreground="White" FontSize="14"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding State, Converter={StaticResource StatusToText}}"
+                                                       Foreground="{Binding State, Converter={StaticResource StatusToColor}}"
+                                                       FontSize="12" Margin="0,4,0,0" />
+                                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                                       Text="{Binding ProgressText}"
+                                                       Foreground="#AAAAAA" FontSize="12" Margin="0,4,0,0" />
+                                            <ProgressBar Grid.Row="2" Grid.ColumnSpan="2"
+                                                         Value="{Binding Progress}" Maximum="100"
+                                                         Height="4" Margin="0,6,0,0" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Background="#1E1E1E" Padding="12,10" CornerRadius="0,0,12,12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Text="{Binding DownloadUrl, Mode=TwoWay}"
+                                     Background="#3E3E42" Foreground="White"
+                                     PlaceholderText="输入下载URL..."
+                                     BorderThickness="1" BorderBrush="#555"
+                                     CornerRadius="4" Padding="8,6" />
+                            <Button Grid.Column="1" Command="{Binding StartDownloadCommand}"
+                                    Content="下载" Margin="8,0,0,0" Padding="16,6"
+                                    Background="#0078D4" Foreground="White" CornerRadius="4" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#007ACC" Height="3" />
+        <Border Grid.Row="3" Background="#007ACC" Height="3" IsVisible="{Binding IsLoading}" />
     </Grid>
 </UserControl>

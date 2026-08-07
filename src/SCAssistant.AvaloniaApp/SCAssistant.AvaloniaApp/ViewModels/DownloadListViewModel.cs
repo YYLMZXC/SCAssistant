@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SCAssistant.AvaloniaApp.Models;
@@ -7,80 +8,37 @@ using SCAssistant.AvaloniaApp.Services;
 namespace SCAssistant.AvaloniaApp.ViewModels;
 
 /// <summary>
-/// 下载列表面板视图模型
+/// 下载列表 ViewModel — 管理下载记录集合。
 /// </summary>
 public partial class DownloadListViewModel : ViewModelBase
 {
-    private readonly IDownloadHistoryService _downloadHistoryService;
-    private readonly IDownloadService _downloadService;
+    private readonly IDownloadHistoryService _historyService;
 
     [ObservableProperty]
     private ObservableCollection<DownloadRecord> _records = new();
 
     [ObservableProperty]
-    private bool _isEmpty = true;
+    private string _downloadUrl = string.Empty;
 
-    public DownloadListViewModel(
-        IDownloadHistoryService downloadHistoryService,
-        IDownloadService downloadService)
+    [ObservableProperty]
+    private bool _isLoading;
+
+    public DownloadListViewModel(IDownloadHistoryService historyService)
     {
-        _downloadHistoryService = downloadHistoryService;
-        _downloadService = downloadService;
-        Title = "下载列表";
+        _historyService = historyService;
     }
 
-    public async Task InitializeAsync()
+    public async Task LoadAsync()
     {
-        await LoadRecordsAsync();
-    }
-
-    [RelayCommand]
-    private async Task LoadRecordsAsync()
-    {
-        try
-        {
-            var items = await _downloadHistoryService.GetRecordsAsync();
-            Records = new ObservableCollection<DownloadRecord>(items);
-            IsEmpty = Records.Count == 0;
-        }
-        catch (Exception ex)
-        {
-            LogHelper.Error(ex, "DownloadList");
-        }
+        var records = await _historyService.GetRecordsAsync();
+        Records = new ObservableCollection<DownloadRecord>(records);
     }
 
     [RelayCommand]
     private async Task ClearAll()
     {
-        await _downloadHistoryService.ClearAllAsync();
+        await _historyService.ClearAllAsync();
         Records.Clear();
-        IsEmpty = true;
-    }
-
-    [RelayCommand]
-    private async Task DeleteRecord(DownloadRecord? record)
-    {
-        if (record == null) return;
-
-        await _downloadHistoryService.DeleteRecordAsync(record.Url);
-        Records.Remove(record);
-        IsEmpty = Records.Count == 0;
-    }
-
-    [RelayCommand]
-    private async Task CancelDownload(DownloadRecord? record)
-    {
-        if (record == null) return;
-
-        await _downloadService.CancelDownloadAsync(record.Url);
-        record.Status = "Cancelled";
-        await _downloadHistoryService.UpdateRecordAsync(record);
-    }
-
-    [RelayCommand]
-    private static async Task OpenFile(DownloadRecord? record)
-    {
-        if (record == null || string.IsNullOrEmpty(record.FilePath)) return;
-        await SystemBrowserProvider.OpenUrlAsync(record.FilePath);
+        LogHelper.Info("[DownloadListVM] 记录已清空");
     }
 }

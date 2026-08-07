@@ -1,33 +1,38 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using SCAssistant.AvaloniaApp.ViewModels;
 
 namespace SCAssistant.AvaloniaApp;
 
 /// <summary>
-/// Given a view model, returns the corresponding view if possible.
+/// View 定位器 — 通过 ViewModel 类型匹配对应的 View。
 /// </summary>
-[RequiresUnreferencedCode(
-    "Default implementation of ViewLocator involves reflection which may be trimmed away.",
-    Url = "https://docs.avaloniaui.net/docs/concepts/view-locator")]
 public class ViewLocator : IDataTemplate
 {
     public Control? Build(object? param)
     {
-        if (param is null)
-            return null;
+        if (param is null) return null;
 
-        var name = param.GetType().FullName!.Replace("ViewModel", "View", StringComparison.Ordinal);
-        var type = Type.GetType(name);
+        var vmName = param.GetType().FullName;
+        if (vmName is null) return null;
 
-        if (type != null)
+        // ViewModel 名称 → View 名称 (MainViewModel → MainView, SettingsViewModel → SettingsView)
+        var viewName = vmName
+            .Replace("ViewModels", "Views")
+            .Replace("ViewModel", "View");
+
+        var viewType = Type.GetType(viewName);
+        if (viewType is null) return new TextBlock { Text = $"View Not Found: {viewName}" };
+
+        var control = (Control?)Activator.CreateInstance(viewType);
+        if (control != null)
         {
-            return (Control)Activator.CreateInstance(type)!;
+            control.DataContext = param;
         }
 
-        return new TextBlock { Text = "Not Found: " + name };
+        return control;
     }
 
     public bool Match(object? data)

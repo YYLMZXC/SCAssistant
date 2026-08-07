@@ -1,57 +1,56 @@
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 namespace SCAssistant.AvaloniaApp.Services;
 
 /// <summary>
-/// 系统浏览器打开链接的实现
+/// 系统浏览器打开器 — 使用系统默认浏览器打开 URL。
 /// </summary>
-public class SystemBrowserProvider
+public static class SystemBrowserProvider
 {
     /// <summary>
-    /// 通过系统默认浏览器打开URL
+    /// 使用系统默认浏览器打开 URL。
     /// </summary>
-    public static async Task OpenUrlAsync(string url)
+    public static void OpenUrl(string url)
     {
+        if (string.IsNullOrWhiteSpace(url)) return;
+
         try
         {
-            if (OperatingSystem.IsWindows())
+            // 转义 URL 中的特殊字符
+            url = System.Net.WebUtility.UrlEncode(url);
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = url,
                     UseShellExecute = true
                 });
             }
-            else if (OperatingSystem.IsMacOS())
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                System.Diagnostics.Process.Start("open", url);
+                Process.Start("xdg-open", url);
             }
-            else if (OperatingSystem.IsLinux())
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                System.Diagnostics.Process.Start("xdg-open", url);
+                Process.Start("open", url);
             }
-            else if (OperatingSystem.IsAndroid())
+            else
             {
-                // Android: handled through platform-specific intent
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
                     FileName = url,
                     UseShellExecute = true
                 });
             }
-            else if (OperatingSystem.IsIOS())
-            {
-                // iOS: handled through platform-specific URL scheme
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = url,
-                    UseShellExecute = true
-                });
-            }
+
+            LogHelper.Info($"[SystemBrowser] 已打开: {url}");
         }
         catch (Exception ex)
         {
-            LogHelper.Error(ex, "SystemBrowser");
+            LogHelper.Error($"[SystemBrowser] 打开失败: {url}", ex);
         }
-
-        await Task.CompletedTask;
     }
 }
