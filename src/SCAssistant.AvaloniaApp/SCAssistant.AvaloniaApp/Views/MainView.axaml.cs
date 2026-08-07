@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using SCAssistant.AvaloniaApp.Services;
 
@@ -7,7 +8,13 @@ namespace SCAssistant.AvaloniaApp.Views;
 /// <summary>
 /// 移动端主视图 — 用于 Android/iOS 单视图生命周期。
 /// 实际的 UI 布局由共享的 MainLayout 提供。
-/// 负责从平台 InsetsManager 获取安全区域（刘海屏/底部指示条），传递给 MainLayout。
+/// 
+/// 安全区域策略说明（2026-08-07 调整）：
+/// - 保留 AutoSafeAreaPadding=false，防止 Avalonia TopLevel 自动给内容施加一次 SafeArea Padding。
+/// - 不再将 InsetsManager.SafeAreaPadding 全量传递给 MainLayout.SafeAreaMargin，
+///   因为 iOS 平台的 AvaloniaView 通常已在 UIKit 层受 SafeAreaLayoutGuide 约束（内容已避开刘海/指示条），
+///   若再叠加一次 SafeArea Padding 会导致双重缩进，顶部/底部出现大片空白。
+/// - 仅对 Top/Bottom 做小幅裁剪避让（最多 10px/8px），兼顾避免状态栏轻微遮挡与不出现过大空白。
 /// </summary>
 public partial class MainView : UserControl
 {
@@ -24,25 +31,21 @@ public partial class MainView : UserControl
     }
 
     /// <summary>
-    /// 视图加载完成后，从平台 InsetsManager 获取安全区域边距，
-    /// 并监听变化以自动适配刘海屏、灵动岛、底部指示条等。
+    /// 视图加载完成后，关闭 Avalonia 自动 SafeArea 缩进，
+    /// 并按"小幅避让"策略计算 SafeAreaMargin，避免双重缩进带来的大片空白。
     /// </summary>
     private void OnLoaded(object? sender, EventArgs e)
     {
         if (TopLevel.GetTopLevel(this) is { } topLevel)
         {
-            // 禁用 Avalonia 内置的自动 SafeArea 缩进（AutoSafeAreaPadding 默认 true）。
-            // 否则 Avalonia 给 TopLevel 内容加的 safe area padding 会与 MainLayout 自身的
-            // SafeAreaMargin 叠加（双重缩进）。在 iOS 上这会导致原生 WKWebView 的 Frame
-            // 坐标与 Avalonia 视觉树错位：WKWebView 上移覆盖顶部地址栏，并在底部留出空白。
-            // 改为由 MainLayout 通过 SafeAreaMargin 统一单次管理安全区域。
+            // 保留：禁用 Avalonia 内置的自动 SafeArea 缩进，避免与 UIKit 约束/我们自定义策略叠加。
             topLevel.SetValue(TopLevel.AutoSafeAreaPaddingProperty, false);
 
             var insetsManager = topLevel.InsetsManager;
             if (insetsManager != null)
             {
                 insetsManager.SafeAreaChanged += OnSafeAreaChanged;
-                LogHelper.Info($"[MainView] 已订阅 SafeAreaChanged — 当前安全区域={insetsManager.SafeAreaPadding}");
+                LogHelper.Info($"[MainView] 已订阅 SafeAreaChanged — 原始安全区域={insetsManager.SafeAreaPadding}");
             }
         }
 
@@ -50,8 +53,7 @@ public partial class MainView : UserControl
     }
 
     /// <summary>
-    /// 安全区域变化时，重新读取并传递给 MainLayout。
-    /// 旋转屏幕、状态栏变化等场景均会触发此回调。
+    /// 安全区域变化时（旋转屏幕、状态栏变化等），重新计算裁剪后的边距。
     /// </summary>
     private void OnSafeAreaChanged(object? sender, EventArgs e)
     {
@@ -59,8 +61,11 @@ public partial class MainView : UserControl
     }
 
     /// <summary>
-    /// 从 TopLevel.InsetsManager 读取安全区域边距，设置到 MainLayout 的 SafeAreaMargin。
-    /// SafeAreaPadding 返回的 Thickness 中，Top 对应状态栏/刘海区域，Bottom 对应底部指示条区域。
+    /// 从 InsetsManager 读取原始 SafeArea，按"小幅避让"策略裁剪后赋值给 MainLayout.SafeAreaMargin：
+    /// - Left/Right：原样保留（横屏时两侧可能有轻微避让需求）
+    /// - Top：仅取 Math.Min(原始值, 10)，避免全量 SafeArea.Top(≈59px) 导致顶栏上方巨大空白
+    /// - Bottom：仅取 Math.Min(原始值, 8)，避免全量 SafeArea.Bottom(≈34px) 导致底栏下方巨大空白
+    /// 如果平台 AvaloniaView 已在 UIKit 层避开 SafeArea，则原始 SafeArea 通常接近 0，裁剪后仍为 0（无影响）。
     /// </summary>
     private void ApplySafeArea()
     {
@@ -69,8 +74,14 @@ public partial class MainView : UserControl
             var insetsManager = topLevel.InsetsManager;
             if (insetsManager != null)
             {
-                _mainLayout.SafeAreaMargin = insetsManager.SafeAreaPadding;
-                LogHelper.Info($"[MainView] 更新安全区域边距 — {_mainLayout.SafeAreaMargin}");
+                var raw = insetsManager.SafeAreaPadding;
+                var clipped = new Thickness(
+                    raw.Left,
+                    Math.Min(raw.Top, 10),
+                    raw.Right,
+                    Math.Min(raw.Bottom, 8));
+                _mainLayout.SafeAreaMargin = clipped;
+                LogHelper.Info($"[MainView] 应用安全区域（已裁剪防空白）— 原始={raw}，裁剪后={clipped}");
             }
         }
     }
