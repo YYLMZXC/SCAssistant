@@ -29,10 +29,15 @@ public partial class MainView : UserControl
     /// </summary>
     private void OnLoaded(object? sender, EventArgs e)
     {
-        ApplySafeArea();
-
         if (TopLevel.GetTopLevel(this) is { } topLevel)
         {
+            // 禁用 Avalonia 内置的自动 SafeArea 缩进（AutoSafeAreaPadding 默认 true）。
+            // 否则 Avalonia 给 TopLevel 内容加的 safe area padding 会与 MainLayout 自身的
+            // SafeAreaMargin 叠加（双重缩进）。在 iOS 上这会导致原生 WKWebView 的 Frame
+            // 坐标与 Avalonia 视觉树错位：WKWebView 上移覆盖顶部地址栏，并在底部留出空白。
+            // 改为由 MainLayout 通过 SafeAreaMargin 统一单次管理安全区域。
+            topLevel.SetValue(TopLevel.AutoSafeAreaPaddingProperty, false);
+
             var insetsManager = topLevel.InsetsManager;
             if (insetsManager != null)
             {
@@ -40,6 +45,8 @@ public partial class MainView : UserControl
                 LogHelper.Info($"[MainView] 已订阅 SafeAreaChanged — 当前安全区域={insetsManager.SafeAreaPadding}");
             }
         }
+
+        ApplySafeArea();
     }
 
     /// <summary>

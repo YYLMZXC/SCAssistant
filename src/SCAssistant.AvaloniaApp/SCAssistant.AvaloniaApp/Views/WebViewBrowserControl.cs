@@ -508,7 +508,11 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
             _webView.NavigationDelegate = new WebViewNavigationDelegate(this);
             _viewController.View.AddSubview(_webView);
             UpdateIosFrame();
+            // SizeChanged 仅在尺寸变化时触发；位置变化（SafeAreaMargin 应用、设置面板开关、
+            // 标签切换等）不会触发，需额外监听 LayoutUpdated 同步原生 WKWebView 的 Frame，
+            // 避免其停留在旧位置覆盖顶部地址栏或在底部留白。
             SizeChanged += (_, _) => UpdateIosFrame();
+            LayoutUpdated += (_, _) => UpdateIosFrame();
 
             _isInitialized = true;
             LogHelper.Info("[iOS WebView] 初始化完成");
