@@ -58,9 +58,10 @@
         </Style>
     </UserControl.Styles>
 
-    <!-- 高度 38 与 MainLayout Row 0 的 Grid Height="38" 一致，避免溢出裁剪 -->
+    <!-- 高度 38 与 MainLayout Row 0 的 Grid Height="38" 一致，避免溢出裁剪。
+         不设 MinWidth —— 让 URL 框在窄屏(360dp)自然收缩，避免后退/前进/跳转按钮被挤出屏幕。 -->
     <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-          ColumnSpacing="6"
+          ColumnSpacing="4"
           Height="38"
           HorizontalAlignment="Stretch">
         <!-- 后退按钮 -->
@@ -84,7 +85,6 @@
                 BorderBrush="#0078D4"
                 BorderThickness="1.5"
                 CornerRadius="18"
-                MinWidth="240"
                 VerticalAlignment="Stretch"
                 HorizontalAlignment="Stretch">
             <TextBox x:Name="AddressTextBox"

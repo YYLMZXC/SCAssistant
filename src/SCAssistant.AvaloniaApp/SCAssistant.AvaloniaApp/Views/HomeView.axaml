@@ -30,10 +30,11 @@
                        Foreground="#666666"
                        HorizontalAlignment="Center" />
 
-            <!-- Search Bar -->
+            <!-- Search Bar — 移除固定 Width，仅保留 MaxWidth 让窄屏自然收缩 -->
             <Border Background="#F0F0F0"
                     CornerRadius="24" Padding="16,10"
-                    Width="500" MaxWidth="500">
+                    MaxWidth="500"
+                    HorizontalAlignment="Stretch">
                 <Grid ColumnDefinitions="Auto,*">
                     <TextBlock Text="🔍" FontSize="18" 
                                VerticalAlignment="Center" Margin="0,0,12,0" />
