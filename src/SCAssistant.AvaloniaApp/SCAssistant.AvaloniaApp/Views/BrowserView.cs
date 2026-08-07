@@ -1,5 +1,5 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Reflection;
 using Avalonia.Controls;
 using SCAssistant.AvaloniaApp.Services;
 
@@ -7,7 +7,7 @@ namespace SCAssistant.AvaloniaApp.Views;
 
 /// <summary>
 /// 跨平台浏览器视图 — 负责创建和管理平台原生 WebView 控件。
-/// 通过工厂模式支持桌面端 WebView2 和移动端原生 WebView。
+/// 通过工厂模式支持桌面端 WebView2、移动端原生 WebView 以及 Linux/macOS WebKit。
 /// </summary>
 public partial class BrowserView : UserControl
 {
@@ -33,7 +33,7 @@ public partial class BrowserView : UserControl
 
         try
         {
-            // 优先使用平台工厂创建真正的浏览器控件
+            // 优先使用平台工厂创建真正的浏览器控件（由各平台入口点注册）
             if (BrowserControlFactory != null)
             {
                 var control = BrowserControlFactory(browserProvider);
@@ -80,7 +80,7 @@ public partial class BrowserView : UserControl
     }
 
     /// <summary>
-    /// Windows 桌面 — 通过反射创建 WebView2 控件。
+    /// Windows 桌面 — 通过反射查找 Desktop 项目中的 WebView2 控件。
     /// </summary>
     private Control? CreateWindowsBrowserControl()
     {
@@ -90,37 +90,137 @@ public partial class BrowserView : UserControl
             return BrowserControlFactory(_browserProvider!);
         }
 
-        // 无工厂时使用系统浏览器
-        LogHelper.Warn("[BrowserView] 无 WebView2 工厂，将使用系统浏览器");
+        // 尝试通过反射加载 Desktop 项目的 WebViewBrowserControl
+        try
+        {
+            var desktopAssembly = Assembly.Load("SCAssistant.AvaloniaApp.Desktop");
+            if (desktopAssembly != null)
+            {
+                var webViewType = desktopAssembly.GetType("SCAssistant.AvaloniaApp.Desktop.WebViewBrowserControl");
+                if (webViewType != null)
+                {
+                    var control = (Control?)Activator.CreateInstance(webViewType);
+                    if (control != null)
+                    {
+                        WireBrowserProvider(control);
+                        LogHelper.Info("[BrowserView] 通过反射创建 WebView2 控件");
+                        return control;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[BrowserView] 反射创建 WebView2 失败: {ex.Message}");
+        }
+
+        LogHelper.Warn("[BrowserView] 无 WebView2 实现，将使用系统浏览器");
         return CreateSystemBrowserFallback();
     }
 
     /// <summary>
-    /// 通用桌面回退方案 — 使用系统默认浏览器。
+    /// Linux/macOS 桌面 — 使用 WebKit 浏览器控件。
     /// </summary>
     private Control CreateDesktopBrowserControl()
     {
-        return CreateSystemBrowserFallback();
+        try
+        {
+            var control = new WebKitWebViewBrowserControl();
+            WireBrowserProvider(control);
+            LogHelper.Info("[BrowserView] 创建 WebKit 浏览器控件");
+            return control;
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[BrowserView] WebKit 初始化失败: {ex.Message}");
+            return CreateSystemBrowserFallback();
+        }
     }
 
     /// <summary>
-    /// Android 浏览器控件。
+    /// Android 浏览器控件 — 工厂未注册时的回退方案。
+    /// 实际上 Android 项目会在 MainActivity 中注册工厂，此路径很少触发。
     /// </summary>
     private Control CreateAndroidBrowserControl()
     {
-        // Android 原生 WebView 需要在 Android 项目中实现
-        // 这里提供占位，实际实现通过工厂注入
-        LogHelper.Info("[BrowserView] Android WebView 需要通过工厂注册");
+        try
+        {
+            // 尝试通过反射加载 Android 项目的 WebViewBrowserControl
+            var androidAssembly = Assembly.Load("SCAssistant.AvaloniaApp.Android");
+            if (androidAssembly != null)
+            {
+                var webViewType = androidAssembly.GetType("SCAssistant.AvaloniaApp.Android.WebViewBrowserControl");
+                if (webViewType != null)
+                {
+                    var control = (Control?)Activator.CreateInstance(webViewType);
+                    if (control != null)
+                    {
+                        WireBrowserProvider(control);
+                        LogHelper.Info("[BrowserView] 通过反射创建 Android WebView 控件");
+                        return control;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[BrowserView] 反射创建 Android WebView 失败: {ex.Message}");
+        }
+
+        LogHelper.Warn("[BrowserView] Android WebView 工厂未注册");
         return CreatePlatformPlaceholder("Android WebView");
     }
 
     /// <summary>
-    /// iOS 浏览器控件。
+    /// iOS 浏览器控件 — 工厂未注册时的回退方案。
+    /// 实际上 iOS 项目会在 Main.cs 中注册工厂，此路径很少触发。
     /// </summary>
     private Control CreateIosBrowserControl()
     {
-        LogHelper.Info("[BrowserView] iOS WebView 需要通过工厂注册");
+        try
+        {
+            // 尝试通过反射加载 iOS 项目的 WebViewBrowserControl
+            var iosAssembly = Assembly.Load("SCAssistant.AvaloniaApp.iOS");
+            if (iosAssembly != null)
+            {
+                var webViewType = iosAssembly.GetType("SCAssistant.AvaloniaApp.iOS.WebViewBrowserControl");
+                if (webViewType != null)
+                {
+                    var control = (Control?)Activator.CreateInstance(webViewType);
+                    if (control != null)
+                    {
+                        WireBrowserProvider(control);
+                        LogHelper.Info("[BrowserView] 通过反射创建 iOS WebView 控件");
+                        return control;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[BrowserView] 反射创建 iOS WebView 失败: {ex.Message}");
+        }
+
+        LogHelper.Warn("[BrowserView] iOS WebView 工厂未注册");
         return CreatePlatformPlaceholder("iOS WebView");
+    }
+
+    /// <summary>
+    /// 将平台浏览器控件的事件桥接到 BrowserProvider。
+    /// </summary>
+    private void WireBrowserProvider(Control control)
+    {
+        if (_browserProvider is not BrowserProvider browserProvider) return;
+
+        if (control is IBrowserProvider webView)
+        {
+            browserProvider.SetPlatformWebView(webView);
+            webView.AddressChanged += (_, url) => browserProvider.HandlePlatformAddressChanged(url);
+            webView.TitleChanged += (_, title) => browserProvider.HandlePlatformTitleChanged(title);
+            webView.LoadingStateChanged += (_, loading) => browserProvider.HandlePlatformLoadingStateChanged(loading);
+            webView.DownloadRequested += (_, url) => browserProvider.HandlePlatformDownloadRequested(url);
+            webView.NavigationHistoryChanged += (_, _) => browserProvider.HandlePlatformNavigationHistoryChanged();
+        }
     }
 
     /// <summary>
