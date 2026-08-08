@@ -90,3 +90,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+## Junie (AI assistant workspace data)
+.junie/
