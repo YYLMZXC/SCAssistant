@@ -1,0 +1,51 @@
+<Project Sdk="Uno.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-desktop</TargetFrameworks>
+        <OutputType>Exe</OutputType>
+        <UnoSingleProject>true</UnoSingleProject>
+        <Nullable>enable</Nullable>
+
+        <!-- Display name -->
+        <ApplicationTitle>生存战争助手</ApplicationTitle>
+        <!-- App Identifier -->
+        <ApplicationId>com.companyname.scassistant.yylmzxc001</ApplicationId>
+        <!-- Versions -->
+        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationVersion>1</ApplicationVersion>
+
+        <ApplicationPublisher>SCAssistant</ApplicationPublisher>
+        <Description>SCAssistant powered by Uno Platform.</Description>
+
+        <!--
+          UnoFeatures are used to quickly add and manage features enabled for your app.
+          https://aka.platform.uno/singleproject-features
+        -->
+        <UnoFeatures>SkiaRenderer;Toolkit;ThemeService;Dsp</UnoFeatures>
+
+        <!-- Android ABI: arm64 for physical devices, x64 for emulators (Android-only) -->
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">android-arm64;android-x64</RuntimeIdentifiers>
+        <AndroidCreatePackagePerAbi Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">true</AndroidCreatePackagePerAbi>
+
+        <!-- Android 签名配置 -->
+        <AndroidKeyStore>true</AndroidKeyStore>
+        <AndroidSigningKeyStore>key\scassistant.keystore</AndroidSigningKeyStore>
+        <AndroidSigningStorePass>sc123456</AndroidSigningStorePass>
+        <AndroidSigningKeyAlias>scassistant</AndroidSigningKeyAlias>
+        <AndroidSigningKeyPass>sc123456</AndroidSigningKeyPass>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <!-- WebView2 桌面后端：仅桌面平台需要，用别名避免与 Uno.UI 的 CoreWebView2 类型冲突 -->
+    <ItemGroup Condition="$(TargetFramework.Contains('desktop'))">
+        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" Aliases="WpfWebView" />
+    </ItemGroup>
+
+    <!-- 桌面平台：嵌入图标到可执行文件（Win32 资源） -->
+    <PropertyGroup Condition="$(TargetFramework.Contains('desktop'))">
+        <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
+    </PropertyGroup>
+</Project>

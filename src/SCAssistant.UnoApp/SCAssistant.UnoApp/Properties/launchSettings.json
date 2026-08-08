@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "SCAssistant (Desktop - Win32)": {
+      "commandName": "Project"
+    },
+    "SCAssistant (Desktop - macOS)": {
+      "commandName": "Project"
+    },
+    "SCAssistant (Desktop - Linux X11)": {
+      "commandName": "Project"
+    },
+    "SCAssistant (Desktop - Linux FrameBuffer)": {
+      "commandName": "Project"
+    }
+  }
+}

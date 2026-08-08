@@ -1,0 +1,3 @@
+adb shell pidof -s com.companyname.scassistant.yylmzxc001
+
+adb logcat --pid=14818
