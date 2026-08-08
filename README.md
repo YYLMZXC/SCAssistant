@@ -1,25 +1,27 @@
 # SC 助手
 
-SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。项目提供两套跨平台实现，共享相同的核心业务逻辑（MVVM + 依赖注入）：
+SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。项目提供三套实现，其中 Avalonia 和 Uno Platform 为跨平台 MVVM 架构，WindowsForms 为传统桌面实现：
 
-| 实现 | UI 框架 | 渲染器 | 支持平台 |
-|------|---------|--------|----------|
-| `SCAssistant.AvaloniaApp` | [Avalonia UI](https://www.avaloniaui.net/) | 原生控件 | Windows、Android、iOS |
-| `SCAssistant.UnoApp` | [Uno Platform](https://platform.uno/) | Skia | Windows、macOS、Linux、Android、iOS |
+| 实现 | UI 框架 | 浏览器引擎 | 运行时 | 支持平台 |
+|------|---------|-----------|--------|----------|
+| `SCAssistant.AvaloniaApp` | [Avalonia UI](https://www.avaloniaui.net/) | 原生 WebView | .NET 10 | Windows、Android、iOS、macOS、Linux |
+| `SCAssistant.UnoApp` | [Uno Platform](https://platform.uno/) | Uno WebView2 | .NET 10 | Windows、macOS、Linux、Android、iOS |
+| `SCAssistant.WindowsForms` | Windows Forms | [CefSharp](https://cefsharp.github.io/) | .NET Framework 4.7.2 | Windows |
 
 ## 主要功能
 
 - **快捷导航**：内置首页、[SCKey](https://www.sckey.net) 和 [SCWZ](https://scwz.top/) 一键跳转，方便快速访问生存战争社区资源。
-- **内置浏览器**：基于跨平台 WebView，自动映射为各平台原生浏览器：
-  - Windows：Edge WebView2
-  - Android：Android WebView
-  - iOS / macOS：WKWebView
+- **内置浏览器**：基于 WebView，各实现使用不同引擎：
+  - Avalonia 版：Edge WebView2（Windows）、Android WebView、WKWebView（iOS/macOS）
+  - Uno Platform 版：Uno WebView2（映射为各平台原生 WebView）
+  - WindowsForms 版：CefSharp（Chromium Embedded Framework）
 - **下载管理**：支持多任务并发下载、进度显示、暂停/取消操作。
 - **下载历史管理**：自动记录下载文件信息，支持查看记录、打开所在文件夹和删除记录。
 - **设置管理**：可配置主页URL、搜索引擎、下载目录、最大并发下载数等。
 - **跨平台支持**：
-  - Avalonia 版：Windows 桌面、Android APK、iOS 应用
-  - Uno Platform 版：Windows、macOS、Linux 桌面、Android APK、iOS 应用
+  - Avalonia 版：Windows、Android、iOS、macOS、Linux
+  - Uno Platform 版：Windows、macOS、Linux、Android、iOS
+  - WindowsForms 版：仅 Windows 桌面
 
 ## 技术架构
 
@@ -43,6 +45,14 @@ SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Sur
 | Uno Toolkit / ThemeService | 随 SDK |
 | 渲染器 | Skia |
 | DI 容器 | CommunityToolkit.Mvvm（内置） |
+
+### WindowsForms 版
+
+| 组件 | 版本 |
+|------|------|
+| .NET Framework | 4.7.2 |
+| CefSharp（浏览器引擎） | 135.0.220 |
+| Newtonsoft.Json | 13.0.3 |
 
 ## 项目结构
 
@@ -89,14 +99,28 @@ src/
             ├── Android/                              # Android（MainActivity、Manifest）
             ├── Desktop/                              # 桌面端（Win32、X11、macOS）
             └── iOS/                                  # iOS（Info.plist、Entitlements）
+│
+└── SCAssistant.WindowsForms/                         # Windows Forms + CefSharp 实现
+    ├── SCAssistant.WindowsForms.sln                  # 解决方案文件
+    ├── SCAssistant.WindowsForms/                     # 项目目录
+    │   ├── SCAssistant.WindowsForms.csproj           # 项目文件（.NET Framework 4.7.2）
+    │   ├── Program.cs                                # 应用入口
+    │   ├── MainForm.cs / MainForm.Designer.cs        # 主窗体（内嵌 CefSharp 浏览器）
+    │   ├── DownloadListForm.cs                       # 下载列表窗体
+    │   ├── DownloadHandler.cs                        # CefSharp 下载处理器
+    │   ├── DownloadRecord.cs                         # 下载记录数据模型
+    │   ├── ContextMenuHandler.cs                     # 自定义右键菜单
+    │   ├── CustomLifeSpanHandler.cs                  # 生命周期处理
+    │   └── Properties/                               # 程序集信息与资源
+    └── packages/                                     # 本地 NuGet 包
 ```
 
 ## 如何运行
 
 ### 环境要求
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- Windows 桌面：无需额外安装浏览器运行时
+- **Avalonia / Uno Platform**：[.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **WindowsForms**：[.NET Framework 4.7.2 SDK](https://dotnet.microsoft.com/download/dotnet-framework/net472)
 - Android：需要 Android SDK 及相关编译工具
 - iOS / macOS：需要在 macOS 上使用 Xcode 进行编译
 
@@ -141,6 +165,18 @@ dotnet build src/SCAssistant.UnoApp/SCAssistant.UnoApp/SCAssistant.UnoApp.csproj
 **iOS**
 
 在 macOS 上打开解决方案，选择 iOS 目标编译运行。
+
+### WindowsForms 版
+
+**Windows 桌面**
+
+使用 Visual Studio 打开 `src/SCAssistant.WindowsForms/SCAssistant.WindowsForms.sln` 编译运行。 也可以使用 MSBuild：
+
+```bash
+msbuild src/SCAssistant.WindowsForms/SCAssistant.WindowsForms.sln -t:Build -p:Configuration=Release
+```
+
+注意：CefSharp 依赖本地 `packages/` 目录中的 NuGet 包，首次编译前请确保包已正确还原。
 
 ## 许可证
 

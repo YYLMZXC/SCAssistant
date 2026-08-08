@@ -1,30 +1,32 @@
 # SC Assistant
 
-SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraft game community sites and download management. The project offers two cross-platform implementations that share the same core business logic (MVVM + DI):
+SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraft game community sites and download management. The project offers three implementations: Avalonia and Uno Platform are cross-platform with MVVM architecture, while WindowsForms is a traditional desktop implementation:
 
-| Implementation | UI Framework | Renderer | Supported Platforms |
-|---------------|-------------|----------|---------------------|
-| `SCAssistant.AvaloniaApp` | [Avalonia UI](https://www.avaloniaui.net/) | Native Controls | Windows, Android, iOS |
-| `SCAssistant.UnoApp` | [Uno Platform](https://platform.uno/) | Skia | Windows, macOS, Linux, Android, iOS |
+| Implementation | UI Framework | Browser Engine | Runtime | Supported Platforms |
+|---------------|-------------|---------------|---------|---------------------|
+| `SCAssistant.AvaloniaApp` | [Avalonia UI](https://www.avaloniaui.net/) | Native WebView | .NET 10 | Windows, Android, iOS, macOS, Linux |
+| `SCAssistant.UnoApp` | [Uno Platform](https://platform.uno/) | Uno WebView2 | .NET 10 | Windows, macOS, Linux, Android, iOS |
+| `SCAssistant.WindowsForms` | Windows Forms | [CefSharp](https://cefsharp.github.io/) | .NET Framework 4.7.2 | Windows |
 
 ## Key Features
 
 - **Quick Navigation**: Built-in shortcuts to the homepage, [SCKey](https://www.sckey.net), and [SCWZ](https://scwz.top/) for quick access to Survivalcraft community resources.
-- **Built-in Browser**: Cross-platform WebView, automatically mapped to each platform's native browser:
-  - Windows: Edge WebView2
-  - Android: Android WebView
-  - iOS / macOS: WKWebView
+- **Built-in Browser**: WebView-based with different engines per implementation:
+  - Avalonia: Edge WebView2 (Windows), Android WebView, WKWebView (iOS/macOS)
+  - Uno Platform: Uno WebView2 (maps to platform-native WebView)
+  - WindowsForms: CefSharp (Chromium Embedded Framework)
 - **Download Management**: Multi-task concurrent downloads, progress display, pause/cancel support.
 - **Download History Management**: Automatically records downloaded files, supports viewing records, opening folders, and deleting records.
 - **Settings Management**: Configurable homepage URL, search engine, download directory, max concurrent downloads, etc.
 - **Cross-Platform Support**:
-  - Avalonia: Windows desktop, Android APK, iOS app
-  - Uno Platform: Windows, macOS, Linux desktop, Android APK, iOS app
+  - Avalonia: Windows, Android, iOS, macOS, Linux
+  - Uno Platform: Windows, macOS, Linux, Android, iOS
+  - WindowsForms: Windows desktop only
 
 ## Technical Architecture
 
-- **Architecture Pattern**: MVVM (CommunityToolkit.Mvvm with DI)
-- **Runtime**: .NET 10
+- **Architecture Pattern**: MVVM (CommunityToolkit.Mvvm with DI) for Avalonia & Uno; Code-behind for WindowsForms
+- **Runtime**: .NET 10 (Avalonia, Uno); .NET Framework 4.7.2 (WindowsForms)
 - **Serialization**: Newtonsoft.Json
 
 ### Avalonia Implementation
@@ -43,6 +45,14 @@ SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraf
 | Uno Toolkit / ThemeService | Bundled with SDK |
 | Renderer | Skia |
 | DI Container | CommunityToolkit.Mvvm (built-in) |
+
+### WindowsForms Implementation
+
+| Component | Version |
+|-----------|---------|
+| .NET Framework | 4.7.2 |
+| CefSharp (Browser Engine) | 135.0.220 |
+| Newtonsoft.Json | 13.0.3 |
 
 ## Project Structure
 
@@ -89,6 +99,20 @@ src/
             ├── Android/                              # Android (MainActivity, Manifest)
             ├── Desktop/                              # Desktop (Win32, X11, macOS)
             └── iOS/                                  # iOS (Info.plist, Entitlements)
+│
+└── SCAssistant.WindowsForms/                         # Windows Forms + CefSharp implementation
+    ├── SCAssistant.WindowsForms.sln                  # Solution file
+    ├── SCAssistant.WindowsForms/                     # Project directory
+    │   ├── SCAssistant.WindowsForms.csproj           # Project file (.NET Framework 4.7.2)
+    │   ├── Program.cs                                # Application entry
+    │   ├── MainForm.cs / MainForm.Designer.cs        # Main form (embedded CefSharp browser)
+    │   ├── DownloadListForm.cs                       # Download list form
+    │   ├── DownloadHandler.cs                        # CefSharp download handler
+    │   ├── DownloadRecord.cs                         # Download record data model
+    │   ├── ContextMenuHandler.cs                     # Custom context menu handler
+    │   ├── CustomLifeSpanHandler.cs                  # Life span handler
+    │   └── Properties/                               # Assembly info & resources
+    └── packages/                                     # Local NuGet packages
 ```
 
 ## How to Run
