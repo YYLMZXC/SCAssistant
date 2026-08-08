@@ -11,5 +11,8 @@
   <Project Path="SCAssistant.MauiApp.WinUI/SCAssistant.MauiApp.WinUI.csproj">
     <Platform Project="x64" />
   </Project>
+  <Project Path="SCAssistant.MauiApp.Linux/SCAssistant.MauiApp.Linux.csproj">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="SCAssistant.MauiApp/SCAssistant.MauiApp.csproj" />
 </Solution>

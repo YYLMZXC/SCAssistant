@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>SCAssistant.Maui</RootNamespace>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseMaui>true</UseMaui>
+
+		<!-- Open-MAUI-Linux specific -->
+		<MauiXamlInflator>SourceGen</MauiXamlInflator>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="OpenMaui.Controls.Linux" Version="10.0.70.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SCAssistant.MauiApp\SCAssistant.MauiApp.csproj" />
+	</ItemGroup>
+
+</Project>
