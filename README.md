@@ -1,11 +1,12 @@
 # SC 助手
 
-SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。项目提供三套实现，其中 Avalonia 和 Uno Platform 为跨平台 MVVM 架构，WindowsForms 为传统桌面实现：
+SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Survivalcraft) 游戏玩家提供便捷的社区网站访问和下载管理功能。项目提供四套实现，其中 Avalonia、Uno Platform 和 MAUI 为跨平台 MVVM 架构，WindowsForms 为传统桌面实现：
 
 | 实现 | UI 框架 | 浏览器引擎 | 运行时 | 支持平台 |
 |------|---------|-----------|--------|----------|
 | `SCAssistant.AvaloniaApp` | [Avalonia UI](https://www.avaloniaui.net/) | 原生 WebView | .NET 10 | Windows、Android、iOS、macOS、Linux |
 | `SCAssistant.UnoApp` | [Uno Platform](https://platform.uno/) | Uno WebView2 | .NET 10 | Windows、macOS、Linux、Android、iOS |
+| `SCAssistant.MauiApp` | [.NET MAUI](https://dotnet.microsoft.com/apps/maui) + [Open-MAUI-Linux](https://github.com/open-maui/maui-linux) | 原生 WebView | .NET 10 | Windows、Android、iOS、macOS、Linux |
 | `SCAssistant.WindowsForms` | Windows Forms | [CefSharp](https://cefsharp.github.io/) | .NET Framework 4.7.2 | Windows |
 
 ## 主要功能
@@ -14,6 +15,7 @@ SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Sur
 - **内置浏览器**：基于 WebView，各实现使用不同引擎：
   - Avalonia 版：Edge WebView2（Windows）、Android WebView、WKWebView（iOS/macOS）
   - Uno Platform 版：Uno WebView2（映射为各平台原生 WebView）
+  - MAUI 版：Edge WebView2（Windows）、Android WebView、WKWebView（iOS/macOS）、Linux WebView（Open-MAUI-Linux）
   - WindowsForms 版：CefSharp（Chromium Embedded Framework）
 - **下载管理**：支持多任务并发下载、进度显示、暂停/取消操作。
 - **下载历史管理**：自动记录下载文件信息，支持查看记录、打开所在文件夹和删除记录。
@@ -21,6 +23,7 @@ SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Sur
 - **跨平台支持**：
   - Avalonia 版：Windows、Android、iOS、macOS、Linux
   - Uno Platform 版：Windows、macOS、Linux、Android、iOS
+  - MAUI 版：Windows、Android、iOS、macOS、Linux
   - WindowsForms 版：仅 Windows 桌面
 
 ## 技术架构
@@ -45,6 +48,14 @@ SCAssistant（SC 助手，又名"生存战争助手"）为《生存战争》(Sur
 | Uno Toolkit / ThemeService | 随 SDK |
 | 渲染器 | Skia |
 | DI 容器 | CommunityToolkit.Mvvm（内置） |
+
+### MAUI 版
+
+| 组件 | 版本 |
+|------|------|
+| .NET MAUI | 10.0 |
+| Open-MAUI-Linux | 10.0.70.4 |
+| DI 容器 | Microsoft.Extensions.DependencyInjection |
 
 ### WindowsForms 版
 
@@ -99,7 +110,24 @@ src/
             ├── Android/                              # Android（MainActivity、Manifest）
             ├── Desktop/                              # 桌面端（Win32、X11、macOS）
             └── iOS/                                  # iOS（Info.plist、Entitlements）
-│
+
+├── SCAssistant.MauiApp/                               # .NET MAUI 实现
+│   ├── SCAssistant.MauiApp.slnx                       # 解决方案文件
+│   ├── SCAssistant.MauiApp/                          # 共享项目
+│   │   ├── App.xaml / App.xaml.cs                    # 应用入口与依赖注入配置
+│   │   ├── AppShell.xaml / AppShell.xaml.cs          # Shell 导航
+│   │   ├── MainPage.xaml / MainPage.xaml.cs          # 主页面
+│   │   ├── ViewModels/                               # MVVM 视图模型层
+│   │   ├── Views/                                    # 视图层
+│   │   ├── Models/                                   # 数据模型
+│   │   ├── Services/                                 # 服务层（浏览器、下载、设置、历史）
+│   │   └── Converters/                               # 值转换器
+│   ├── SCAssistant.MauiApp.WinUI/                    # Windows 平台项目
+│   ├── SCAssistant.MauiApp.Droid/                    # Android 平台项目
+│   ├── SCAssistant.MauiApp.iOS/                      # iOS 平台项目
+│   ├── SCAssistant.MauiApp.Mac/                      # macOS 平台项目
+│   └── SCAssistant.MauiApp.Linux/                    # Linux 平台项目（Open-MAUI-Linux）
+
 └── SCAssistant.WindowsForms/                         # Windows Forms + CefSharp 实现
     ├── SCAssistant.WindowsForms.sln                  # 解决方案文件
     ├── SCAssistant.WindowsForms/                     # 项目目录
@@ -165,6 +193,38 @@ dotnet build src/SCAssistant.UnoApp/SCAssistant.UnoApp/SCAssistant.UnoApp.csproj
 **iOS**
 
 在 macOS 上打开解决方案，选择 iOS 目标编译运行。
+
+### MAUI 版
+
+**Windows 桌面**
+
+```bash
+dotnet run --project src/SCAssistant.MauiApp/SCAssistant.MauiApp.WinUI
+```
+
+**Linux 桌面**
+
+首先安装系统依赖（Ubuntu/Debian）：
+
+```bash
+sudo apt install libx11-dev libxrandr-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev
+```
+
+然后运行：
+
+```bash
+dotnet run --project src/SCAssistant.MauiApp/SCAssistant.MauiApp.Linux
+```
+
+**Android**
+
+```bash
+dotnet build src/SCAssistant.MauiApp/SCAssistant.MauiApp.Droid -c Release
+```
+
+**iOS / macOS**
+
+在 macOS 上打开 `src/SCAssistant.MauiApp/SCAssistant.MauiApp.slnx`，选择 iOS 或 Mac 目标编译运行。
 
 ### WindowsForms 版
 

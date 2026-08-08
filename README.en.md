@@ -1,11 +1,12 @@
 # SC Assistant
 
-SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraft game community sites and download management. The project offers three implementations: Avalonia and Uno Platform are cross-platform with MVVM architecture, while WindowsForms is a traditional desktop implementation:
+SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraft game community sites and download management. The project offers four implementations: Avalonia, Uno Platform and MAUI are cross-platform with MVVM architecture, while WindowsForms is a traditional desktop implementation:
 
 | Implementation | UI Framework | Browser Engine | Runtime | Supported Platforms |
 |---------------|-------------|---------------|---------|---------------------|
 | `SCAssistant.AvaloniaApp` | [Avalonia UI](https://www.avaloniaui.net/) | Native WebView | .NET 10 | Windows, Android, iOS, macOS, Linux |
 | `SCAssistant.UnoApp` | [Uno Platform](https://platform.uno/) | Uno WebView2 | .NET 10 | Windows, macOS, Linux, Android, iOS |
+| `SCAssistant.MauiApp` | [.NET MAUI](https://dotnet.microsoft.com/apps/maui) + [Open-MAUI-Linux](https://github.com/open-maui/maui-linux) | Native WebView | .NET 10 | Windows, Android, iOS, macOS, Linux |
 | `SCAssistant.WindowsForms` | Windows Forms | [CefSharp](https://cefsharp.github.io/) | .NET Framework 4.7.2 | Windows |
 
 ## Key Features
@@ -14,6 +15,7 @@ SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraf
 - **Built-in Browser**: WebView-based with different engines per implementation:
   - Avalonia: Edge WebView2 (Windows), Android WebView, WKWebView (iOS/macOS)
   - Uno Platform: Uno WebView2 (maps to platform-native WebView)
+  - MAUI: Edge WebView2 (Windows), Android WebView, WKWebView (iOS/macOS), Linux WebView (Open-MAUI-Linux)
   - WindowsForms: CefSharp (Chromium Embedded Framework)
 - **Download Management**: Multi-task concurrent downloads, progress display, pause/cancel support.
 - **Download History Management**: Automatically records downloaded files, supports viewing records, opening folders, and deleting records.
@@ -21,6 +23,7 @@ SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraf
 - **Cross-Platform Support**:
   - Avalonia: Windows, Android, iOS, macOS, Linux
   - Uno Platform: Windows, macOS, Linux, Android, iOS
+  - MAUI: Windows, Android, iOS, macOS, Linux
   - WindowsForms: Windows desktop only
 
 ## Technical Architecture
@@ -45,6 +48,14 @@ SCAssistant (Survivalcraft Assistant) provides convenient access to Survivalcraf
 | Uno Toolkit / ThemeService | Bundled with SDK |
 | Renderer | Skia |
 | DI Container | CommunityToolkit.Mvvm (built-in) |
+
+### MAUI Implementation
+
+| Component | Version |
+|-----------|---------|
+| .NET MAUI | 10.0 |
+| Open-MAUI-Linux | 10.0.70.4 |
+| DI Container | Microsoft.Extensions.DependencyInjection |
 
 ### WindowsForms Implementation
 
@@ -99,7 +110,24 @@ src/
             ├── Android/                              # Android (MainActivity, Manifest)
             ├── Desktop/                              # Desktop (Win32, X11, macOS)
             └── iOS/                                  # iOS (Info.plist, Entitlements)
-│
+
+├── SCAssistant.MauiApp/                               # .NET MAUI implementation
+│   ├── SCAssistant.MauiApp.slnx                       # Solution file
+│   ├── SCAssistant.MauiApp/                          # Shared project
+│   │   ├── App.xaml / App.xaml.cs                    # App entry & DI configuration
+│   │   ├── AppShell.xaml / AppShell.xaml.cs          # Shell navigation
+│   │   ├── MainPage.xaml / MainPage.xaml.cs          # Main page
+│   │   ├── ViewModels/                               # MVVM ViewModel layer
+│   │   ├── Views/                                    # View layer
+│   │   ├── Models/                                   # Data models
+│   │   ├── Services/                                 # Service layer (browser, download, settings, history)
+│   │   └── Converters/                               # Value converters
+│   ├── SCAssistant.MauiApp.WinUI/                    # Windows platform project
+│   ├── SCAssistant.MauiApp.Droid/                    # Android platform project
+│   ├── SCAssistant.MauiApp.iOS/                      # iOS platform project
+│   ├── SCAssistant.MauiApp.Mac/                      # macOS platform project
+│   └── SCAssistant.MauiApp.Linux/                    # Linux platform project (Open-MAUI-Linux)
+
 └── SCAssistant.WindowsForms/                         # Windows Forms + CefSharp implementation
     ├── SCAssistant.WindowsForms.sln                  # Solution file
     ├── SCAssistant.WindowsForms/                     # Project directory
@@ -165,6 +193,38 @@ dotnet build src/SCAssistant.UnoApp/SCAssistant.UnoApp/SCAssistant.UnoApp.csproj
 **iOS**
 
 On macOS, open the solution and build & run with the iOS target.
+
+### MAUI
+
+**Windows Desktop**
+
+```bash
+dotnet run --project src/SCAssistant.MauiApp/SCAssistant.MauiApp.WinUI
+```
+
+**Linux Desktop**
+
+Install system dependencies first (Ubuntu/Debian):
+
+```bash
+sudo apt install libx11-dev libxrandr-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev
+```
+
+Then run:
+
+```bash
+dotnet run --project src/SCAssistant.MauiApp/SCAssistant.MauiApp.Linux
+```
+
+**Android**
+
+```bash
+dotnet build src/SCAssistant.MauiApp/SCAssistant.MauiApp.Droid -c Release
+```
+
+**iOS / macOS**
+
+On macOS, open `src/SCAssistant.MauiApp/SCAssistant.MauiApp.slnx` and build & run with the iOS or Mac target.
 
 ## License
 
