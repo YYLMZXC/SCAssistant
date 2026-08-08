@@ -1,4 +1,6 @@
-﻿namespace SCAssistant.Maui.WinUI
+﻿using SCAssistant.Maui;
+
+namespace SCAssistant.Maui.WinUI
 {
     public static class MauiProgram
     {

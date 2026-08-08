@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SCAssistant.Maui.ViewModels"
+             xmlns:conv="clr-namespace:SCAssistant.Maui.Converters"
+             x:Class="SCAssistant.Maui.Views.BrowserPage"
+             x:DataType="vm:MainViewModel">
+
+    <ContentPage.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InverseBoolConverter x:Key="InverseBool" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- 地址栏 -->
+        <Grid Grid.Row="0" ColumnDefinitions="36,36,*,36,36"
+              Padding="4" ColumnSpacing="4"
+              BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+              BindingContext="{Binding AddressBar}"
+              x:DataType="vm:AddressBarViewModel">
+
+            <Button Grid.Column="0" Text="◀" FontSize="16"
+                    Command="{Binding GoBackCommand}"
+                    IsEnabled="{Binding CanGoBack}"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                    WidthRequest="36" HeightRequest="36" Padding="0" />
+
+            <Button Grid.Column="1" Text="▶" FontSize="16"
+                    Command="{Binding GoForwardCommand}"
+                    IsEnabled="{Binding CanGoForward}"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                    WidthRequest="36" HeightRequest="36" Padding="0" />
+
+            <Border Grid.Column="2" StrokeShape="RoundRectangle 4"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                    StrokeThickness="1">
+                <Entry Text="{Binding UrlText, Mode=TwoWay}"
+                       ReturnType="Go"
+                       ReturnCommand="{Binding NavigateCommand}"
+                       Placeholder="输入网址或搜索..."
+                       FontSize="14"
+                       VerticalOptions="Center" />
+            </Border>
+
+            <Button Grid.Column="3" Text="→" FontSize="18"
+                    Command="{Binding NavigateCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                    WidthRequest="36" HeightRequest="36" Padding="0" />
+
+            <Button Grid.Column="4" Text="↻" FontSize="18"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                    WidthRequest="36" HeightRequest="36" Padding="0"
+                    x:Name="BtnReload" />
+        </Grid>
+
+        <!-- 内容区 -->
+        <Grid Grid.Row="1">
+
+            <WebView x:Name="BrowserWebView"
+                     HorizontalOptions="Fill" VerticalOptions="Fill" />
+
+            <!-- 主页覆盖层 -->
+            <ScrollView x:Name="HomeOverlay"
+                        IsVisible="{Binding IsHomePage}"
+                        Padding="20,40"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+                <VerticalStackLayout Spacing="16"
+                                     BindingContext="{Binding Home}"
+                                     x:DataType="vm:HomeViewModel">
+
+                    <Frame Padding="4" CornerRadius="24"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+                           BorderColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                           HasShadow="True" HorizontalOptions="Center" WidthRequest="520">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Entry Grid.Column="0"
+                                   Text="{Binding SearchText, Mode=TwoWay}"
+                                   ReturnType="Search"
+                                   ReturnCommand="{Binding SearchCommand}"
+                                   CommandParameter="{Binding SearchText}"
+                                   Placeholder="输入网址或搜索..."
+                                   FontSize="16"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="1" Text="🔍"
+                                    Command="{Binding SearchCommand}"
+                                    CommandParameter="{Binding SearchText}"
+                                    BackgroundColor="Transparent"
+                                    FontSize="20"
+                                    WidthRequest="48" HeightRequest="48" Padding="0" />
+                        </Grid>
+                    </Frame>
+
+                    <Label Text="快捷链接" FontSize="18" FontAttributes="Bold"
+                           HorizontalOptions="Center" Margin="0,16,0,8" />
+                    <FlexLayout Wrap="Wrap" JustifyContent="Center" AlignItems="Center"
+                                HorizontalOptions="Center" x:Name="QuickLinksContainer" />
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- 加载指示器 -->
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Start"
+                               Margin="0,4,0,0"
+                               Color="{StaticResource Primary}" />
+        </Grid>
+    </Grid>
+
+</ContentPage>

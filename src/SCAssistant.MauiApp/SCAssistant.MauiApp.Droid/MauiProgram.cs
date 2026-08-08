@@ -1,4 +1,6 @@
-﻿namespace SCAssistant.Maui.Droid
+﻿using SCAssistant.Maui;
+
+namespace SCAssistant.Maui.Droid
 {
     public static class MauiProgram
     {

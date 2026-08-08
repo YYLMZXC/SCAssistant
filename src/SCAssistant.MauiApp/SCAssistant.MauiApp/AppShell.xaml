@@ -3,13 +3,28 @@
     x:Class="SCAssistant.Maui.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:SCAssistant.Maui"
+    xmlns:views="clr-namespace:SCAssistant.Maui.Views"
     Shell.FlyoutBehavior="Disabled"
     Title="SCAssistant.MauiApp">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent
+            Title="浏览器"
+            Icon="dotnet_bot.png"
+            ContentTemplate="{DataTemplate views:BrowserPage}"
+            Route="browser" />
+
+        <ShellContent
+            Title="下载"
+            Icon="dotnet_bot.png"
+            ContentTemplate="{DataTemplate views:DownloadListPage}"
+            Route="downloads" />
+
+        <ShellContent
+            Title="设置"
+            Icon="dotnet_bot.png"
+            ContentTemplate="{DataTemplate views:SettingsPage}"
+            Route="settings" />
+    </TabBar>
 
 </Shell>
