@@ -1,4 +1,4 @@
-﻿namespace SCAssistant
+﻿namespace SCAssistant.WindowsForms
 {
     partial class DownloadListForm
     {

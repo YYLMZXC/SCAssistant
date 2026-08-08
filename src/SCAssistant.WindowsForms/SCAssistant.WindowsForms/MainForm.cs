@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp;
 using CefSharp.WinForms;
-namespace SCAssistant
+namespace SCAssistant.WindowsForms
 {
     public partial class MainForm : Form
     {

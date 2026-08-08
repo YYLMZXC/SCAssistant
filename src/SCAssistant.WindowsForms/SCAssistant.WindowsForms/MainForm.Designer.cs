@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SCAssistant
+namespace SCAssistant.WindowsForms
 {
     partial class MainForm
     {

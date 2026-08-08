@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SCAssistant
+namespace SCAssistant.WindowsForms
 {
     internal static class Program
     {

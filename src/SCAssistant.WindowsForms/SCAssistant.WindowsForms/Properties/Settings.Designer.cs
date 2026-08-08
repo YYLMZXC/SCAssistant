@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SCAssistant.Properties
+namespace SCAssistant.WindowsForms.Properties
 {
 
 
