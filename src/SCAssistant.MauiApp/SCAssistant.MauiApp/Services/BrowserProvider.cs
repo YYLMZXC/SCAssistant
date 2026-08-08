@@ -54,8 +54,8 @@ public class BrowserProvider : IBrowserProvider
             }
             _isLoading = false;
             LoadingStateChanged?.Invoke(this, false);
-            CanGoBack = _webView.CanGoBack();
-            CanGoForward = _webView.CanGoForward();
+            CanGoBack = _webView.CanGoBack;
+            CanGoForward = _webView.CanGoForward;
             NavigationHistoryChanged?.Invoke(this, EventArgs.Empty);
             _isReady = true;
         };

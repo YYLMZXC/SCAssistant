@@ -82,7 +82,7 @@
                                    Text="{Binding SearchText, Mode=TwoWay}"
                                    ReturnType="Search"
                                    ReturnCommand="{Binding SearchCommand}"
-                                   CommandParameter="{Binding SearchText}"
+                                   ReturnCommandParameter="{Binding SearchText}"
                                    Placeholder="输入网址或搜索..."
                                    FontSize="16"
                                    VerticalOptions="Center" />
