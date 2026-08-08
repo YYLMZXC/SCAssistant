@@ -1,0 +1,19 @@
+CEFSharp.WinForms
+CEFSharp.Common
+
+
+https://jrsoftware.org/isdl.php
+https://jrsoftware.org/files/istrans/
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+
+AppName：你的应用名称。
+AppVersion：应用版本号。
+DefaultDirName：默认的安装目录。
+DefaultGroupName：开始菜单中的程序组名称。
+OutputBaseFilename：生成的安装程序的文件名。
+[Files]：指定要包含在安装程序中的文件。这里的路径应指向你的项目生成的可执行文件和其他相关文件的路径。
+4. 编译安装程序
+在Inno Setup中打开你的脚本文件，然后点击“编译”按钮。这将生成一个安装程序文件（.exe），你可以用它来安装你的应用程序。
