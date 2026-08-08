@@ -1,4 +1,4 @@
-﻿namespace SCAssistant.MauiApp.iOS
+﻿namespace SCAssistant.Maui.iOS
 {
     public static class MauiProgram
     {

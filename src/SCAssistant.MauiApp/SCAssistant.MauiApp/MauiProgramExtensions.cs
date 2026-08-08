@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace SCAssistant.MauiApp
+namespace SCAssistant.Maui
 {
     public static class MauiProgramExtensions
     {

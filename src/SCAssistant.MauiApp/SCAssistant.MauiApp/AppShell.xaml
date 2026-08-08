@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Shell
-    x:Class="SCAssistant.MauiApp.AppShell"
+    x:Class="SCAssistant.Maui.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:SCAssistant.MauiApp"
+    xmlns:local="clr-namespace:SCAssistant.Maui"
     Shell.FlyoutBehavior="Disabled"
     Title="SCAssistant.MauiApp">
 

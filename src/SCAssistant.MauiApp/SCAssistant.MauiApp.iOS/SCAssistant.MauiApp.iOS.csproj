@@ -4,7 +4,7 @@
 		<TargetFramework>net10.0-ios</TargetFramework>
 		<SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
 		<OutputType>Exe</OutputType>
-		<RootNamespace>SCAssistant.MauiApp</RootNamespace>
+		<RootNamespace>SCAssistant.Maui</RootNamespace>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseMaui>true</UseMaui>

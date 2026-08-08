@@ -1,4 +1,4 @@
-﻿namespace SCAssistant.MauiApp.Mac
+﻿namespace SCAssistant.Maui.Mac
 {
     public static class MauiProgram
     {

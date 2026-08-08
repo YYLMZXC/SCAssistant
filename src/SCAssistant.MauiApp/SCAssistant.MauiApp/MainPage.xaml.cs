@@ -1,4 +1,4 @@
-﻿namespace SCAssistant.MauiApp
+﻿namespace SCAssistant.Maui
 {
     public partial class MainPage : ContentPage
     {

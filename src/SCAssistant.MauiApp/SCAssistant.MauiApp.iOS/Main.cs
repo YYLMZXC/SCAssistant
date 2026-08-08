@@ -1,7 +1,7 @@
 using ObjCRuntime;
 using UIKit;
 
-namespace SCAssistant.MauiApp.iOS
+namespace SCAssistant.Maui.iOS
 {
     public class Program
     {

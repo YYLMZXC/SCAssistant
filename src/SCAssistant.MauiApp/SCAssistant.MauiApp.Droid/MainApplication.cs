@@ -1,7 +1,7 @@
 using Android.App;
 using Android.Runtime;
 
-namespace SCAssistant.MauiApp.Droid
+namespace SCAssistant.Maui.Droid
 {
     [Application]
     public class MainApplication : MauiApplication

@@ -1,6 +1,6 @@
 using Foundation;
 
-namespace SCAssistant.MauiApp.Mac
+namespace SCAssistant.Maui.Mac
 {
     [Register(nameof(AppDelegate))]
     public class AppDelegate : MauiUIApplicationDelegate

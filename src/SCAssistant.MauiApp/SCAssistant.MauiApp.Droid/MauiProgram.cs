@@ -1,4 +1,4 @@
-﻿namespace SCAssistant.MauiApp.Droid
+﻿namespace SCAssistant.Maui.Droid
 {
     public static class MauiProgram
     {
