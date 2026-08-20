@@ -88,6 +88,25 @@ public class MainViewModel : INotifyPropertyChanged
         set { _isDownloadListVisible = value; OnPropertyChanged(); }
     }
 
+    // ===================== 底部导航标签 =====================
+
+    /// <summary>底部快捷导航标签。</summary>
+    public enum BottomTab
+    {
+        None,
+        Home,
+        SCKey,
+        SCWZ,
+    }
+
+    private BottomTab _currentBottomTab;
+    /// <summary>当前所在的底部导航标签（决定底栏按钮是否高亮显示）。</summary>
+    public BottomTab CurrentBottomTab
+    {
+        get => _currentBottomTab;
+        set { _currentBottomTab = value; OnPropertyChanged(); }
+    }
+
     // ===================== 下载列表（保留兼容） =====================
 
     public DownloadListViewModel DownloadList { get; }
@@ -141,6 +160,7 @@ public class MainViewModel : INotifyPropertyChanged
         _browser.AddressChanged += (_, url) =>
         {
             CurrentUrl = url;
+            UpdateCurrentTab(url);
             if (!string.IsNullOrWhiteSpace(url))
             {
                 History.Insert(0, url);
@@ -188,6 +208,7 @@ public class MainViewModel : INotifyPropertyChanged
         }
 
         CurrentUrl = url;
+        UpdateCurrentTab(url);
         _browser.Navigate(url);
     }
 
@@ -203,6 +224,26 @@ public class MainViewModel : INotifyPropertyChanged
         LogHelper.Info("[主页] NavigateToHome");
         _browser.Initialize("https://test.suancaixianyu.cn/");
         CurrentUrl = "https://test.suancaixianyu.cn/";
+        UpdateCurrentTab(CurrentUrl);
+    }
+
+    /// <summary>根据当前 URL 更新底部导航高亮标签。</summary>
+    private void UpdateCurrentTab(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            CurrentBottomTab = BottomTab.None;
+            return;
+        }
+
+        if (url.Contains("scbbs.top", StringComparison.OrdinalIgnoreCase))
+            CurrentBottomTab = BottomTab.Home;
+        else if (url.Contains("sckey.net", StringComparison.OrdinalIgnoreCase))
+            CurrentBottomTab = BottomTab.SCKey;
+        else if (url.Contains("scwz.top", StringComparison.OrdinalIgnoreCase))
+            CurrentBottomTab = BottomTab.SCWZ;
+        else
+            CurrentBottomTab = BottomTab.None;
     }
 
     // ===================== 下载处理 =====================

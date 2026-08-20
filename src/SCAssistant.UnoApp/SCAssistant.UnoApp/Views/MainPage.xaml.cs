@@ -1,6 +1,8 @@
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using SCAssistant.UnoApp.Services;
 using SCAssistant.UnoApp.ViewModels;
 
@@ -10,6 +12,12 @@ public sealed partial class MainPage : Page
 {
     public MainViewModel ViewModel { get; }
     private readonly IBrowserProvider _browserProvider;
+
+    // 底部导航按钮高亮画刷
+    private readonly SolidColorBrush _tabSelectedBg = new(Microsoft.UI.Colors.DodgerBlue);
+    private readonly SolidColorBrush _tabUnselectedBg = new(Microsoft.UI.Colors.Transparent);
+    private readonly SolidColorBrush _tabSelectedFg = new(Microsoft.UI.Colors.White);
+    private readonly SolidColorBrush _tabUnselectedFg;
 
     public MainPage()
     {
@@ -30,6 +38,14 @@ public sealed partial class MainPage : Page
         // 获取 ViewModel（DI 创建，含 SettingsViewModel）
         ViewModel = ServiceLocator.ServiceLocatorObj.GetRequiredService<MainViewModel>();
         DataContext = ViewModel;
+
+        // 底部导航按钮高亮画刷（未选中前景使用主题色）
+        var mediumColor = (Windows.UI.Color)Application.Current.Resources["SystemBaseMediumColor"];
+        _tabUnselectedFg = new SolidColorBrush(mediumColor);
+
+        // 监听底部导航标签变化，刷新按钮高亮
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        UpdateBottomTabs(ViewModel.CurrentBottomTab);
 
         // 绑定浏览历史到设置面板
         if (ViewModel.Settings is not null)
@@ -102,5 +118,26 @@ public sealed partial class MainPage : Page
     {
         LogHelper.Info($"[主页] 窄屏跳转按钮点击: {NarrowAddressBar.Text}");
         ViewModel.NavigateToCustomUrl(NarrowAddressBar.Text);
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.CurrentBottomTab) && sender is MainViewModel vm)
+        {
+            UpdateBottomTabs(vm.CurrentBottomTab);
+        }
+    }
+
+    /// <summary>根据当前底部导航标签刷新 3 个底栏按钮的高亮状态。</summary>
+    private void UpdateBottomTabs(MainViewModel.BottomTab tab)
+    {
+        BottomTabHome.Background = tab == MainViewModel.BottomTab.Home ? _tabSelectedBg : _tabUnselectedBg;
+        BottomTabHome.Foreground = tab == MainViewModel.BottomTab.Home ? _tabSelectedFg : _tabUnselectedFg;
+
+        BottomTabSCKey.Background = tab == MainViewModel.BottomTab.SCKey ? _tabSelectedBg : _tabUnselectedBg;
+        BottomTabSCKey.Foreground = tab == MainViewModel.BottomTab.SCKey ? _tabSelectedFg : _tabUnselectedFg;
+
+        BottomTabSCWZ.Background = tab == MainViewModel.BottomTab.SCWZ ? _tabSelectedBg : _tabUnselectedBg;
+        BottomTabSCWZ.Foreground = tab == MainViewModel.BottomTab.SCWZ ? _tabSelectedFg : _tabUnselectedFg;
     }
 }

@@ -14,6 +14,19 @@
     <Page.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+
+        <!-- 底部导航按钮样式：等宽矩形按钮，当前所在站点由代码高亮为蓝色 -->
+        <Style x:Key="BottomBarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{ThemeResource SystemBaseMediumColor}" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0,10" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
     </Page.Resources>
 
     <Grid>
@@ -139,21 +152,23 @@
             <Grid Grid.Row="1" x:Name="BrowserHost"
                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-            <!-- ========== 底栏 (SC 快捷链接) ========== -->
-            <Border Grid.Row="2" Padding="4,2"
-                    Background="{ThemeResource SystemAltMediumLowColor}">
-                <Grid ColumnSpacing="6">
+            <!-- ========== 底栏 (SC 快捷导航，3 个等宽矩形按钮分割底部空间) ========== -->
+            <Border Grid.Row="2" Background="{ThemeResource SystemAltMediumLowColor}">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="SC中文社区" Command="{Binding NavigateHomeCommand}" Width="110" />
-                    <Button Grid.Column="1" Content="SC联机号" Command="{Binding NavigateSCKeyCommand}" Width="85" />
-                    <Button Grid.Column="2" Content="SC导航网" Command="{Binding NavigateSCWZCommand}" Width="85" />
-                    <!-- Spacer -->
-                    <Border Grid.Column="3" />
+                    <Button Grid.Column="0" x:Name="BottomTabHome" Content="SC中文社区"
+                            Command="{Binding NavigateHomeCommand}"
+                            Style="{StaticResource BottomBarButtonStyle}" />
+                    <Button Grid.Column="1" x:Name="BottomTabSCKey" Content="SC联机号"
+                            Command="{Binding NavigateSCKeyCommand}"
+                            Style="{StaticResource BottomBarButtonStyle}" />
+                    <Button Grid.Column="2" x:Name="BottomTabSCWZ" Content="SC导航网"
+                            Command="{Binding NavigateSCWZCommand}"
+                            Style="{StaticResource BottomBarButtonStyle}" />
                 </Grid>
             </Border>
         </Grid>
