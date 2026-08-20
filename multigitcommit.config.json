@@ -1,0 +1,9 @@
+{
+  "RemoteUrls": [
+    "https://cnb.cool/SurvivalcraftTool/SCAssistant",
+    "https://gitee.com/yylmzxc/SCAssistant",
+    "https://github.com/YYLMZXC/SCAssistant"
+  ],
+  "CheckAddAll": true,
+  "CheckPushTags": false
+}
