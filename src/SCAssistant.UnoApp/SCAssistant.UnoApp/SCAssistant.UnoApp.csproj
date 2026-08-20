@@ -1,6 +1,16 @@
-<Project Sdk="Uno.Sdk">
+<Project Sdk="Uno.Sdk" TreatAsLocalProperty="RuntimeIdentifier;RuntimeIdentifiers">
     <PropertyGroup>
         <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-desktop</TargetFrameworks>
+
+        <!--
+          修复：IDE 对整个多目标项目还原时可能传入 RuntimeIdentifiers=win-x64（全局属性），
+          而 android/ios 目标强制使用 Mono 运行时，会去请求不存在的
+          Microsoft.NETCore.App.Runtime.Mono.win-x64 包（dotnet/maui#27215）。
+          这里把非桌面目标的 RID 固定为平台自身的 RID，
+          桌面目标保持 win-x64（CoreCLR 运行时包存在）。
+        -->
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">android-arm64;android-x64</RuntimeIdentifiers>
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">ios-arm64</RuntimeIdentifiers>
         <OutputType>Exe</OutputType>
         <UnoSingleProject>true</UnoSingleProject>
         <Nullable>enable</Nullable>
@@ -23,7 +33,6 @@
         <UnoFeatures>SkiaRenderer;Toolkit;ThemeService;Dsp</UnoFeatures>
 
         <!-- Android ABI: arm64 for physical devices, x64 for emulators (Android-only) -->
-        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">android-arm64;android-x64</RuntimeIdentifiers>
         <AndroidCreatePackagePerAbi Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">true</AndroidCreatePackagePerAbi>
 
         <!-- Android 签名配置 -->
@@ -37,6 +46,8 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <!-- 覆盖 Uno.WinUI 传递依赖的旧版 Microsoft.Windows.CsWin32 (0.3.106)，该版本存在已知安全漏洞 -->
+        <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.321" PrivateAssets="all" />
     </ItemGroup>
 
     <!-- WebView2 桌面后端：仅桌面平台需要，用别名避免与 Uno.UI 的 CoreWebView2 类型冲突 -->
