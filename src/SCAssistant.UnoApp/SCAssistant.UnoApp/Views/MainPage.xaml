@@ -45,6 +45,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- ========== 宽屏工具栏 (桌面端，单行) ========== -->
@@ -56,40 +57,34 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Content="SC中文社区" Command="{Binding NavigateHomeCommand}" Width="110" />
-                    <Button Grid.Column="1" Content="SC联机号" Command="{Binding NavigateSCKeyCommand}" Width="85" />
-                    <Button Grid.Column="2" Content="SC导航网" Command="{Binding NavigateSCWZCommand}" Width="85" />
                     <!-- Address bar -->
-                    <TextBox Grid.Column="3" x:Name="AddressBar"
+                    <TextBox Grid.Column="0" x:Name="AddressBar"
                              Text="{Binding CurrentUrl, Mode=OneWay}"
                              PlaceholderText="输入网址后按回车或点跳转"
                              Width="300"
                              VerticalAlignment="Center"
                              KeyDown="AddressBar_KeyDown" />
-                    <Button Grid.Column="4" x:Name="GoButton"
+                    <Button Grid.Column="1" x:Name="GoButton"
                             Content="跳转"
                             Width="50"
                             Click="GoButton_Click" />
-                    <Button Grid.Column="5" Content="后退"
+                    <Button Grid.Column="2" Content="后退"
                             Command="{Binding NavigateBackCommand}"
                             Width="50" />
-                    <Button Grid.Column="6" Content="前进"
+                    <Button Grid.Column="3" Content="前进"
                             Command="{Binding NavigateForwardCommand}"
                             Width="50" />
                     <!-- Spacer -->
-                    <Border Grid.Column="7" />
+                    <Border Grid.Column="4" />
                     <!-- Loading indicator -->
-                    <TextBlock Grid.Column="8" Text="加载中..." VerticalAlignment="Center"
+                    <TextBlock Grid.Column="5" Text="加载中..." VerticalAlignment="Center"
                                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    <Button Grid.Column="9" Content="设置" Command="{Binding OpenSettingsCommand}" Width="60" />
+                    <Button Grid.Column="6" Content="设置" Command="{Binding OpenSettingsCommand}" Width="60" />
                 </Grid>
             </Border>
 
@@ -98,28 +93,18 @@
                     Visibility="Collapsed"
                     Background="{ThemeResource SystemAltMediumLowColor}">
                 <StackPanel Spacing="3">
-                    <!-- 第1行：首页 + 快捷链接 + 设置 -->
+                    <!-- 第1行：加载指示 + 设置 -->
                     <Grid ColumnSpacing="4">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" Content="SC中文社区" FontSize="12"
-                                Command="{Binding NavigateHomeCommand}" Width="95" Padding="4,4" />
-                        <Button Grid.Column="1" Content="SC联机号" FontSize="12"
-                                Command="{Binding NavigateSCKeyCommand}" Width="70" Padding="4,4" />
-                        <Button Grid.Column="2" Content="SC导航网" FontSize="12"
-                                Command="{Binding NavigateSCWZCommand}" Width="70" Padding="4,4" />
-                        <!-- 加载指示 -->
-                        <TextBlock Grid.Column="3" Text="加载中..." VerticalAlignment="Center" FontSize="11"
+                        <TextBlock Grid.Column="0" Text="加载中..." VerticalAlignment="Center" FontSize="11"
                                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <!-- 弹性空白：推动设置按钮到最右 -->
-                        <Border Grid.Column="4" />
-                        <Button Grid.Column="5" Content="设置" FontSize="12"
+                        <Border Grid.Column="1" />
+                        <Button Grid.Column="2" Content="设置" FontSize="12"
                                 Command="{Binding OpenSettingsCommand}" Width="55" Padding="4,4" />
                     </Grid>
                     <!-- 第2行：地址栏 + 跳转 + 后退 + 前进 -->
@@ -153,6 +138,24 @@
             <!-- Browser host -->
             <Grid Grid.Row="1" x:Name="BrowserHost"
                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+            <!-- ========== 底栏 (SC 快捷链接) ========== -->
+            <Border Grid.Row="2" Padding="4,2"
+                    Background="{ThemeResource SystemAltMediumLowColor}">
+                <Grid ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="SC中文社区" Command="{Binding NavigateHomeCommand}" Width="110" />
+                    <Button Grid.Column="1" Content="SC联机号" Command="{Binding NavigateSCKeyCommand}" Width="85" />
+                    <Button Grid.Column="2" Content="SC导航网" Command="{Binding NavigateSCWZCommand}" Width="85" />
+                    <!-- Spacer -->
+                    <Border Grid.Column="3" />
+                </Grid>
+            </Border>
         </Grid>
 
         <!-- 设置面板覆盖层 -->
