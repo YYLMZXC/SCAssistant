@@ -14,12 +14,17 @@
         <SolidColorBrush x:Key="TabSelectedBg" Color="#0078D4" />
         <SolidColorBrush x:Key="TabUnselectedBg" Color="Transparent" />
         <SolidColorBrush x:Key="TabSelectedFg" Color="White" />
-        <SolidColorBrush x:Key="TabUnselectedFg" Color="{ThemeResource SystemBaseMediumColor}" />
+        <SolidColorBrush x:Key="TabUnselectedFg" Color="#666666" />
+
+        <!-- 白色面板下的固定文字颜色 -->
+        <SolidColorBrush x:Key="PanelTextColor" Color="#1A1A1A" />
+        <SolidColorBrush x:Key="PanelCardBg" Color="#F3F3F3" />
+        <SolidColorBrush x:Key="PanelCardStroke" Color="#E0E0E0" />
     </UserControl.Resources>
 
-    <!-- 右侧滑出面板 -->
-    <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-            BorderBrush="{ThemeResource SystemBaseLowColor}"
+    <!-- 右侧滑出面板（固定白色，像浏览器设置弹层） -->
+    <Border Background="White"
+            BorderBrush="#E0E0E0"
             BorderThickness="1,0,0,0"
             CornerRadius="8,0,0,8"
             Padding="16,12"
@@ -34,9 +39,11 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="设置" FontSize="18" FontWeight="Bold"
+                           Foreground="{StaticResource PanelTextColor}"
                            VerticalAlignment="Center" />
                 <Button Grid.Column="1" Content="✕" Width="32" Height="32"
                         FontSize="14" Padding="4"
+                        Foreground="{StaticResource PanelTextColor}"
                         Click="CloseButton_Click" />
             </Grid>
 
@@ -64,7 +71,7 @@
                 <!-- Tab 0: 浏览器标识设置 -->
                 <StackPanel x:Name="BrowserSettingsPanel" Spacing="12" Visibility="Visible">
                     <TextBlock Text="浏览器标识 (User-Agent)" FontSize="15" FontWeight="SemiBold"
-                               Foreground="{ThemeResource SystemBaseHighColor}" />
+                               Foreground="{StaticResource PanelTextColor}" />
                     <TextBlock Text="选择浏览网页时使用的浏览器标识。修改后当前页面将自动刷新。"
                                FontSize="12" Foreground="Gray" TextWrapping="Wrap" />
                     <ComboBox x:Name="UaComboBox"
@@ -81,12 +88,13 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <Border Background="{ThemeResource CardBackgroundFillColorDefault}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                    <Border Background="{StaticResource PanelCardBg}"
+                            BorderBrush="{StaticResource PanelCardStroke}"
                             BorderThickness="1" CornerRadius="6" Padding="12,8"
                             Margin="0,8,0,0">
                         <StackPanel Spacing="4">
-                            <TextBlock Text="提示" FontWeight="SemiBold" FontSize="13" />
+                            <TextBlock Text="提示" FontWeight="SemiBold" FontSize="13"
+                                       Foreground="{StaticResource PanelTextColor}" />
                             <TextBlock Text="• 跟随系统：使用当前设备的默认浏览器标识"
                                        FontSize="11" Foreground="Gray" />
                             <TextBlock Text="• 桌面版：模拟 Windows Chrome 浏览器，部分网站会显示桌面版页面"
@@ -112,7 +120,7 @@
                 <!-- Tab 2: 历史记录 -->
                 <StackPanel x:Name="HistorySettingsPanel" Spacing="8" Visibility="Collapsed">
                     <TextBlock Text="浏览历史" FontSize="15" FontWeight="SemiBold"
-                               Foreground="{ThemeResource SystemBaseHighColor}" />
+                               Foreground="{StaticResource PanelTextColor}" />
                     <TextBlock Text="点击条目可跳转到对应页面。" FontSize="12"
                                Foreground="Gray" TextWrapping="Wrap" />
 
@@ -128,7 +136,7 @@
                                            FontSize="12"
                                            TextTrimming="CharacterEllipsis"
                                            Padding="8,6"
-                                           Foreground="{ThemeResource SystemBaseHighColor}" />
+                                           Foreground="{StaticResource PanelTextColor}" />
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

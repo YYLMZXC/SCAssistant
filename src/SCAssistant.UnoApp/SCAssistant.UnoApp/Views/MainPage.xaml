@@ -241,11 +241,10 @@
             </Border>
         </Grid>
 
-        <!-- 设置面板覆盖层 -->
+        <!-- 设置面板覆盖层（无遮罩，打开时仍能看到主界面/浏览器内容） -->
         <Grid x:Name="SettingsOverlay"
               Visibility="Collapsed"
               Canvas.ZIndex="100">
-            <Grid Background="#80000000" />
             <!-- 设置面板靠右显示 -->
             <views:SettingsPanel x:Name="SettingsPanelControl"
                                   DataContext="{Binding Settings}"

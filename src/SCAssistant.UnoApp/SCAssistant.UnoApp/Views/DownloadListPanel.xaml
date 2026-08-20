@@ -12,10 +12,12 @@
         <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
         <converters:DownloadStateToTextConverter x:Key="StateToTextConverter" />
         <converters:ProgressToPercentTextConverter x:Key="ProgressToPercentTextConverter" />
+        <!-- 白色面板下的固定文字颜色 -->
+        <SolidColorBrush x:Key="PanelTextColor" Color="#1A1A1A" />
     </UserControl.Resources>
 
-    <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-            BorderBrush="{ThemeResource SystemBaseLowColor}"
+    <Border Background="White"
+            BorderBrush="#E0E0E0"
             BorderThickness="1" CornerRadius="4" Padding="8">
         <Grid>
             <Grid.RowDefinitions>
@@ -26,6 +28,7 @@
 
             <!-- Header -->
             <TextBlock Grid.Row="0" Text="下载文件列表" FontSize="16" FontWeight="Bold"
+                       Foreground="{StaticResource PanelTextColor}"
                        Margin="0,0,0,8" />
 
             <!-- List -->
@@ -40,6 +43,7 @@
                                 <!-- 文件名 + 文件大小 -->
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0" Text="{Binding FileName}" FontWeight="Bold"
+                                               Foreground="{StaticResource PanelTextColor}"
                                                TextTrimming="CharacterEllipsis" />
                                     <TextBlock Grid.Column="1" Text="{Binding FileSizeDisplay}"
                                                FontSize="11" Foreground="Gray"
