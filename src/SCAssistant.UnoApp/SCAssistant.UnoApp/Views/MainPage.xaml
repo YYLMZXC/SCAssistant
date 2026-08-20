@@ -61,71 +61,76 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- ========== 宽屏工具栏 (桌面端，单行) ========== -->
+            <!-- ========== 宽屏工具栏 (桌面端，单行：前进后退|地址栏居中|跳转|设置) ========== -->
             <Border Grid.Row="0" x:Name="WideToolbar" Padding="4,2"
                     Background="{ThemeResource SystemAltMediumLowColor}">
-                <Grid ColumnSpacing="6">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- Address bar -->
-                    <TextBox Grid.Column="0" x:Name="AddressBar"
-                             Text="{Binding CurrentUrl, Mode=OneWay}"
-                             PlaceholderText="输入网址后按回车或点跳转"
-                             Width="300"
-                             VerticalAlignment="Center"
-                             KeyDown="AddressBar_KeyDown" />
-                    <Button Grid.Column="1" x:Name="GoButton"
-                            Content="跳转"
-                            Width="50"
-                            Click="GoButton_Click" />
-                    <Button Grid.Column="2" Content="后退"
-                            Command="{Binding NavigateBackCommand}"
-                            Width="50" />
-                    <Button Grid.Column="3" Content="前进"
-                            Command="{Binding NavigateForwardCommand}"
-                            Width="50" />
-                    <!-- Spacer -->
-                    <Border Grid.Column="4" />
-                    <!-- Loading indicator -->
-                    <TextBlock Grid.Column="5" Text="加载中..." VerticalAlignment="Center"
-                               Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
-                    <Button Grid.Column="6" Content="设置" Command="{Binding OpenSettingsCommand}" Width="60" />
+                    <!-- 左区：后退 / 前进（左对齐） -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                HorizontalAlignment="Left" Spacing="6">
+                        <Button Content="后退" Command="{Binding NavigateBackCommand}" Width="50" />
+                        <Button Content="前进" Command="{Binding NavigateForwardCommand}" Width="50" />
+                    </StackPanel>
+
+                    <!-- 中区：地址栏 + 跳转（组合居中，跳转紧贴地址栏） -->
+                    <Grid Grid.Column="1" ColumnSpacing="4" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" x:Name="AddressBar"
+                                 Text="{Binding CurrentUrl, Mode=OneWay}"
+                                 PlaceholderText="输入网址后按回车或点跳转"
+                                 VerticalAlignment="Center"
+                                 KeyDown="AddressBar_KeyDown" />
+                        <Button Grid.Column="1" x:Name="GoButton" Content="跳转" Width="50"
+                                Click="GoButton_Click" />
+                    </Grid>
+
+                    <!-- 右区：加载中 / 设置（右对齐，设置贴最右） -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                HorizontalAlignment="Right" Spacing="6">
+                        <TextBlock Text="加载中..." VerticalAlignment="Center"
+                                   Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Button Content="设置" Command="{Binding OpenSettingsCommand}" Width="60" />
+                    </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- ========== 窄屏工具栏 (手机端，双行) ========== -->
+            <!-- ========== 窄屏工具栏 (手机端，双行：后退前进|地址栏|跳转|设置) ========== -->
             <Border Grid.Row="0" x:Name="NarrowToolbar" Padding="4,2"
                     Visibility="Collapsed"
                     Background="{ThemeResource SystemAltMediumLowColor}">
                 <StackPanel Spacing="3">
-                    <!-- 第1行：加载指示 + 设置 -->
+                    <!-- 第1行：后退 + 前进 + 加载中（弹性） + 设置 -->
                     <Grid ColumnSpacing="4">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="加载中..." VerticalAlignment="Center" FontSize="11"
+                        <Button Grid.Column="0" Content="后退" FontSize="12"
+                                Command="{Binding NavigateBackCommand}"
+                                Width="42" Padding="2,4" />
+                        <Button Grid.Column="1" Content="前进" FontSize="12"
+                                Command="{Binding NavigateForwardCommand}"
+                                Width="42" Padding="2,4" />
+                        <TextBlock Grid.Column="2" Text="加载中..." VerticalAlignment="Center" FontSize="11"
                                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}" />
-                        <!-- 弹性空白：推动设置按钮到最右 -->
-                        <Border Grid.Column="1" />
-                        <Button Grid.Column="2" Content="设置" FontSize="12"
+                        <Button Grid.Column="3" Content="设置" FontSize="12"
                                 Command="{Binding OpenSettingsCommand}" Width="55" Padding="4,4" />
                     </Grid>
-                    <!-- 第2行：地址栏 + 跳转 + 后退 + 前进 -->
+                    <!-- 第2行：地址栏 + 跳转 -->
                     <Grid ColumnSpacing="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0" x:Name="NarrowAddressBar"
@@ -138,12 +143,6 @@
                                 Content="跳转" FontSize="12"
                                 Width="42" Padding="2,4"
                                 Click="NarrowGoButton_Click" />
-                        <Button Grid.Column="2" Content="后退" FontSize="12"
-                                Command="{Binding NavigateBackCommand}"
-                                Width="42" Padding="2,4" />
-                        <Button Grid.Column="3" Content="前进" FontSize="12"
-                                Command="{Binding NavigateForwardCommand}"
-                                Width="42" Padding="2,4" />
                     </Grid>
                 </StackPanel>
             </Border>
