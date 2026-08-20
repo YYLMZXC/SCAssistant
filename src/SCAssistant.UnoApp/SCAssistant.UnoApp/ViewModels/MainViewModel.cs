@@ -116,6 +116,7 @@ public class MainViewModel : INotifyPropertyChanged
     public IRelayCommand NavigateHomeCommand { get; }
     public IRelayCommand NavigateSCKeyCommand { get; }
     public IRelayCommand NavigateSCWZCommand { get; }
+    public IRelayCommand GoHomeCommand { get; }
     public IRelayCommand NavigateBackCommand { get; }
     public IRelayCommand NavigateForwardCommand { get; }
     public IRelayCommand ReloadCommand { get; }
@@ -142,6 +143,7 @@ public class MainViewModel : INotifyPropertyChanged
         NavigateHomeCommand = new RelayCommand(() => NavigateTo("https://www.scbbs.top/"));
         NavigateSCKeyCommand = new RelayCommand(() => NavigateTo("https://www.sckey.net/"));
         NavigateSCWZCommand = new RelayCommand(() => NavigateTo("https://www.scwz.top/"));
+        GoHomeCommand = new RelayCommand(NavigateToHome);
         NavigateBackCommand = new RelayCommand(() => _browser.GoBack(), () => _browser.CanGoBack);
         NavigateForwardCommand = new RelayCommand(() => _browser.GoForward(), () => _browser.CanGoForward);
         ReloadCommand = new RelayCommand(() => _browser.Reload());
