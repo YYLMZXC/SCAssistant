@@ -9,7 +9,7 @@ public interface IBrowserProvider
     event EventHandler<string>? AddressChanged;
     event EventHandler<string>? TitleChanged;
     event EventHandler<bool>? LoadingStateChanged;
-    event EventHandler<string>? DownloadRequested;
+    event EventHandler<DownloadRequestedEventArgs>? DownloadRequested;
     event EventHandler? NavigationHistoryChanged;
 
     string CurrentUrl { get; }

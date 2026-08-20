@@ -18,8 +18,6 @@
 
         <!-- 白色面板下的固定文字颜色 -->
         <SolidColorBrush x:Key="PanelTextColor" Color="#1A1A1A" />
-        <SolidColorBrush x:Key="PanelCardBg" Color="#F3F3F3" />
-        <SolidColorBrush x:Key="PanelCardStroke" Color="#E0E0E0" />
     </UserControl.Resources>
 
     <!-- 右侧滑出面板（固定白色，像浏览器设置弹层） -->
@@ -87,22 +85,6 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-
-                    <Border Background="{StaticResource PanelCardBg}"
-                            BorderBrush="{StaticResource PanelCardStroke}"
-                            BorderThickness="1" CornerRadius="6" Padding="12,8"
-                            Margin="0,8,0,0">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="提示" FontWeight="SemiBold" FontSize="13"
-                                       Foreground="{StaticResource PanelTextColor}" />
-                            <TextBlock Text="• 跟随系统：使用当前设备的默认浏览器标识"
-                                       FontSize="11" Foreground="Gray" />
-                            <TextBlock Text="• 桌面版：模拟 Windows Chrome 浏览器，部分网站会显示桌面版页面"
-                                       FontSize="11" Foreground="Gray" />
-                            <TextBlock Text="• 移动版：模拟 Android Chrome 浏览器，获得移动端优化的页面"
-                                       FontSize="11" Foreground="Gray" />
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
 
                 <!-- Tab 1: 下载管理 -->

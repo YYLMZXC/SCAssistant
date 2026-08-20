@@ -27,8 +27,11 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ObservableCollection<UaOption> UaOptions { get; } = new()
     {
         new UaOption { Platform = UserAgentPlatform.Auto, DisplayName = "跟随系统" },
-        new UaOption { Platform = UserAgentPlatform.Desktop, DisplayName = "桌面版 (Windows Chrome)" },
-        new UaOption { Platform = UserAgentPlatform.Mobile, DisplayName = "移动版 (Android Chrome)" },
+        new UaOption { Platform = UserAgentPlatform.Desktop, DisplayName = "Windows (Chrome)" },
+        new UaOption { Platform = UserAgentPlatform.Mobile, DisplayName = "安卓 (Android Chrome)" },
+        new UaOption { Platform = UserAgentPlatform.IPhone, DisplayName = "iPhone (iOS Chrome)" },
+        new UaOption { Platform = UserAgentPlatform.Linux, DisplayName = "Linux (Chrome)" },
+        new UaOption { Platform = UserAgentPlatform.MacOS, DisplayName = "macOS (Chrome)" },
     };
 
     /// <summary>当前选中的标签页索引：0=浏览器设置，1=下载管理，2=历史记录。</summary>

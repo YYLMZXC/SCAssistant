@@ -264,32 +264,19 @@ public class MainViewModel : INotifyPropertyChanged
     /// <summary>
     /// 当 BrowserProvider 检测到可下载文件时触发。
     /// 自动弹出设置面板并切换到下载标签，启动下载。
+    /// 文件名优先级：服务器 Content-Disposition / ResultFilePath > URL 提取 > 兜底默认名。
     /// </summary>
-    private void OnDownloadRequested(object? sender, string url)
+    private void OnDownloadRequested(object? sender, DownloadRequestedEventArgs e)
     {
-        LogHelper.Info($"[主页] OnDownloadRequested -> {url}");
-
-        var fileName = GetFileNameFromUrl(url);
+        LogHelper.Info($"[主页] OnDownloadRequested -> {e.Url}" +
+                       (string.IsNullOrEmpty(e.FileName) ? string.Empty : $", 文件名={e.FileName}"));
 
         // 自动显示设置面板（下载标签页）
         Settings?.ShowDownloads();
         IsSettingsVisible = true;
 
-        // 启动下载
-        DownloadList.StartDownload(url, fileName);
-    }
-
-    private static string GetFileNameFromUrl(string url)
-    {
-        try
-        {
-            var uri = new Uri(url);
-            var path = uri.AbsolutePath;
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrWhiteSpace(name)) return name;
-        }
-        catch { }
-        return "download";
+        // 启动下载（文件名缺省时由下载管理从 URL 推断）
+        DownloadList.StartDownload(e.Url, e.FileName);
     }
 
     // ===================== INPC =====================

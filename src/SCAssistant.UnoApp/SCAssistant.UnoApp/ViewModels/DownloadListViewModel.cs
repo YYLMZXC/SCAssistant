@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SCAssistant.UnoApp.Models;
@@ -23,6 +24,9 @@ public partial class DownloadListViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial DownloadRecord? SelectedRecord { get; set; }
+
+    /// <summary>是否有下载记录（用于空状态提示）。</summary>
+    public bool HasRecords => Records.Count > 0;
 
     public DownloadListViewModel(
         IDownloadHistoryService historyService,
@@ -62,6 +66,8 @@ public partial class DownloadListViewModel : ViewModelBase
             if (!Records.Any(rec => rec.Id == r.Id))
                 Records.Add(r);
         }
+
+        OnPropertyChanged(nameof(HasRecords));
     }
 
     private void Refresh()
@@ -69,18 +75,22 @@ public partial class DownloadListViewModel : ViewModelBase
         Records.Clear();
         foreach (var r in _historyService.Records)
             Records.Add(r);
+        OnPropertyChanged(nameof(HasRecords));
         LogHelper.Info($"[下载列表] 刷新完成，共 {Records.Count} 条记录");
     }
 
     /// <summary>
-    /// 开始下载文件。自动从 WebView 获取 Cookie 以支持鉴权下载。
+    /// 开始下载文件（浏览器式入口）。自动从 WebView 获取 Cookie 以支持鉴权下载。
+    /// 文件名缺省时从 URL 推断，支持任意文件格式。
     /// </summary>
-    public async void StartDownload(string url, string fileName)
+    public async void StartDownload(string url, string? fileName = null)
     {
         var record = new DownloadRecord
         {
             Id = Guid.NewGuid().ToString("N")[..12],
-            FileName = fileName,
+            FileName = string.IsNullOrWhiteSpace(fileName)
+                ? BrowserProvider.GetFileNameFromUrl(url)
+                : fileName,
             Url = url,
             State = DownloadState.Pending,
             DownloadTime = DateTime.Now
@@ -88,15 +98,25 @@ public partial class DownloadListViewModel : ViewModelBase
 
         _historyService.AddRecord(record);
         Records.Add(record);
-        LogHelper.Info($"[下载列表] 新增下载任务: {fileName}");
+        OnPropertyChanged(nameof(HasRecords));
+        LogHelper.Info($"[下载列表] 新增下载任务: {record.FileName}, URL={url}");
 
+        await DownloadAsync(record);
+    }
+
+    /// <summary>
+    /// 执行下载任务（新任务与重试共用）。
+    /// 进度通过 Progress 组件封送到 UI 线程，实现进度条实时刷新。
+    /// </summary>
+    private async Task DownloadAsync(DownloadRecord record)
+    {
         // 从浏览器获取 Cookie 用于鉴权
         string? cookies = null;
         if (_browserProvider is not null)
         {
             try
             {
-                cookies = await _browserProvider.GetCookiesAsync(url);
+                cookies = await _browserProvider.GetCookiesAsync(record.Url);
                 LogHelper.Info($"[下载列表] 获取到 Cookie: {(string.IsNullOrEmpty(cookies) ? "无" : $"{cookies.Length} 字符")}");
             }
             catch (Exception ex)
@@ -107,20 +127,99 @@ public partial class DownloadListViewModel : ViewModelBase
 
         try
         {
+            var progress = new Progress<(double Percent, long Received, long Total)>(p =>
+            {
+                record.Progress = p.Percent;
+            });
+
             await _downloadService.StartDownloadAsync(
                 record,
-                onProgress: null,
+                onProgress: progress,
                 ct: CancellationToken.None,
                 cookies: cookies);
-            // 下载完成后刷新历史记录
+
+            // 下载完成后刷新历史记录（含最终文件名/路径/状态）
             _historyService.UpdateRecord(record);
             LogHelper.Info($"[下载列表] 下载完成: {record.FileName}, 状态={record.State}");
         }
         catch (Exception ex)
         {
             LogHelper.Error($"[下载列表] 下载异常: {record.FileName}", ex);
+            _historyService.UpdateRecord(record);
         }
     }
+
+    /// <summary>取消下载任务（下载中/等待中的记录）。</summary>
+    [RelayCommand]
+    private void CancelDownload(DownloadRecord? record)
+    {
+        record ??= SelectedRecord;
+        if (record is null) return;
+        if (record.CanCancel)
+        {
+            LogHelper.Info($"[下载列表] 取消下载: {record.FileName}");
+            _downloadService.CancelDownload(record.Id);
+        }
+    }
+
+    /// <summary>重试下载任务（失败/已取消的记录）。</summary>
+    [RelayCommand]
+    private async Task RetryDownloadAsync(DownloadRecord? record)
+    {
+        record ??= SelectedRecord;
+        if (record is null) return;
+        if (!record.CanRetry)
+        {
+            LogHelper.Warn($"[下载列表] 当前状态不可重试: {record.State}");
+            return;
+        }
+
+        LogHelper.Info($"[下载列表] 重试下载: {record.FileName}");
+        record.State = DownloadState.Pending;
+        record.Progress = 0;
+        record.ErrorMessage = null;
+        record.CompletedTime = null;
+        record.LocalPath = string.Empty;
+        record.FileSize = 0;
+        record.MimeType = string.Empty;
+        _historyService.UpdateRecord(record);
+
+        await DownloadAsync(record);
+    }
+
+    /// <summary>打开已下载的文件（Completed 记录）。</summary>
+    [RelayCommand]
+    private void OpenFile(DownloadRecord? record)
+    {
+        record ??= SelectedRecord;
+        if (record is null) return;
+        if (!record.CanOpen) return;
+
+        var localPath = record.LocalPath;
+        if (string.IsNullOrWhiteSpace(localPath) || !File.Exists(localPath))
+        {
+            LogHelper.Warn($"[下载列表] 打开文件失败，文件不存在: {localPath}");
+            return;
+        }
+
+        LogHelper.Info($"[下载列表] 打开文件: {localPath}");
+#if ANDROID
+        OpenFileOnAndroid(localPath);
+#else
+        try
+        {
+            Process.Start(new ProcessStartInfo(localPath) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error($"[下载列表] 打开文件失败: {ex.Message}", ex);
+        }
+#endif
+    }
+
+    /// <summary>打开下载目录命令（供下载面板 Header 按钮绑定）。</summary>
+    [RelayCommand]
+    private void OpenDownloadsFolder() => OpenDownloadFolder();
 
     /// <summary>打开下载目录（供 SettingsViewModel 调用）。</summary>
     public void OpenDownloadFolder()
@@ -151,6 +250,7 @@ public partial class DownloadListViewModel : ViewModelBase
         LogHelper.Info("[下载列表] 删除所有记录");
         _historyService.ClearHistory();
         Records.Clear();
+        OnPropertyChanged(nameof(HasRecords));
     }
 
     /// <summary>清除所有下载历史记录（供 SettingsViewModel 调用）。</summary>
@@ -160,15 +260,16 @@ public partial class DownloadListViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void OpenFolder()
+    private void OpenFolder(DownloadRecord? record)
     {
-        if (SelectedRecord == null)
+        record ??= SelectedRecord;
+        if (record == null)
         {
             LogHelper.Warn("[下载列表] OpenFolder - 未选中任何记录");
             return;
         }
 
-        var localPath = SelectedRecord.LocalPath;
+        var localPath = record.LocalPath;
 
 #if ANDROID
         // Android: 使用 Intent 打开文件
@@ -200,6 +301,27 @@ public partial class DownloadListViewModel : ViewModelBase
             }
         }
 #endif
+    }
+
+    [RelayCommand]
+    private void DeleteRecord(DownloadRecord? record)
+    {
+        record ??= SelectedRecord;
+        if (record == null)
+        {
+            LogHelper.Warn("[下载列表] 删除记录 - 未选中任何记录");
+            return;
+        }
+
+        // 如果正在下载中，先取消
+        if (record.State == DownloadState.Downloading)
+            _downloadService.CancelDownload(record.Id);
+
+        LogHelper.Info($"[下载列表] 删除记录: Id={record.Id}, Name={record.FileName}");
+        _historyService.RemoveRecord(record);
+        Records.Remove(record);
+        if (SelectedRecord == record) SelectedRecord = null;
+        OnPropertyChanged(nameof(HasRecords));
     }
 
 #if ANDROID
@@ -344,23 +466,4 @@ public partial class DownloadListViewModel : ViewModelBase
         }
     }
 #endif
-
-    [RelayCommand]
-    private void DeleteRecord()
-    {
-        if (SelectedRecord == null)
-        {
-            LogHelper.Warn("[下载列表] 删除记录 - 未选中任何记录");
-            return;
-        }
-
-        // 如果正在下载中，先取消
-        if (SelectedRecord.State == DownloadState.Downloading)
-            _downloadService.CancelDownload(SelectedRecord.Id);
-
-        LogHelper.Info($"[下载列表] 删除记录: Id={SelectedRecord.Id}, Name={SelectedRecord.FileName}");
-        _historyService.RemoveRecord(SelectedRecord);
-        Records.Remove(SelectedRecord);
-        SelectedRecord = null;
-    }
 }

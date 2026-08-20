@@ -239,18 +239,18 @@
                             Style="{StaticResource BottomBarButtonStyle}" />
                 </Grid>
             </Border>
-        </Grid>
-
-        <!-- 设置面板覆盖层（无遮罩，打开时仍能看到主界面/浏览器内容） -->
-        <Grid x:Name="SettingsOverlay"
-              Visibility="Collapsed"
-              Canvas.ZIndex="100">
-            <!-- 设置面板靠右显示 -->
-            <views:SettingsPanel x:Name="SettingsPanelControl"
-                                  DataContext="{Binding Settings}"
-                                  HorizontalAlignment="Right"
-                                  VerticalAlignment="Stretch"
-                                  Width="380" />
+            <!-- 设置面板覆盖层（无遮罩，打开时仍能看到主界面/浏览器内容） -->
+            <Grid x:Name="SettingsOverlay"
+                  Grid.RowSpan="3"
+                  Visibility="Collapsed"
+                  Canvas.ZIndex="100">
+                <!-- 设置面板靠右显示 -->
+                <views:SettingsPanel x:Name="SettingsPanelControl"
+                                      DataContext="{Binding Settings}"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Stretch"
+                                      Width="380" />
+            </Grid>
         </Grid>
     </Grid>
 </Page>

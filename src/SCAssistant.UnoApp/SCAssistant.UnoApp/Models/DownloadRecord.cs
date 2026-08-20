@@ -17,6 +17,7 @@ public class DownloadRecord : INotifyPropertyChanged
     private DownloadState _state;
     private string? _errorMessage;
     private double _progress;
+    private string _mimeType = string.Empty;
 
     public string Id
     {
@@ -74,7 +75,16 @@ public class DownloadRecord : INotifyPropertyChanged
     public DownloadState State
     {
         get => _state;
-        set { _state = value; OnPropertyChanged(); }
+        set
+        {
+            if (_state == value) return;
+            _state = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(StateText));
+            OnPropertyChanged(nameof(CanCancel));
+            OnPropertyChanged(nameof(CanRetry));
+            OnPropertyChanged(nameof(CanOpen));
+        }
     }
 
     public string? ErrorMessage
@@ -88,6 +98,37 @@ public class DownloadRecord : INotifyPropertyChanged
         get => _progress;
         set { _progress = value; OnPropertyChanged(); }
     }
+
+    /// <summary>响应 Content-Type（如 application/zip），供 UI 展示与打开方式判断。</summary>
+    public string MimeType
+    {
+        get => _mimeType;
+        set { _mimeType = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>状态显示文本。</summary>
+    [JsonIgnore]
+    public string StateText => State switch
+    {
+        DownloadState.Pending => "等待中",
+        DownloadState.Downloading => "下载中",
+        DownloadState.Completed => "已完成",
+        DownloadState.Failed => "失败",
+        DownloadState.Cancelled => "已取消",
+        _ => State.ToString()
+    };
+
+    /// <summary>是否可取消（下载中/等待中）。</summary>
+    [JsonIgnore]
+    public bool CanCancel => State == DownloadState.Downloading || State == DownloadState.Pending;
+
+    /// <summary>是否可重试（失败/已取消）。</summary>
+    [JsonIgnore]
+    public bool CanRetry => State == DownloadState.Failed || State == DownloadState.Cancelled;
+
+    /// <summary>是否可打开文件（已完成）。</summary>
+    [JsonIgnore]
+    public bool CanOpen => State == DownloadState.Completed;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

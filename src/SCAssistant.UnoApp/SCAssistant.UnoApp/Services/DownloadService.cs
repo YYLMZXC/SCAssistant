@@ -60,7 +60,21 @@ public class DownloadService : IDownloadService
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             record.FileSize = totalBytes > 0 ? totalBytes : 0;
 
-            LogHelper.Info($"[下载服务] 响应 200 OK, 文件大小: {(totalBytes > 0 ? $"{totalBytes} 字节" : "未知")}");
+            // 记录响应 Content-Type
+            if (response.Content.Headers.ContentType is not null)
+                record.MimeType = response.Content.Headers.ContentType.MediaType ?? string.Empty;
+
+            LogHelper.Info($"[下载服务] 响应 200 OK, 文件大小: {(totalBytes > 0 ? $"{totalBytes} 字节" : "未知")}" +
+                           (string.IsNullOrEmpty(record.MimeType) ? string.Empty : $", 类型: {record.MimeType}"));
+
+            // HTML 错误页/登录页检测：
+            // 下载接口返回 text/html 且 URL 路径不是网页型扩展名时，多半是
+            // 服务器返回了错误页、验证页或登录跳转，中止下载避免写入垃圾文件。
+            if (IsHtmlErrorResponse(response, record.Url))
+            {
+                throw new InvalidOperationException(
+                    "服务器返回了 HTML 页面而非文件（可能是登录/验证/错误页），请检查下载地址");
+            }
 
             // 确定保存路径
             var downloadDir = GetDownloadDirectory();
@@ -69,9 +83,11 @@ public class DownloadService : IDownloadService
             // 处理重名文件
             var savePath = GetSavePath(downloadDir, record.FileName);
 
-            // 如果文件名未知，尝试从 URL 或 Content-Disposition 获取
+            // 如果文件名未知，尝试从 URL 或 Content-Disposition 获取；否则清理非法字符
             if (string.IsNullOrWhiteSpace(record.FileName))
                 record.FileName = GetFileNameFromResponse(response, record.Url);
+            else
+                record.FileName = CleanFileName(record.FileName);
 
             savePath = GetSavePath(downloadDir, record.FileName);
             record.LocalPath = savePath;
@@ -173,33 +189,82 @@ public class DownloadService : IDownloadService
 
     private static string GetFileNameFromResponse(HttpResponseMessage response, string url)
     {
-        // 先从 Content-Disposition 头部获取
+        // 1) 优先从 Content-Disposition 头部获取（filename* 支持 RFC 5987 的 UTF-8 文件名）
         var contentDisposition = response.Content.Headers.ContentDisposition;
-        if (contentDisposition?.FileName is not null)
+        if (contentDisposition is not null)
         {
-            var fileName = contentDisposition.FileName.Trim('"');
-            if (!string.IsNullOrWhiteSpace(fileName))
-                return Uri.UnescapeDataString(fileName);
-        }
-        if (contentDisposition?.FileNameStar is not null)
-        {
-            var fileName = contentDisposition.FileNameStar.Trim('"');
-            if (!string.IsNullOrWhiteSpace(fileName))
-                return Uri.UnescapeDataString(fileName);
+            var headerName = contentDisposition.FileNameStar ?? contentDisposition.FileName;
+            if (!string.IsNullOrWhiteSpace(headerName))
+            {
+                var fileName = CleanFileName(Uri.UnescapeDataString(headerName.Trim('"')));
+                if (!string.IsNullOrWhiteSpace(fileName))
+                    return fileName;
+            }
         }
 
-        // 从 URL 中提取文件名
+        // 2) 从 URL 中提取文件名（兼容带查询参数与无扩展名的下载接口）
         try
         {
             var uri = new Uri(url);
-            var path = uri.AbsolutePath;
-            var name = Path.GetFileName(path);
+            var name = Path.GetFileName(uri.AbsolutePath);
             if (!string.IsNullOrWhiteSpace(name))
-                return Uri.UnescapeDataString(name);
+            {
+                var fileName = CleanFileName(Uri.UnescapeDataString(name));
+                if (!string.IsNullOrWhiteSpace(fileName))
+                    return fileName;
+            }
         }
         catch { }
 
         return "download";
+    }
+
+    /// <summary>
+    /// 判断响应是否为"HTML 页面而非文件"。
+    /// 当响应为 text/html 且 URL 路径不指向网页型扩展名时判定为错误页/登录页。
+    /// </summary>
+    private static bool IsHtmlErrorResponse(HttpResponseMessage response, string url)
+    {
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        if (string.IsNullOrEmpty(mediaType)) return false;
+        if (!mediaType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase)) return false;
+
+        // URL 本身指向 .html/.htm 页面（如静态站点的直接下载），则视为正常
+        try
+        {
+            var path = new Uri(url).AbsolutePath.ToLowerInvariant();
+            if (path.EndsWith(".html", StringComparison.Ordinal) ||
+                path.EndsWith(".htm", StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+        catch
+        {
+            // URL 解析失败时按错误处理
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 清理文件名中的非法字符并限制长度，避免写入失败或路径穿越。
+    /// </summary>
+    private static string CleanFileName(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return "download";
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = new System.Collections.Generic.List<char>(fileName.Length);
+        foreach (var c in fileName)
+        {
+            chars.Add(Array.IndexOf(invalid, c) >= 0 ? '_' : c);
+        }
+
+        var cleaned = new string(chars.ToArray()).Trim();
+        if (cleaned.Length == 0) return "download";
+        if (cleaned.Length > 150) cleaned = cleaned[..150]; // 限制长度，避免路径过长
+
+        return cleaned;
     }
 
     private static void TryDeleteFile(string? path)
