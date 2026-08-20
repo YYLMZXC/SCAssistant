@@ -466,7 +466,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private Activity? GetAndroidActivity()
     {
         // 优先由入口点注入静态 CurrentActivity
-        var mainActivityType = Type.GetType("SCAssistant.AvaloniaApp.Android.MainActivity, SCAssistant.AvaloniaApp.Android");
+        var mainActivityType = Type.GetType("SCAssistant.AvaloniaApp.Platforms.Android.MainActivity, SCAssistant.AvaloniaApp");
         if (mainActivityType != null)
         {
             var prop = mainActivityType.GetProperty("CurrentActivity", BindingFlags.Public | BindingFlags.Static);
@@ -630,7 +630,7 @@ public class WebViewBrowserControl : Control, IBrowserProvider, IDisposable
     private UIViewController? GetIosViewController()
     {
         // 优先从入口静态属性获取
-        var appType = Type.GetType("SCAssistant.AvaloniaApp.iOS.Application, SCAssistant.AvaloniaApp.iOS");
+        var appType = Type.GetType("SCAssistant.AvaloniaApp.Platforms.iOS.Application, SCAssistant.AvaloniaApp");
         if (appType != null)
         {
             var p = appType.GetProperty("CurrentViewController", BindingFlags.Public | BindingFlags.Static);

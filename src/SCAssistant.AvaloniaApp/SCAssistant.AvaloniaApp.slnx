@@ -1,10 +1,5 @@
 ﻿<Solution>
-  <Project Path="SCAssistant.AvaloniaApp.Android/SCAssistant.AvaloniaApp.Android.csproj">
-    <Deploy />
-  </Project>
-  <Project Path="SCAssistant.AvaloniaApp.Desktop/SCAssistant.AvaloniaApp.Desktop.csproj" />
-  <Project Path="SCAssistant.AvaloniaApp.iOS/SCAssistant.AvaloniaApp.iOS.csproj">
-    <Deploy />
-  </Project>
+  <!-- 单项目模板：一个 csproj 同时支持 Windows / macOS / Linux / Android / iOS。
+       构建指定平台：dotnet build -f net10.0-windows 等。 -->
   <Project Path="SCAssistant.AvaloniaApp/SCAssistant.AvaloniaApp.csproj" />
 </Solution>

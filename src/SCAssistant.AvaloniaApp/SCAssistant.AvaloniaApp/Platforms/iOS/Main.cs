@@ -3,11 +3,11 @@ using Avalonia;
 using Avalonia.iOS;
 using Foundation;
 
-namespace SCAssistant.AvaloniaApp.iOS;
+namespace SCAssistant.AvaloniaApp.Platforms.iOS;
 
 /// <summary>
 /// iOS 应用程序入口（薄壳文件）。
-/// WebView 控件实现与工厂注册已迁移到共享项目，
+/// WebView 控件实现与工厂注册已统一在共享层 App.axaml.cs 完成，
 /// 此处仅保留 UIApplication 启动与 CurrentViewController 静态引用（供 WKWebView 嵌入使用）。
 /// </summary>
 public class Application
@@ -17,7 +17,6 @@ public class Application
 
     static void Main(string[] args)
     {
-        // 工厂注册已由共享项目 App.axaml.cs 统一处理
         UIApplication.Main(args, null, typeof(AppDelegate));
     }
 

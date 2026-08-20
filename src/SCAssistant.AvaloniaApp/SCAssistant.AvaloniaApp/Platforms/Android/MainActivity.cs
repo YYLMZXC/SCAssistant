@@ -6,17 +6,17 @@ using AndroidX.Core.View;
 using Avalonia;
 using Avalonia.Android;
 
-namespace SCAssistant.AvaloniaApp.Android;
+namespace SCAssistant.AvaloniaApp.Platforms.Android;
 
 [Activity(
-    Label = "SCAssistant.AvaloniaApp.Android",
+    Label = "SCAssistant.AvaloniaApp",
     Theme = "@style/MyTheme.NoActionBar",
     Icon = "@drawable/icon",
     MainLauncher = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
 /// <summary>
 /// Android 主 Activity（薄壳文件）。
-/// WebView 控件实现与工厂注册已迁移到共享项目，
+/// WebView 控件实现与工厂注册已统一在共享层 App.axaml.cs 完成，
 /// 此处仅保留全面屏适配与 CurrentActivity 静态引用（供 WebViewBrowserControl 查找 Context）。
 /// </summary>
 public class MainActivity : AvaloniaMainActivity
@@ -31,7 +31,6 @@ public class MainActivity : AvaloniaMainActivity
         base.OnCreate(savedInstanceState);
         CurrentActivity = this;
         EnableEdgeToEdge();
-        // 工厂注册已由共享项目 App.axaml.cs 统一处理
     }
 
     private void EnableEdgeToEdge()

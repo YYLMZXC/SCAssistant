@@ -1,22 +1,55 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <!-- ═══════════════════════════════════════════════════════════
+         Avalonia 单项目模板：一个 csproj 同时支持五个平台
+           net10.0             → Linux / macOS 桌面端（WebKit 反射）
+           net10.0-windows     → Windows 桌面端（WebView2 / Win32）
+           net10.0-android     → Android
+           net10.0-ios         → iOS
+         平台入口文件统一放在 Platforms/ 目录，按 TFM 条件编译，
+         WINDOWS / ANDROID / IOS 条件编译符号由各 TFM 自动启用。
+         ═══════════════════════════════════════════════════════════ -->
     <PropertyGroup>
-        <!-- 多目标类库：为每个平台 TFM 编译一次，自动启用 WINDOWS/ANDROID/IOS 条件编译符号。
-             平台头项目（Desktop/Android/iOS）仍存在，仅保留最薄入口点和清单/资源。 -->
+        <OutputType>WinExe</OutputType>
+        <OutputType Condition="'$(TargetFramework)' == 'net10.0-android' or '$(TargetFramework)' == 'net10.0-ios'">Exe</OutputType>
+
         <TargetFrameworks>net10.0;net10.0-windows;net10.0-android;net10.0-ios</TargetFrameworks>
+
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+
+        <!-- Windows 桌面端清单 -->
+        <ApplicationManifest Condition="'$(TargetFramework)' == 'net10.0-windows'">app.manifest</ApplicationManifest>
+
         <!-- 平台最低支持版本 -->
         <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-android'">23</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-ios'">13.0</SupportedOSPlatformVersion>
+
+        <!-- Android 打包参数 -->
+        <ApplicationId Condition="'$(TargetFramework)' == 'net10.0-android'">com.CompanyName.SCAssistant.AvaloniaApp</ApplicationId>
+        <ApplicationVersion Condition="'$(TargetFramework)' == 'net10.0-android'">1</ApplicationVersion>
+        <ApplicationDisplayVersion Condition="'$(TargetFramework)' == 'net10.0-android'">1.0</ApplicationDisplayVersion>
+        <AndroidPackageFormat Condition="'$(TargetFramework)' == 'net10.0-android'">apk</AndroidPackageFormat>
+        <AndroidEnableProfiledAot Condition="'$(TargetFramework)' == 'net10.0-android'">false</AndroidEnableProfiledAot>
+        <AndroidManifest Condition="'$(TargetFramework)' == 'net10.0-android'">Platforms\Android\AndroidManifest.xml</AndroidManifest>
+
+        <!-- iOS 包标识 -->
+        <BundleIdentifier Condition="'$(TargetFramework)' == 'net10.0-ios'">companyName.SCAssistant.AvaloniaApp</BundleIdentifier>
     </PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
-    <!-- 所有平台共用的包 -->
+    <!-- 平台入口文件不参与默认 Compile/None 项，统一按 TFM 显式引入 -->
+    <ItemGroup>
+        <Compile Remove="Platforms\**\*.cs"/>
+        <EmbeddedResource Remove="Platforms\**\*.resx"/>
+        <None Remove="Platforms\**"/>
+    </ItemGroup>
+
+    <!-- ─── 所有平台共用的包 ─── -->
     <ItemGroup>
         <PackageReference Include="Avalonia"/>
         <PackageReference Include="Avalonia.Themes.Fluent"/>
@@ -29,22 +62,30 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     </ItemGroup>
 
-    <!-- Windows 桌面端特有包（编译时引用，运行时由头项目负责） -->
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <!-- ─── 桌面端（Windows 用 net10.0-windows，Linux/macOS 用 net10.0） ─── -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' or '$(TargetFramework)' == 'net10.0-windows'">
         <PackageReference Include="Avalonia.Desktop"/>
+        <Compile Include="Platforms\Desktop\Program.cs"/>
+    </ItemGroup>
+
+    <!-- Windows 桌面端特有包（WebView2 / Win32 宿主） -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
         <PackageReference Include="Microsoft.Web.WebView2"/>
     </ItemGroup>
 
-    <!-- Android 特有包（编译时引用） -->
+    <!-- ─── Android ─── -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
         <PackageReference Include="Avalonia.Android"/>
         <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen"/>
+        <Compile Include="Platforms\Android\**\*.cs"/>
+        <AndroidResource Include="Platforms\Android\Resources\**"/>
     </ItemGroup>
 
-    <!-- iOS 特有包（编译时引用） -->
+    <!-- ─── iOS ─── -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-ios'">
         <PackageReference Include="Avalonia.iOS"/>
+        <Compile Include="Platforms\iOS\**\*.cs"/>
+        <BundleResource Include="Platforms\iOS\Resources\**"/>
+        <None Include="Platforms\iOS\Info.plist"/>
     </ItemGroup>
-
-    <!-- Linux/macOS (net10.0) 不需要额外平台包，WebKit 通过反射调用 -->
 </Project>

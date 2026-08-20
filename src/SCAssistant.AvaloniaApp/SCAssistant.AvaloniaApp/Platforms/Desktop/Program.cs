@@ -2,12 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using Avalonia;
 
-namespace SCAssistant.AvaloniaApp.Desktop;
+namespace SCAssistant.AvaloniaApp;
 
 /// <summary>
-/// Windows 桌面端程序入口（薄壳文件 — 以桌面端为标准）。
-/// WebView2 控件与工厂注册已迁移到共享项目 SCAssistant.AvaloniaApp，
-/// 此处仅保留 Win32 控制台分配和启动 Avalonia 桌面生命周期。
+/// 桌面端程序入口（Windows / Linux / macOS 共用，仅编译进桌面 TFM）。
+/// WebView2 控件与工厂注册已统一在共享层 App.axaml.cs 完成，
+/// 此处仅保留 Win32 控制台分配（调试用）和启动 Avalonia 桌面生命周期。
 /// </summary>
 sealed class Program
 {

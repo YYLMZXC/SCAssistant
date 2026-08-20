@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.iOS;
 using Foundation;
 
-namespace SCAssistant.AvaloniaApp.iOS;
+namespace SCAssistant.AvaloniaApp.Platforms.iOS;
 
 [Register("AppDelegate")]
 #pragma warning disable CA1711
