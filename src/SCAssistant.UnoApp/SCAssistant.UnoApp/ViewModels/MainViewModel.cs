@@ -161,6 +161,7 @@ public class MainViewModel : INotifyPropertyChanged
         // 订阅浏览器事件
         _browser.AddressChanged += (_, url) =>
         {
+            LogHelper.Info($"[主页] 地址变化 -> {url}");
             CurrentUrl = url;
             UpdateCurrentTab(url);
             if (!string.IsNullOrWhiteSpace(url))
@@ -171,10 +172,19 @@ public class MainViewModel : INotifyPropertyChanged
         };
         _browser.TitleChanged += (_, title) =>
         {
-            WindowTitle = string.IsNullOrWhiteSpace(title) ? "SCAssistant" : $"SCAssistant - {title}";
+            var newTitle = string.IsNullOrWhiteSpace(title) ? "SCAssistant" : $"SCAssistant - {title}";
+            if (newTitle != _windowTitle)
+            {
+                LogHelper.Info($"[主页] 页面标题变化 -> {title}");
+                WindowTitle = newTitle;
+            }
         };
         _browser.LoadingStateChanged += (_, loading) =>
         {
+            if (loading != _isLoading)
+            {
+                LogHelper.Info(loading ? "[主页] 页面开始加载" : "[主页] 页面加载完成");
+            }
             IsLoading = loading;
             StatusText = loading ? "加载中..." : "就绪";
         };
@@ -185,6 +195,7 @@ public class MainViewModel : INotifyPropertyChanged
             // 刷新命令的 CanExecute 状态
             NavigateBackCommand.NotifyCanExecuteChanged();
             NavigateForwardCommand.NotifyCanExecuteChanged();
+            LogHelper.Info($"[主页] 导航历史变化 (canGoBack={CanGoBack}, canGoForward={CanGoForward})");
         };
 
         // 下载请求事件：自动弹出设置面板并触发下载

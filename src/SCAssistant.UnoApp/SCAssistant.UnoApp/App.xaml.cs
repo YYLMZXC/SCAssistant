@@ -17,8 +17,80 @@ public partial class App : Application
     public App()
     {
         this.InitializeComponent();
+
+        // 启动基础信息（软件目录、日志目录、平台、版本）—— 排查问题第一步看这里
+        LogHelper.Info($"[应用] ============ 应用启动 ============");
+        LogHelper.Info($"[应用] 软件目录: {AppPaths.Root}");
+        LogHelper.Info($"[应用] 日志目录: {LogHelper.GetLogDirectory()}");
+        LogHelper.Info($"[应用] 平台: {GetPlatformInfo()}");
+        LogHelper.Info($"[应用] 版本: {GetVersionInfo()}");
+
+        // 全局未处理异常日志：任何未捕获异常都记录到 Bugs 日志，便于崩溃定位
+        RegisterGlobalExceptionLogging();
+
         LogHelper.Info("[应用] 构造函数 - 正在配置服务");
         ConfigureServices();
+    }
+
+    /// <summary>注册全局未处理异常日志，确保任何崩溃都记录到 Bugs 目录。</summary>
+    private static void RegisterGlobalExceptionLogging()
+    {
+        try
+        {
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                var ex = e.ExceptionObject as Exception;
+                LogHelper.Error($"[应用] 未处理的域异常 (IsTerminating={e.IsTerminating})", ex);
+            };
+
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                LogHelper.Error($"[应用] 未观察的任务异常 (inner={e.Exception?.InnerExceptions?.Count ?? 0})", e.Exception);
+                e.SetObserved(); // 标记已处理，防止进程被终止
+            };
+
+            LogHelper.Info("[应用] 全局异常日志已注册");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[应用] 注册全局异常日志失败: {ex.Message}");
+        }
+    }
+
+    private static string GetPlatformInfo()
+    {
+#if ANDROID
+        return $"Android {Android.OS.Build.VERSION.Release} (API {(int)Android.OS.Build.VERSION.SdkInt})";
+#elif __IOS__
+        return $"iOS {UIKit.UIDevice.CurrentDevice.SystemVersion}";
+#elif MACCATALYST
+        return $"macOS {Environment.OSVersion.VersionString}";
+#elif WINDOWS
+        return $"Windows {Environment.OSVersion.VersionString}";
+#else
+        return Environment.OSVersion.VersionString;
+#endif
+    }
+
+    private static string GetVersionInfo()
+    {
+        try
+        {
+            var asmVersion = typeof(App).Assembly.GetName().Version?.ToString() ?? "unknown";
+#if ANDROID
+            var context = Android.App.Application.Context;
+            var pkg = context?.PackageManager?.GetPackageInfo(context.PackageName!, 0);
+            if (pkg is not null)
+            {
+                return $"{pkg.VersionName} ({asmVersion})";
+            }
+#endif
+            return asmVersion;
+        }
+        catch
+        {
+            return "unknown";
+        }
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -32,6 +104,7 @@ public partial class App : Application
         _mainWindow.SetWindowIcon();
 
         _mainWindow.Activate();
+        LogHelper.Info("[应用] 窗口已激活");
 
         // Win32 Skia 后端：通过原生 API 设置窗口图标
         if (OperatingSystem.IsWindows())
@@ -46,8 +119,6 @@ public partial class App : Application
             LogHelper.Info("[应用] 检测到应用恢复事件，通知浏览器刷新");
             ServiceLocator.BrowserProvider?.HandleAppResumed();
         };
-
-        LogHelper.Info("[应用] 窗口已激活");
     }
 
     private static void ConfigureServices()

@@ -104,6 +104,13 @@ src/
         │   └── SettingsPanel.xaml                    # 设置面板
         ├── Models/                                   # 数据模型
         ├── Services/                                 # 服务层
+        │   ├── AppPaths.cs                           # 数据目录统一管理（config/Bugs/Downloads/...）
+        │   ├── LogHelper.cs                          # 日志系统（输出到 Console/Debug/文件）
+        │   ├── BrowserProvider.cs                    # 浏览器封装（含下载拦截、UA 设置）
+        │   ├── DownloadService.cs                    # 多任务并发下载服务
+        │   ├── DownloadHistoryService.cs             # 下载历史持久化
+        │   ├── SettingsService.cs                    # 设置持久化（config/settings.json）
+        │   └── ServiceLocator.cs                     # 服务定位器
         ├── Converters/                               # 值转换器
         ├── Assets/                                   # 图标与启动画面
         └── Platforms/                                # 平台入口文件
@@ -237,6 +244,50 @@ msbuild src/SCAssistant.WindowsForms/SCAssistant.WindowsForms.sln -t:Build -p:Co
 ```
 
 注意：CefSharp 依赖本地 `packages/` 目录中的 NuGet 包，首次编译前请确保包已正确还原。
+
+## 数据目录与日志
+
+Uno Platform 版（当前主要维护实现）将应用数据统一收拢在"软件目录"下，各功能独立文件夹：
+
+```
+软件目录/
+├── config/            ← 配置文件（settings.json）
+├── Bugs/              ← 日志文件（app_yyyy-MM-dd.log）
+├── Downloads/         ← 下载的文件
+├── DownloadHistory/   ← 下载历史（download_history.json）
+└── WebView2/          ← 浏览器数据（Cookie、缓存等）
+```
+
+软件目录位置：
+
+| 平台 | 位置 |
+|------|------|
+| Windows / macOS / Linux | 程序所在目录（便携式，数据随 exe 走）；程序目录不可写时回退到 `%LocalAppData%/SCAssistant` |
+| Android | 应用专属外部存储 `Android/data/com.companyname.scassistant.yylmzxc001/files/`（文件管理器可直接访问）；获取失败回退内部存储 |
+
+> 注意：升级到新目录结构后，旧版本在 `%LocalAppData%/SCAssistant/` 下的 `settings.json` 与 `download_history.json` 会自动迁移到新位置。
+
+### 日志说明
+
+- 日志文件位于 `软件目录/Bugs/app_yyyy-MM-dd.log`，按天切分。
+- 日志同时输出到：日志文件、控制台窗口、IDE Debug 输出。
+- 应用启动时会在日志中记录：软件目录、日志目录、平台版本、应用版本。
+- 已注册全局未处理异常日志（`AppDomain.UnhandledException`、`TaskScheduler.UnobservedTaskException`），任何崩溃都会写入 `Bugs` 目录，方便定位问题。
+- 反馈问题时请附上 `Bugs` 目录下当天的日志文件。
+
+## 常见问题
+
+### 安卓上为什么总是弹出"已复制到剪贴板"提示？
+
+这是 **Android 13+ 的系统级隐私提示**，不是应用 bug，也无法通过代码关闭。触发源是内置浏览器加载的网页：网页 JS 调用剪贴板 API（如点击网页上的"复制"按钮、长按选择后复制、页面自动复制）时，系统会强制弹出提示。用系统 Chrome 打开同一网页点同一按钮也会有同样的提示，可借此确认与 App 无关。
+
+### Rider 运行报"未知运行配置类型 XamarinAndroidProject"？
+
+项目从 Xamarin 迁移到 Uno/.NET 后，Rider 的 `.idea` 本地配置中残留了旧运行配置导致。删除本地 `.idea` 目录后重新加载项目（`File` → `Reload Project`）即可，Rider 会基于 `net10.0-android` 目标重新生成 `.NET Android` 运行配置。`.idea` 目录已被 `.gitignore` 忽略，删除不影响仓库。
+
+### Android 构建报 `XAPRAS7009`（缺少 RuntimeIdentifier 元数据）？
+
+这是项目文件中的 `TreatAsLocalProperty` 错误忽略了单数 `RuntimeIdentifier` 所致。当前 `SCAssistant.UnoApp.csproj` 只忽略复数 `RuntimeIdentifiers`，保留单数 `RuntimeIdentifier` 以支持 Android 多 ABI（arm64/x64）构建。若再次出现，请检查 csproj 是否误加了 `TreatAsLocalProperty="RuntimeIdentifier;..."`。
 
 ## 许可证
 

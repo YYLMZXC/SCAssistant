@@ -48,30 +48,59 @@ public class DownloadHistoryService : IDownloadHistoryService
 
     public void Load()
     {
-        if (!File.Exists(_filePath))
+        try
         {
-            LogHelper.Info("[下载历史] 文件不存在，初始化为空列表");
-            _records = new List<DownloadRecord>();
-            return;
-        }
+            if (!File.Exists(_filePath))
+            {
+                LogHelper.Info("[下载历史] 文件不存在，初始化为空列表");
+                _records = new List<DownloadRecord>();
+                return;
+            }
 
-        var json = File.ReadAllText(_filePath);
-        _records = JsonConvert.DeserializeObject<List<DownloadRecord>>(json) ?? new List<DownloadRecord>();
-        LogHelper.Info($"[下载历史] 加载成功，共 {_records.Count} 条记录");
+            var json = File.ReadAllText(_filePath);
+            _records = JsonConvert.DeserializeObject<List<DownloadRecord>>(json) ?? new List<DownloadRecord>();
+            LogHelper.Info($"[下载历史] 加载成功，共 {_records.Count} 条记录 -> {_filePath}");
+        }
+        catch (Exception ex)
+        {
+            // 文件损坏或格式异常时不崩溃，备份损坏文件后重置为空列表
+            LogHelper.Error($"[下载历史] 加载失败，将重置为空列表", ex);
+            try
+            {
+                if (File.Exists(_filePath))
+                {
+                    var backupPath = _filePath + ".corrupt";
+                    File.Copy(_filePath, backupPath, overwrite: true);
+                    LogHelper.Warn($"[下载历史] 已备份损坏文件: {backupPath}");
+                }
+            }
+            catch (Exception backupEx)
+            {
+                LogHelper.Warn($"[下载历史] 备份损坏文件失败: {backupEx.Message}");
+            }
+            _records = new List<DownloadRecord>();
+        }
     }
 
     public void Save()
     {
-        var dir = Path.GetDirectoryName(_filePath);
-        if (dir is not null && !Directory.Exists(dir))
+        try
         {
-            Directory.CreateDirectory(dir);
-            LogHelper.Info($"[下载历史] 创建目录: {dir}");
-        }
+            var dir = Path.GetDirectoryName(_filePath);
+            if (dir is not null && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+                LogHelper.Info($"[下载历史] 创建目录: {dir}");
+            }
 
-        var json = JsonConvert.SerializeObject(_records, Formatting.Indented);
-        File.WriteAllText(_filePath, json);
-        LogHelper.Info($"[下载历史] 保存成功，共 {_records.Count} 条记录 -> {_filePath}");
+            var json = JsonConvert.SerializeObject(_records, Formatting.Indented);
+            File.WriteAllText(_filePath, json);
+            LogHelper.Info($"[下载历史] 保存成功，共 {_records.Count} 条记录 -> {_filePath}");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error("[下载历史] 保存失败", ex);
+        }
     }
 
     public void AddRecord(DownloadRecord record)

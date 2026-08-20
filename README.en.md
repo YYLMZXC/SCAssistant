@@ -104,6 +104,13 @@ src/
         │   └── SettingsPanel.xaml                    # Settings panel
         ├── Models/                                   # Data models
         ├── Services/                                 # Service layer
+        │   ├── AppPaths.cs                           # Central data-directory management (config/Bugs/Downloads/...)
+        │   ├── LogHelper.cs                          # Logging (Console/Debug/file output)
+        │   ├── BrowserProvider.cs                    # Browser wrapper (download interception, UA settings)
+        │   ├── DownloadService.cs                    # Multi-task concurrent download service
+        │   ├── DownloadHistoryService.cs             # Download history persistence
+        │   ├── SettingsService.cs                    # Settings persistence (config/settings.json)
+        │   └── ServiceLocator.cs                     # Service locator
         ├── Converters/                               # Value converters
         ├── Assets/                                   # Icons & splash screen
         └── Platforms/                                # Platform entry points
@@ -225,6 +232,50 @@ dotnet build src/SCAssistant.MauiApp/SCAssistant.MauiApp.Droid -c Release
 **iOS / macOS**
 
 On macOS, open `src/SCAssistant.MauiApp/SCAssistant.MauiApp.slnx` and build & run with the iOS or Mac target.
+
+## Data Directory & Logs
+
+The Uno Platform implementation (currently the primary maintained implementation) stores all application data under a "software directory", with each feature in its own folder:
+
+```
+Software directory/
+├── config/            ← Configuration file (settings.json)
+├── Bugs/              ← Log files (app_yyyy-MM-dd.log)
+├── Downloads/         ← Downloaded files
+├── DownloadHistory/   ← Download history (download_history.json)
+└── WebView2/          ← Browser data (cookies, cache, etc.)
+```
+
+Software directory location:
+
+| Platform | Location |
+|----------|----------|
+| Windows / macOS / Linux | Program directory (portable, data travels with the exe); falls back to `%LocalAppData%/SCAssistant` when the program directory is not writable |
+| Android | App-specific external storage `Android/data/com.companyname.scassistant.yylmzxc001/files/` (accessible via file manager); falls back to internal storage |
+
+> Note: After upgrading to the new directory layout, `settings.json` and `download_history.json` from the old location (`%LocalAppData%/SCAssistant/`) are migrated automatically.
+
+### Logging
+
+- Log files are stored at `Software directory/Bugs/app_yyyy-MM-dd.log`, rotated daily.
+- Logs are written to: log file, console window, and IDE Debug output.
+- At startup, the app logs: software directory, log directory, platform, and app version.
+- Global unhandled exception logging is registered (`AppDomain.UnhandledException`, `TaskScheduler.UnobservedTaskException`), so any crash is recorded in the `Bugs` folder for easier diagnosis.
+- When reporting a bug, please attach the current day's log file from the `Bugs` folder.
+
+## FAQ
+
+### Why does Android always show a "copied to clipboard" toast?
+
+This is a **system-level privacy notification from Android 13+**, not a bug, and it cannot be disabled from the app. The trigger is the web page loaded inside the built-in browser: when page JS calls the clipboard API (e.g. clicking a "copy" button on the page, copying after long-press selection, or auto-copy), the system shows the toast. Opening the same page in the system Chrome and clicking the same button produces the same toast, confirming it's unrelated to this app.
+
+### Rider reports "Unknown run configuration type XamarinAndroidProject"?
+
+After the project migrated from Xamarin to Uno/.NET, Rider's local `.idea` configuration still contains stale run configurations. Delete the local `.idea` directory and reload the project (`File` → `Reload Project`); Rider will regenerate a `.NET Android` run configuration from the `net10.0-android` target. The `.idea` directory is already ignored by `.gitignore`, so deleting it does not affect the repository.
+
+### Android build fails with `XAPRAS7009` (missing RuntimeIdentifier metadata)?
+
+This was caused by `TreatAsLocalProperty` incorrectly ignoring the singular `RuntimeIdentifier` property. The current `SCAssistant.UnoApp.csproj` only ignores the plural `RuntimeIdentifiers` and keeps the singular `RuntimeIdentifier` to support Android multi-ABI (arm64/x64) builds. If it reappears, check whether the csproj accidentally added `TreatAsLocalProperty="RuntimeIdentifier;..."`.
 
 ## License
 

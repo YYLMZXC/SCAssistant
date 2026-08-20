@@ -14,11 +14,11 @@ namespace SCAssistant.UnoApp.Services;
 ///     WebView2/          —— WebView2 浏览器数据
 /// 软件目录：
 ///   - Android: 应用专属外部存储（用户可通过文件管理器访问），不可用时回退内部存储
-///   - 其他平台: %LocalAppData%/SCAssistant
+///   - 桌面:    程序所在目录（便携式，数据随 exe 走）；程序目录不可写时回退 %LocalAppData%/SCAssistant
 /// </summary>
 public static class AppPaths
 {
-    /// <summary>软件目录根路径（不带应用名子目录，Android 为 files 根，桌面为 LocalAppData）。</summary>
+    /// <summary>软件目录根路径。Android 为 files 根，桌面为程序所在目录（或 LocalAppData/SCAssistant 回退）。</summary>
     public static string Root { get; }
 
     /// <summary>配置文件目录（config）。</summary>
@@ -52,6 +52,22 @@ public static class AppPaths
         return GetAndroidStoragePath() ??
                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 #else
+        // 桌面端：优先使用程序所在目录（便携式数据目录），
+        // 程序目录不可写时（如安装到 Program Files）回退到 %LocalAppData%/SCAssistant。
+        var appDir = AppContext.BaseDirectory;
+        if (!string.IsNullOrWhiteSpace(appDir))
+        {
+            try
+            {
+                // 探测可写性：尝试创建 config 子目录
+                Directory.CreateDirectory(Path.Combine(appDir, "config"));
+                return appDir;
+            }
+            catch
+            {
+                // 程序目录不可写，回退到 LocalAppData
+            }
+        }
         return Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "SCAssistant");
