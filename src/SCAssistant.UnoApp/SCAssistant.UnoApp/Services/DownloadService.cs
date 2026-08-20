@@ -141,52 +141,10 @@ public class DownloadService : IDownloadService
         }
     }
 
-    public string GetDownloadDirectory()
-    {
-#if ANDROID
-        return AndroidDownloadDirectory();
-#elif __IOS__
-        return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-#else
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            "Downloads");
-#endif
-    }
-
-#if ANDROID
     /// <summary>
-    /// 获取 Android 下载目录（统一放在 SCAssistant/Downloads/ 下）。
-    /// Android 10+: 优先使用应用专属外部存储（不需要运行时权限），
-    /// 回退到内部存储。
-    /// 路径示例: {externalFilesDir}/SCAssistant/Downloads/
+    /// 获取下载文件保存目录（软件目录 Downloads 文件夹，见 <see cref="AppPaths"/>）。
     /// </summary>
-    private static string AndroidDownloadDirectory()
-    {
-        try
-        {
-            var appContext = Android.App.Application.Context;
-            if (appContext is not null)
-            {
-                var externalDir = appContext.GetExternalFilesDir(null);
-                if (externalDir is not null)
-                {
-                    var downloadsDir = Path.Combine(externalDir.AbsolutePath, "SCAssistant", "Downloads");
-                    Directory.CreateDirectory(downloadsDir);
-                    return downloadsDir;
-                }
-            }
-        }
-        catch { /* 回退到内部存储 */ }
-
-        // 回退：内部存储数据目录
-        var fallbackDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SCAssistant", "Downloads");
-        Directory.CreateDirectory(fallbackDir);
-        return fallbackDir;
-    }
-#endif
+    public string GetDownloadDirectory() => AppPaths.Downloads;
 
     private static string GetSavePath(string directory, string fileName)
     {

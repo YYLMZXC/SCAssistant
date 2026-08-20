@@ -17,9 +17,33 @@ public class DownloadHistoryService : IDownloadHistoryService
 
     public DownloadHistoryService()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        _filePath = Path.Combine(appData, "SCAssistant", "download_history.json");
+        _filePath = Path.Combine(AppPaths.DownloadHistory, "download_history.json");
         LogHelper.Info($"[下载历史] 初始化，存储路径: {_filePath}");
+        MigrateLegacyFile();
+    }
+
+    /// <summary>
+    /// 迁移旧版本路径下的 download_history.json（%LocalAppData%/SCAssistant/），
+    /// 避免升级后历史记录丢失。
+    /// </summary>
+    private void MigrateLegacyFile()
+    {
+        try
+        {
+            var legacyPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SCAssistant", "download_history.json");
+            if (File.Exists(legacyPath) && !File.Exists(_filePath))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_filePath)!);
+                File.Move(legacyPath, _filePath);
+                LogHelper.Info($"[下载历史] 已迁移旧文件: {legacyPath} -> {_filePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[下载历史] 旧文件迁移失败: {ex.Message}");
+        }
     }
 
     public void Load()

@@ -6,13 +6,11 @@ using SCAssistant.UnoApp.Models;
 namespace SCAssistant.UnoApp.Services;
 
 /// <summary>
-/// 应用设置服务 — JSON 持久化到 %LocalAppData%/SCAssistant/settings.json。
+/// 应用设置服务 — JSON 持久化到软件目录 config/settings.json。
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private static readonly string SettingsDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SCAssistant");
+    private static readonly string SettingsDir = AppPaths.Config;
     private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
 
     public AppSettings Settings { get; private set; } = new();
@@ -20,6 +18,31 @@ public class SettingsService : ISettingsService
     public SettingsService()
     {
         Directory.CreateDirectory(SettingsDir);
+        MigrateLegacySettings();
+    }
+
+    /// <summary>
+    /// 迁移旧版本路径下的 settings.json（%LocalAppData%/SCAssistant/settings.json），
+    /// 避免升级后用户设置丢失。
+    /// </summary>
+    private static void MigrateLegacySettings()
+    {
+        try
+        {
+            var legacyPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SCAssistant", "settings.json");
+            if (File.Exists(legacyPath) && !File.Exists(SettingsPath))
+            {
+                Directory.CreateDirectory(SettingsDir);
+                File.Move(legacyPath, SettingsPath);
+                LogHelper.Info($"[设置] 已迁移旧配置文件: {legacyPath} -> {SettingsPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[设置] 旧配置迁移失败: {ex.Message}");
+        }
     }
 
     public void Load()

@@ -260,9 +260,7 @@ public class BrowserProvider : IBrowserProvider
     {
         try
         {
-            var userDataFolder = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "SCAssistant", "WebView2Data");
+            var userDataFolder = AppPaths.WebView2;
             System.IO.Directory.CreateDirectory(userDataFolder);
 
             LogHelper.Info($"[浏览器] 正在创建 CoreWebView2Environment (userDataFolder={userDataFolder})");

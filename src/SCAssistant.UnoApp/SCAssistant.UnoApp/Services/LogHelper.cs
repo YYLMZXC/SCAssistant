@@ -5,10 +5,9 @@ namespace SCAssistant.UnoApp.Services;
 
 /// <summary>
 /// 日志系统：同时输出到 Console 窗口、Debug 输出和日志文件。
-/// 日志文件保存在 SCAssistant/Bugs/log/ 目录下，按日期命名。
-/// - Windows/Linux: %LocalAppData%/SCAssistant/Bugs/log/
-/// - Android: 外部存储/SCAssistant/Bugs/log/（用户可访问）
-/// - iOS: {LocalApplicationData}/SCAssistant/Bugs/log/
+/// 日志文件直接保存在软件目录 Bugs 文件夹下，按日期命名：
+///   {软件目录}/Bugs/app_yyyy-MM-dd.log
+/// 软件目录位置见 <see cref="AppPaths"/>。
 /// </summary>
 public static class LogHelper
 {
@@ -17,53 +16,7 @@ public static class LogHelper
 
     static LogHelper()
     {
-        var appDataDir = GetAppDataDirectory();
-        LogDirectory = Path.Combine(appDataDir, "SCAssistant", "Bugs", "log");
-        Directory.CreateDirectory(LogDirectory);
-    }
-
-    /// <summary>
-    /// 获取应用数据基础目录。
-    /// Android 使用外部存储（用户可访问），其他平台使用 LocalApplicationData。
-    /// </summary>
-    private static string GetAppDataDirectory()
-    {
-#if ANDROID
-        return GetAndroidStoragePath() ??
-               Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-#else
-        return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-#endif
-    }
-
-#if ANDROID
-    /// <summary>
-    /// 获取 Android 外部存储路径（应用专属外部文件目录）。
-    /// 返回 null 时回退到内部存储。
-    /// </summary>
-    private static string? GetAndroidStoragePath()
-    {
-        try
-        {
-            var context = Android.App.Application.Context;
-            var externalDir = context?.GetExternalFilesDir(null);
-            if (externalDir?.AbsolutePath is { } path && !string.IsNullOrWhiteSpace(path))
-            {
-                return path;
-            }
-        }
-        catch
-        {
-            // 获取外部存储失败，回退到内部存储
-        }
-        return null;
-    }
-#endif
-
-    private static string GetLogFilePath()
-    {
-        var date = DateTime.Now.ToString("yyyy-MM-dd");
-        return Path.Combine(LogDirectory, $"app_{date}.log");
+        LogDirectory = AppPaths.Bugs;
     }
 
     /// <summary>获取日志目录路径（供外部使用，如打开日志文件夹）。</summary>
@@ -109,5 +62,11 @@ public static class LogHelper
         {
             // 写文件失败不抛异常
         }
+    }
+
+    private static string GetLogFilePath()
+    {
+        var date = DateTime.Now.ToString("yyyy-MM-dd");
+        return Path.Combine(LogDirectory, $"app_{date}.log");
     }
 }
