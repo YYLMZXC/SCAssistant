@@ -414,20 +414,11 @@ public class BrowserProvider : IBrowserProvider
             if (IsMobilePlatform)
             {
                 LogHelper.Info("[浏览器] 移动端: 使用 Source 属性导航");
+                // 注意：Uno WebView2 的 Source setter 在 Android 上会触发原生 WebView.loadUrl。
+                // 这里不能再额外调用 CoreWebView2.Navigate，否则同一个 URL 会被 loadUrl 两次，
+                // 导致网页重复加载（页面闪烁、资源重复请求、状态被重置）。
+                // 若 Source 导航确实失败，由 VerifyMobileNavigationAsync 在 1 秒后兜底重试。
                 _webView.Source = new Uri(url);
-
-                if (IsAndroidPlatform && _webView.CoreWebView2 is not null)
-                {
-                    try
-                    {
-                        _webView.CoreWebView2.Navigate(url);
-                        LogHelper.Info("[浏览器] Android: 同时触发 CoreWebView2.Navigate 兜底");
-                    }
-                    catch (Exception ex2)
-                    {
-                        LogHelper.Warn($"[浏览器] Android CoreWebView2.Navigate 兜底失败: {ex2.Message}");
-                    }
-                }
             }
             else if (_webView.CoreWebView2 is not null)
             {
@@ -493,7 +484,23 @@ public class BrowserProvider : IBrowserProvider
 
             if (currentSource != url && !_isLoading)
             {
-                LogHelper.Warn($"[浏览器] {platform}: 导航似乎未生效，重试 Source 设置");
+                LogHelper.Warn($"[浏览器] {platform}: 导航似乎未生效，重试导航");
+#if __ANDROID__
+                // Android 兜底：使用原生 Navigate 重试（避免再次设置 Source 造成重复导航）。
+                // 仅在 Source 导航确实未生效时才走到这里。
+                try
+                {
+                    if (_webView.CoreWebView2 is not null)
+                    {
+                        _webView.CoreWebView2.Navigate(url);
+                        return;
+                    }
+                }
+                catch (Exception ex2)
+                {
+                    LogHelper.Warn($"[浏览器] Android 导航重试(Navigate)失败: {ex2.Message}");
+                }
+#endif
                 _webView.Source = new Uri(url);
             }
         }
