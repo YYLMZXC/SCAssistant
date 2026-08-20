@@ -43,6 +43,22 @@ public class BrowserProvider : IBrowserProvider
     private bool _isReady;
     private UserAgentPlatform _userAgentPlatform = UserAgentPlatform.Auto;
 
+    // 幂等标志：保证事件处理器只注册一次。
+    // 背景：CoreWebView2Initialized 事件与 EnsureCoreWebView2Async 完成后是两条初始化路径，
+    // 都会触发注册；若无幂等保护，DownloadStarting / NewWindowRequested / WebMessageReceived
+    // 等事件会被重复订阅，导致下载请求被触发多次等业务 bug。
+    private bool _isNewWindowHandlerRegistered;
+    private bool _isDesktopDownloadHandlerRegistered;
+    private bool _isMobileDownloadHandlerRegistered;
+    private bool _isWebMessageHandlerRegistered;
+    private bool _isCoreHttpStatusLogRegistered;
+
+    /// <summary>已成功应用的 UA 平台，避免重复设置（性能冗余）。</summary>
+    private UserAgentPlatform? _appliedUserAgentPlatform;
+
+    /// <summary>CoreWebView2 内核初始化超时时间。</summary>
+    private static readonly TimeSpan CoreInitTimeout = TimeSpan.FromSeconds(30);
+
     /// <summary>上一个有效的 HTTP/HTTPS 页面 URL，用于 scheme 跳转后恢复黑屏。</summary>
     private string _lastKnownGoodUrl = string.Empty;
 
@@ -143,7 +159,17 @@ public class BrowserProvider : IBrowserProvider
         _webView.NavigationCompleted += (sender, args) =>
         {
             _isLoading = false;
-            LogHelper.Info($"[浏览器] 导航完成 成功={args.IsSuccess} 错误={args.WebErrorStatus}");
+
+            // 注意：WebView2 导航成功时 WebErrorStatus 恒为 Unknown（正常行为），
+            // 不能拿 WebErrorStatus 判断成败，仅在失败时输出它做诊断。
+            if (args.IsSuccess)
+            {
+                LogHelper.Info("[浏览器] 导航完成 成功");
+            }
+            else
+            {
+                LogHelper.Warn($"[浏览器] 导航完成 失败, WebErrorStatus={args.WebErrorStatus}");
+            }
 
             try
             {
@@ -161,6 +187,9 @@ public class BrowserProvider : IBrowserProvider
             }
             TitleChanged?.Invoke(this, _currentTitle);
             LoadingStateChanged?.Invoke(this, false);
+
+            // 页面加载完成后注入资源失败钩子，上报子资源（图片/脚本等）加载失败
+            _ = InjectResourceErrorHookAsync();
         };
 
         // 诊断：CoreWebView2 属性访问
@@ -194,23 +223,25 @@ public class BrowserProvider : IBrowserProvider
             var sw = System.Diagnostics.Stopwatch.StartNew();
             LogHelper.Info($"[浏览器] 正在调用 EnsureCoreWebView2Async... (iOS={IsIOSPlatform}, Android={IsAndroidPlatform})");
 
-#if __SKIA__
-            if (OperatingSystem.IsWindows())
+            // 初始化超时保护：内核长时间无响应时避免页面永久空白且无日志
+            var initTask = InitializeWebViewCoreAsync();
+            var completedTask = await Task.WhenAny(initTask, Task.Delay(CoreInitTimeout));
+            if (completedTask != initTask)
             {
-                await InitializeWithUserDataFolderAsync();
+                sw.Stop();
+                LogHelper.Error($"[浏览器] CoreWebView2 初始化超时（{CoreInitTimeout.TotalSeconds} 秒），放弃后续初始化。请检查 WebView2 Runtime 是否安装或可用。");
+                return;
             }
-            else
-            {
-                await _webView!.EnsureCoreWebView2Async();
-            }
-#else
-            await _webView!.EnsureCoreWebView2Async();
-#endif
+            await initTask; // 初始化内部若抛异常，在此传播到下方 catch
 
             sw.Stop();
             LogHelper.Info($"[浏览器] EnsureCoreWebView2Async 完成，耗时 {sw.ElapsedMilliseconds}ms");
 
+            // 内核就绪：先置位，供后续注册/UA 方法判断（此时 CoreWebView2 才是真实内核而非占位对象）
+            _isReady = true;
+
             ApplyPerformanceSettings();
+            RegisterCoreHttpStatusLog();
             RegisterNewWindowHandler();
             RegisterDownloadHandler();
             ApplyUserAgent();
@@ -235,8 +266,6 @@ public class BrowserProvider : IBrowserProvider
                 LogHelper.Error($"[浏览器] 初始化后检查 CoreWebView2 失败: {ex2.Message}", ex2);
             }
 
-            _isReady = true;
-
             if (_pendingNavigateUrl is not null)
             {
                 var url = _pendingNavigateUrl;
@@ -253,6 +282,24 @@ public class BrowserProvider : IBrowserProvider
         {
             LogHelper.Error($"[浏览器] CoreWebView2 初始化失败: {ex.GetType().Name}: {ex.Message}", ex);
         }
+    }
+
+    /// <summary>
+    /// 执行 WebView2 内核初始化（不同平台路径不同）。
+    /// 抽离为独立方法以便在 InitializeCoreWebView2Async 中统一加超时控制。
+    /// </summary>
+    private async Task InitializeWebViewCoreAsync()
+    {
+#if __SKIA__
+        if (OperatingSystem.IsWindows())
+        {
+            await InitializeWithUserDataFolderAsync();
+            return;
+        }
+#endif
+        // 注：EnsureCoreWebView2Async 在不同平台返回类型不同（桌面为 Task，移动端为 IAsyncAction），
+        // 统一用 await 兼容
+        await _webView!.EnsureCoreWebView2Async();
     }
 
 #if __SKIA__
@@ -293,9 +340,43 @@ public class BrowserProvider : IBrowserProvider
         }
     }
 
+    /// <summary>
+    /// 注册 CoreWebView2 级导航完成监听，仅用于记录主文档 HTTP 状态码异常（4xx/5xx）。
+    /// 说明：控件级 NavigationCompleted 参数（WebViewNavigationCompletedEventArgs）不暴露
+    /// HTTP 状态码，而 Core 级参数（CoreWebView2NavigationCompletedEventArgs）有 HttpStatusCode。
+    /// WebView2 中 404/500 等错误页 IsSuccess 仍为 true，必须借助状态码才能发现。
+    /// </summary>
+    private void RegisterCoreHttpStatusLog()
+    {
+        if (!_isReady) return;
+        if (_isCoreHttpStatusLogRegistered) return; // 幂等：只注册一次
+        if (_webView?.CoreWebView2 is null) return;
+
+        try
+        {
+            _webView.CoreWebView2.NavigationCompleted += (_, args) =>
+            {
+                var code = args.HttpStatusCode;
+                if (code >= 400)
+                {
+                    LogHelper.Warn($"[浏览器] 主文档 HTTP 状态码异常: {code}");
+                }
+            };
+            _isCoreHttpStatusLogRegistered = true;
+            LogHelper.Info("[浏览器] Core 级 HTTP 状态码监听已注册");
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 注册 HTTP 状态码监听失败: {ex.Message}");
+        }
+    }
+
     private bool _isHandlingNewWindow; // 防止 NewWindowRequested 重入
     private void RegisterNewWindowHandler()
     {
+        // 内核未就绪时 CoreWebView2 可能是占位对象，注册无效；幂等防止重复注册
+        if (!_isReady) return;
+        if (_isNewWindowHandlerRegistered) return;
         if (_webView?.CoreWebView2 is null) return;
 
         try
@@ -327,6 +408,7 @@ public class BrowserProvider : IBrowserProvider
                     _isHandlingNewWindow = false;
                 }
             };
+            _isNewWindowHandlerRegistered = true;
             LogHelper.Info("[浏览器] NewWindowRequested 事件已注册");
         }
         catch (Exception ex)
@@ -429,7 +511,12 @@ public class BrowserProvider : IBrowserProvider
                 _webView.Source = new Uri(url);
             }
 
-            LogHelper.Info($"[浏览器] 导航后 Source={(object?)_webView.Source}");
+            // 桌面端使用 CoreWebView2.Navigate() 时，控件 Source 属性不会立即同步，
+            // 此时读取会得到空值，容易误导排查。仅在移动端（刚设置过 Source）记录。
+            if (IsMobilePlatform)
+            {
+                LogHelper.Info($"[浏览器] 导航后 Source={_webView.Source?.ToString() ?? "null"}");
+            }
 
             if (IsMobilePlatform)
             {
@@ -528,6 +615,12 @@ public class BrowserProvider : IBrowserProvider
     {
         if (_webView is null) return;
 
+        // 内核未就绪时 CoreWebView2 可能是占位对象，设置无效；等就绪后统一应用一次
+        if (!_isReady) return;
+
+        // 已为当前平台成功应用过 UA，跳过避免重复设置（性能冗余）
+        if (_appliedUserAgentPlatform == _userAgentPlatform) return;
+
         var ua = GetUserAgentString(_userAgentPlatform);
         LogHelper.Info($"[浏览器] ApplyUserAgent 平台={_userAgentPlatform}, UA={(ua is null ? "跟随系统" : ua)}");
 
@@ -537,6 +630,7 @@ public class BrowserProvider : IBrowserProvider
             try
             {
                 _webView.CoreWebView2.Settings.UserAgent = ua;
+                _appliedUserAgentPlatform = _userAgentPlatform;
                 LogHelper.Info("[浏览器] UA 已通过 CoreWebView2.Settings 设置");
                 return;
             }
@@ -549,6 +643,7 @@ public class BrowserProvider : IBrowserProvider
         // 移动端 / 桌面端 UA 设置失败时的兜底：JS 覆盖 navigator.userAgent
         if (ua is not null && _webView.CoreWebView2 is not null)
         {
+            _appliedUserAgentPlatform = _userAgentPlatform; // 标记已应用，避免重复注入
             _ = InjectUserAgentAsync(ua);
         }
     }
@@ -676,6 +771,9 @@ public class BrowserProvider : IBrowserProvider
     /// </summary>
     private void RegisterDesktopDownloadHandler()
     {
+        // 内核未就绪时 CoreWebView2 可能是占位对象，注册无效；幂等防止重复注册
+        if (!_isReady) return;
+        if (_isDesktopDownloadHandlerRegistered) return;
         if (_webView?.CoreWebView2 is null) return;
 
         try
@@ -692,6 +790,7 @@ public class BrowserProvider : IBrowserProvider
                 // 走统一的自定义下载管线
                 DownloadRequested?.Invoke(this, dlUrl);
             };
+            _isDesktopDownloadHandlerRegistered = true;
             LogHelper.Info("[浏览器] 桌面端 DownloadStarting 拦截已注册 — 下载将走统一管线");
         }
         catch (Exception ex)
@@ -705,6 +804,10 @@ public class BrowserProvider : IBrowserProvider
     /// </summary>
     private void RegisterMobileDownloadHandler()
     {
+        if (!_isReady) return;
+        if (_isMobileDownloadHandlerRegistered) return; // 幂等：只注册一次
+        _isMobileDownloadHandlerRegistered = true;
+
         // 每次页面导航完成后注入下载拦截 JS
         _webView!.NavigationCompleted += (sender, args) =>
         {
@@ -733,6 +836,8 @@ public class BrowserProvider : IBrowserProvider
     /// </summary>
     private void RegisterWebMessageHandler()
     {
+        if (!_isReady) return;
+        if (_isWebMessageHandlerRegistered) return; // 幂等：只注册一次
         if (_webView is null) return;
 
         _webView.WebMessageReceived += (_, args) =>
@@ -741,14 +846,30 @@ public class BrowserProvider : IBrowserProvider
             if (string.IsNullOrWhiteSpace(raw)) return;
 
             var message = raw.Trim('"');
-            if (message is not null && message.StartsWith("download:", StringComparison.Ordinal))
+            if (message is null) return;
+
+            if (message.StartsWith("download:", StringComparison.Ordinal))
             {
                 var downloadUrl = message["download:".Length..];
                 LogHelper.Info($"[浏览器] JS postMessage 通知下载 -> {downloadUrl}");
                 DownloadRequested?.Invoke(this, downloadUrl);
             }
+            else if (message.StartsWith("log:", StringComparison.Ordinal))
+            {
+                // 页面内资源失败日志（低优先级诊断）
+                var logMsg = message["log:".Length..];
+                if (logMsg.StartsWith("resource-error:", StringComparison.Ordinal))
+                {
+                    LogHelper.Warn($"[浏览器] 资源加载失败: {logMsg["resource-error:".Length..]}");
+                }
+                else if (logMsg.StartsWith("js-error:", StringComparison.Ordinal))
+                {
+                    LogHelper.Warn($"[浏览器] 页面 JS 错误: {logMsg["js-error:".Length..]}");
+                }
+            }
         };
 
+        _isWebMessageHandlerRegistered = true;
         LogHelper.Info("[浏览器] WebMessageReceived 已注册");
     }
 
@@ -878,6 +999,65 @@ public class BrowserProvider : IBrowserProvider
             });
         })(allLinks[j]);
     }
+})();
+";
+
+    /// <summary>
+    /// 在当前页面注入资源加载失败监听 JS：
+    /// - 子资源（图片/脚本/样式等）加载失败 -> postMessage("log:resource-error:...")
+    /// - 页面脚本运行时错误 -> postMessage("log:js-error:...")
+    /// C# 侧在 RegisterWebMessageHandler 中解析并记录日志。
+    /// </summary>
+    private async Task InjectResourceErrorHookAsync()
+    {
+        if (_webView?.CoreWebView2 is null) return;
+
+        try
+        {
+            await _webView.CoreWebView2.ExecuteScriptAsync(ResourceErrorHookJs);
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Warn($"[浏览器] 资源失败钩子 JS 注入失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 资源加载失败监听 JavaScript（低优先级诊断增强）。
+    /// 跨平台兼容：优先 window.chrome.webview.postMessage，移动端回退 window.external.notify。
+    /// </summary>
+    private const string ResourceErrorHookJs = @"
+(function() {
+    if (window.__scResourceErrorHookInstalled) return;
+    window.__scResourceErrorHookInstalled = true;
+
+    function postLog(msg) {
+        try {
+            if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
+                window.chrome.webview.postMessage(msg);
+                return;
+            }
+        } catch(e) {}
+        try {
+            if (window.external && typeof window.external.notify === 'function') {
+                window.external.notify(msg);
+                return;
+            }
+        } catch(e) {}
+    }
+
+    // 子资源加载失败（img/script/link/audio/video 等）
+    document.addEventListener('error', function(e) {
+        var el = e.target;
+        var src = el && (el.src || el.href);
+        if (src) postLog('log:resource-error:' + src);
+    }, true);
+
+    // 页面脚本运行时错误
+    window.addEventListener('error', function(e) {
+        var msg = 'log:js-error:' + (e.message || 'unknown') + ' @ ' + (e.filename || '') + ':' + (e.lineno || 0);
+        postLog(msg);
+    });
 })();
 ";
 
