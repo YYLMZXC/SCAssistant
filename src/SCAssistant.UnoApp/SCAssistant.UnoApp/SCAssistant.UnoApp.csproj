@@ -58,9 +58,12 @@
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" Aliases="WpfWebView" />
     </ItemGroup>
 
-    <!-- 应用图标源：由 Uno.Resizetizer 生成 Android / iOS / 桌面等平台的图标 -->
+    <!-- 应用图标与启动屏源：统一内嵌 Assets\Icon.png 的 SVG（Uno.Resizetizer 派生各平台图标与启动屏；icon_foreground + icon_background 组成 Android 自适应图标） -->
     <ItemGroup>
-        <UnoIcon Include="Assets\icon.png" />
+        <UnoIcon Include="Assets\Icons\icon.svg" />
+        <UnoIcon Include="Assets\Icons\icon_foreground.svg" ForegroundScale="0.65" />
+        <UnoIcon Include="Assets\Icons\icon_background.svg" />
+        <UnoSplashScreen Include="Assets\Splash\splash_screen.svg" />
     </ItemGroup>
 
     <!-- 桌面平台：嵌入图标到可执行文件（Win32 资源） -->
