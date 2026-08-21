@@ -93,3 +93,6 @@ Thumbs.db
 
 ## Junie (AI assistant workspace data)
 .junie/
+
+## AI assistant temporary workspace data
+.freebuff/
